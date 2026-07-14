@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>10×10 블록 퍼즐 · Core Draft V5</title>
+  <title>10×10 블록 퍼즐 · Core Draft V5.1</title>
   <style>
     :root {
       color-scheme: dark;
@@ -980,6 +980,186 @@
       .stats { gap: 5px; }
       .stat-card { padding: 7px 6px; }
       #tray { gap: 6px; }
+    }
+
+
+
+    /* V5.1 mobile layout hotfix
+       CORE DRAFT / CORE MELTDOWN add one extra status panel.
+       Compact only those modes so the board and all three tray pieces remain reachable. */
+    html { min-height: 100%; }
+    body {
+      min-height: 100dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+      }
+
+      #game.draft-mode .mode-bar,
+      #game.meltdown-mode .mode-bar {
+        gap: 5px;
+        margin-bottom: 7px;
+      }
+      #game.draft-mode .mode-btn,
+      #game.meltdown-mode .mode-btn {
+        min-height: 38px;
+        padding: 7px 8px;
+        font-size: 11.5px;
+      }
+      #game.draft-mode #sound-btn,
+      #game.meltdown-mode #sound-btn {
+        flex-basis: 40px;
+        min-height: 38px;
+        font-size: 18px;
+      }
+
+      #game.draft-mode .stats,
+      #game.meltdown-mode .stats {
+        gap: 6px;
+        margin-bottom: 7px;
+      }
+      #game.draft-mode .stat-card,
+      #game.meltdown-mode .stat-card {
+        padding: 6px 7px;
+      }
+      #game.draft-mode .stat-label,
+      #game.meltdown-mode .stat-label {
+        font-size: 9.5px;
+      }
+      #game.draft-mode .stat-value,
+      #game.meltdown-mode .stat-value {
+        font-size: clamp(19px, 5.5vw, 24px);
+      }
+
+      #game.draft-mode .fever-panel,
+      #game.meltdown-mode .fever-panel {
+        margin-bottom: 7px;
+        padding: 7px 9px;
+      }
+      #game.draft-mode .fever-head,
+      #game.meltdown-mode .fever-head {
+        margin-bottom: 4px;
+        font-size: 10.5px;
+      }
+      #game.draft-mode .fever-track,
+      #game.meltdown-mode .fever-track {
+        height: 9px;
+      }
+      #game.draft-mode .core-bank-line,
+      #game.meltdown-mode .core-bank-line {
+        margin-top: 5px;
+        padding: 4px 7px;
+        font-size: 9px;
+      }
+      #game.draft-mode #core-bank,
+      #game.meltdown-mode #core-bank {
+        font-size: 12px;
+      }
+      #game.draft-mode .fever-rule,
+      #game.meltdown-mode .fever-rule {
+        display: none;
+      }
+
+      #game.draft-mode .draft-panel,
+      #game.meltdown-mode .meltdown-panel {
+        margin-bottom: 7px;
+        padding: 7px 9px;
+      }
+      #game.draft-mode .draft-head,
+      #game.meltdown-mode .meltdown-head {
+        margin-bottom: 0;
+        font-size: 10.5px;
+      }
+      #game.draft-mode #draft-status,
+      #game.meltdown-mode #meltdown-status {
+        font-size: 9.5px;
+      }
+      #game.draft-mode #draft-build {
+        margin-top: 5px;
+        gap: 4px;
+      }
+      #game.draft-mode .build-chip {
+        padding: 3px 6px;
+        font-size: 8px;
+      }
+      #game.draft-mode .build-empty {
+        padding: 2px 0;
+        font-size: 8.5px;
+      }
+      #game.meltdown-mode .meltdown-track {
+        height: 9px;
+        margin-top: 5px;
+      }
+      #game.meltdown-mode .meltdown-rule {
+        display: none;
+      }
+
+      #game.draft-mode .nickname-row,
+      #game.meltdown-mode .nickname-row {
+        gap: 5px;
+        margin-bottom: 7px;
+      }
+      #game.draft-mode .nickname-row label,
+      #game.meltdown-mode .nickname-row label {
+        font-size: 10px;
+      }
+      #game.draft-mode #nickname,
+      #game.meltdown-mode #nickname {
+        width: 100px;
+        min-height: 32px;
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+
+      #game.draft-mode #board,
+      #game.meltdown-mode #board {
+        width: min(100%, 374px);
+        margin-inline: auto;
+        --board-padding: 5px;
+      }
+      #game.draft-mode #tray,
+      #game.meltdown-mode #tray {
+        width: min(100%, 374px);
+        margin: 8px auto 0;
+        gap: 7px;
+      }
+      #game.draft-mode .tray-slot,
+      #game.meltdown-mode .tray-slot {
+        min-height: clamp(68px, 19vw, 78px);
+        padding: 5px;
+      }
+      #game.draft-mode .piece-square,
+      #game.meltdown-mode .piece-square {
+        width: clamp(13px, 4vw, 16px);
+        height: clamp(13px, 4vw, 16px);
+      }
+      #game.draft-mode .special-icon,
+      #game.meltdown-mode .special-icon {
+        font-size: clamp(25px, 7vw, 32px);
+      }
+      #game.draft-mode .hint,
+      #game.meltdown-mode .hint {
+        display: none;
+      }
+    }
+
+    @media (max-width: 365px) {
+      #game.draft-mode .mode-btn,
+      #game.meltdown-mode .mode-btn {
+        font-size: 10.5px;
+        padding-inline: 6px;
+      }
+      #game.draft-mode #board,
+      #game.meltdown-mode #board,
+      #game.draft-mode #tray,
+      #game.meltdown-mode #tray {
+        width: 100%;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2822,7 +3002,7 @@
   void loadNickname();
   restart();
 
-  // Build: CORE DRAFT V5 · cumulative roguelike upgrade mode
+  // Build: CORE DRAFT V5.1 · mobile compact layout hotfix
 
   </script>
 </body>
