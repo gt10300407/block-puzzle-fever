@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- V5.3: viewport-root game over modal hotfix -->
   <title>10×10 블록 퍼즐 · Core Draft V5.1</title>
   <style>
     :root {
@@ -662,18 +663,73 @@
     .summary-value { margin-top: 2px; font-size: 18px; font-weight: 800; }
 
     #gameover {
-      display: none;
-      margin-top: 14px;
-      padding: 16px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: var(--surface-1);
-      box-shadow: 0 16px 42px rgba(0,0,0,.35);
+      display: none !important;
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      z-index: 2147483000 !important;
+      margin: 0;
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      align-items: center;
+      justify-content: center;
+      background: rgba(3, 7, 20, .76);
+      -webkit-backdrop-filter: blur(9px) saturate(1.12);
+      backdrop-filter: blur(9px) saturate(1.12);
+      overscroll-behavior: contain;
     }
-    #gameover.visible { display: block; animation: panelIn .2s ease-out; }
-    .gameover-title { font-size: 18px; font-weight: 750; margin-bottom: 4px; }
-    .gameover-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
-    .full-btn { width: 100%; }
+    #gameover.visible {
+      display: flex !important;
+      animation: gameoverFade .2s ease-out;
+    }
+    .gameover-card {
+      width: min(100%, 390px);
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(84, 216, 255, .42);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(84,216,255,.15), transparent 44%),
+        linear-gradient(180deg, rgba(19,28,55,.98), rgba(8,13,30,.99));
+      box-shadow: 0 0 0 1px rgba(255,255,255,.035), 0 24px 70px rgba(0,0,0,.64), 0 0 36px rgba(84,216,255,.12);
+      text-align: center;
+      animation: gameoverCardIn .28s cubic-bezier(.2,.85,.2,1.08);
+    }
+    .gameover-kicker {
+      margin-bottom: 5px;
+      color: var(--text-accent);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .16em;
+    }
+    .gameover-title { font-size: 27px; font-weight: 950; margin-bottom: 5px; letter-spacing: -.03em; }
+    .gameover-message { min-height: 20px; margin-bottom: 4px; color: var(--text-secondary); font-size: 13px; }
+    .gameover-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; }
+    .gameover-sub strong { color: #fff; font-size: 25px; font-variant-numeric: tabular-nums; }
+    .full-btn {
+      width: 100%;
+      min-height: 50px;
+      border-color: rgba(84,216,255,.65);
+      background: linear-gradient(135deg, rgba(45,167,255,.23), rgba(130,86,255,.23));
+      font-size: 16px;
+      font-weight: 900;
+    }
+    html.game-over-open, body.game-over-open {
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+    }
+    body.game-over-open { touch-action: none; }
+
+    @media (max-width: 480px) {
+      #gameover {
+        padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom)) !important;
+      }
+      .gameover-card {
+        width: min(100%, 360px);
+        max-height: calc(100dvh - max(28px, env(safe-area-inset-top)) - max(28px, env(safe-area-inset-bottom)));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
     .hint {
       margin: 10px 2px 0;
       color: var(--text-secondary);
@@ -693,6 +749,14 @@
     @keyframes panelIn {
       from { transform: translateY(8px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes gameoverFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes gameoverCardIn {
+      from { transform: translateY(18px) scale(.92); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
     }
     .pop { animation: pop .15s ease-out; }
 
@@ -1231,18 +1295,21 @@
     <div id="board" role="grid" aria-label="10×10 게임 보드"></div>
     <div id="tray" aria-label="사용할 블록 3개"></div>
     <p id="game-hint" class="hint">드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.</p>
-
-    <section id="gameover" aria-live="polite">
-      <div id="gameover-title" class="gameover-title">게임 종료</div>
-      <div class="gameover-sub">최종 점수: <strong id="final-score">0</strong></div>
-      <div class="summary-grid">
-        <div class="summary-item"><div class="summary-label">삭제 라인</div><div id="final-lines" class="summary-value">0</div></div>
-        <div class="summary-item"><div class="summary-label">최대 콤보</div><div id="final-combo" class="summary-value">0</div></div>
-        <div class="summary-item"><div id="final-mode-label" class="summary-label">오버드라이브</div><div id="final-fever" class="summary-value">0</div></div>
-      </div>
-      <button id="restart-btn" class="full-btn" type="button">다시 시작</button>
-    </section>
   </main>
+  <section id="gameover" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="gameover-title" aria-describedby="gameover-message">
+      <div class="gameover-card">
+        <div class="gameover-kicker">RUN RESULT</div>
+        <div id="gameover-title" class="gameover-title">게임 종료</div>
+        <div id="gameover-message" class="gameover-message">놓을 수 있는 블록이 없어.</div>
+        <div class="gameover-sub">최종 점수 <strong id="final-score">0</strong></div>
+        <div class="summary-grid">
+          <div class="summary-item"><div class="summary-label">삭제 라인</div><div id="final-lines" class="summary-value">0</div></div>
+          <div class="summary-item"><div class="summary-label">최대 콤보</div><div id="final-combo" class="summary-value">0</div></div>
+          <div class="summary-item"><div id="final-mode-label" class="summary-label">오버드라이브</div><div id="final-fever" class="summary-value">0</div></div>
+        </div>
+        <button id="restart-btn" class="full-btn" type="button">같은 모드 다시 시작</button>
+      </div>
+    </section>
   <section id="draft-overlay" aria-modal="true" role="dialog" aria-labelledby="draft-modal-title">
     <div class="draft-modal">
       <header class="draft-modal-head">
@@ -1395,6 +1462,7 @@
     gameover: document.getElementById('gameover'),
     finalScore: document.getElementById('final-score'),
     gameoverTitle: document.getElementById('gameover-title'),
+    gameoverMessage: document.getElementById('gameover-message'),
     restartBtn: document.getElementById('restart-btn'),
     game: document.getElementById('game'),
     feverFill: document.getElementById('fever-fill'),
@@ -2876,11 +2944,21 @@
     els.finalCombo.textContent = `×${maxCombo}`;
     els.finalModeLabel.textContent = isMeltdownMode() ? '위기 탈출' : isDraftMode() ? '강화 선택' : '오버드라이브';
     els.finalFever.textContent = String(isMeltdownMode() ? meltdownEscapes : isDraftMode() ? draftLevel : feverCount);
-    els.gameoverTitle.textContent = reason === 'MELTDOWN' ? 'CORE MELTDOWN' : '게임 종료';
+    els.draftOverlay.classList.remove('visible');
+    document.body.classList.remove('draft-open');
+    const meltdownEnded = reason === 'MELTDOWN';
+    els.gameoverTitle.textContent = meltdownEnded ? 'CORE MELTDOWN' : '게임 종료';
+    els.gameoverMessage.textContent = meltdownEnded
+      ? '코어 온도가 한계를 넘어 런이 종료됐어.'
+      : '놓을 수 있는 블록이 없어 런이 종료됐어.';
+    els.gameover.setAttribute('aria-hidden', 'false');
     els.gameover.classList.add('visible');
-    announceEvent(reason === 'MELTDOWN' ? 'CORE MELTDOWN' : 'RUN OVER', formatNumber(score), reason === 'MELTDOWN' ? 'danger' : '');
-    flashScreen(reason === 'MELTDOWN' ? 'danger' : 'normal');
-    screenShake(reason === 'MELTDOWN' ? 'large' : 'medium');
+    document.documentElement.classList.add('game-over-open');
+    document.body.classList.add('game-over-open');
+    window.setTimeout(() => els.restartBtn.focus({ preventScroll: true }), 80);
+    announceEvent(meltdownEnded ? 'CORE MELTDOWN' : 'RUN OVER', formatNumber(score), meltdownEnded ? 'danger' : '');
+    flashScreen(meltdownEnded ? 'danger' : 'normal');
+    screenShake(meltdownEnded ? 'large' : 'medium');
   }
 
   async function loadBest() {
@@ -2956,7 +3034,11 @@
 
     rng = Math.random;
     els.gameover.classList.remove('visible');
+    els.gameover.setAttribute('aria-hidden', 'true');
+    document.documentElement.classList.remove('game-over-open');
+    document.body.classList.remove('game-over-open');
     els.gameoverTitle.textContent = '게임 종료';
+    els.gameoverMessage.textContent = '놓을 수 있는 블록이 없어.';
     els.draftOverlay.classList.remove('visible');
     document.body.classList.remove('draft-open');
     els.effectsLayer.innerHTML = '';
@@ -3002,7 +3084,7 @@
   void loadNickname();
   restart();
 
-  // Build: CORE DRAFT V5.1 · mobile compact layout hotfix
+  // Build: CORE DRAFT V5.2 · mobile compact layout hotfix
 
   </script>
 </body>
