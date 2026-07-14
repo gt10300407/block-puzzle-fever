@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V5.4: thermal optimization · burst impact redesign -->
-  <title>10×10 블록 퍼즐 · Core Overdrive V5.4</title>
+  <!-- V5.5: subtle special-core frequency and pacing tuning -->
+  <title>10×10 블록 퍼즐 · Core Overdrive V5.5</title>
   <style>
     :root {
       color-scheme: dark;
@@ -576,7 +576,7 @@
       text-align: center;
       filter: drop-shadow(0 8px 22px rgba(0,0,0,.5));
     }
-    #event-banner.visible { animation: eventBannerIn .95s cubic-bezier(.18,.85,.25,1) both; }
+    #event-banner.visible { animation: eventBannerIn .80s cubic-bezier(.18,.85,.25,1) both; }
     #event-banner .event-main {
       font-size: clamp(32px, 10vw, 54px);
       font-weight: 950;
@@ -1447,8 +1447,8 @@
   const FEVER_MULTIPLIER = 2;
   const OVERDRIVE_MAX_MOVES = 12;
   const OVERDRIVE_BANK_MULTIPLIER = 3;
-  const SPECIAL_MIN_TRAY = 5;
-  const SPECIAL_FORCE_TRAY = 14;
+  const SPECIAL_MIN_TRAY = 4;
+  const SPECIAL_FORCE_TRAY = 13;
   const DRAFT_FIRST_TRAY = 3;
   const DRAFT_INTERVAL_TRAYS = 4;
   const MELTDOWN_MAX = 100;
@@ -1872,7 +1872,7 @@
     const forceTray = Math.max(8, SPECIAL_FORCE_TRAY - beacon * 2);
     if (trayRound < 4 || traysSinceSpecial < minTray) return false;
     if (traysSinceSpecial >= forceTray) return true;
-    const chance = Math.min(.16, .055 + Math.min(score, 50000) / 900000 + beacon * .015);
+    const chance = Math.min(.165, .062 + Math.min(score, 50000) / 900000 + beacon * .015);
     return rng() < chance;
   }
 
@@ -3265,7 +3265,7 @@
   void loadNickname();
   restart();
 
-  // Build: CORE OVERDRIVE V5.4 · thermal optimized burst-impact edition
+  // Build: CORE OVERDRIVE V5.5 · subtle special-core pacing tune
 
   </script>
 </body>
