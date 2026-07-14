@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>10×10 블록 퍼즐 · Core Meltdown V4</title>
+  <title>10×10 블록 퍼즐 · Core Draft V5</title>
   <style>
     :root {
       color-scheme: dark;
@@ -130,9 +130,6 @@
       align-items: center;
       margin-bottom: 10px;
     }
-    .stats.timed-mode {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
     .stat-card {
       min-width: 0;
       padding: 8px 9px;
@@ -162,8 +159,6 @@
     #combo-wrap { opacity: .34; transition: opacity .18s ease; }
     #combo-wrap.active { opacity: 1; }
     #combo { color: var(--text-accent); }
-    #timer { color: var(--text-danger); }
-    #timer-wrap[hidden] { display: none; }
 
 
     .meltdown-panel {
@@ -819,6 +814,166 @@
       100% { opacity: 0; transform: scale(18); }
     }
 
+
+    .draft-panel {
+      display: none;
+      margin: 0 0 10px;
+      padding: 9px 10px 10px;
+      border: 1px solid rgba(213,122,255,.34);
+      border-radius: 12px;
+      background: linear-gradient(120deg, rgba(213,122,255,.09), rgba(80,231,255,.055));
+      box-shadow: inset 0 0 24px rgba(84,216,255,.025);
+    }
+    #game.draft-mode .draft-panel { display: block; }
+    .draft-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .055em;
+    }
+    .draft-title { color: #d98bff; }
+    #draft-status { color: var(--text-secondary); font-size: 11px; }
+    #draft-build {
+      display: flex;
+      gap: 5px;
+      margin-top: 7px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    #draft-build::-webkit-scrollbar { display: none; }
+    .build-chip {
+      flex: 0 0 auto;
+      padding: 4px 7px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      color: #dce5ff;
+      font-size: 9px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+    .build-empty {
+      color: var(--text-secondary);
+      font-size: 10px;
+      padding: 3px 1px;
+    }
+    body.draft-open { overflow: hidden; }
+    #draft-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding:
+        max(16px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(16px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+      background: rgba(4,7,17,.88);
+      backdrop-filter: blur(12px) saturate(1.25);
+      -webkit-backdrop-filter: blur(12px) saturate(1.25);
+      overscroll-behavior: contain;
+    }
+    #draft-overlay.visible { display: flex; animation: draftOverlayIn .18s ease-out; }
+    .draft-modal {
+      width: min(100%, 430px);
+      max-height: 100%;
+      overflow-y: auto;
+      padding: 15px;
+      border: 1px solid rgba(213,122,255,.46);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(213,122,255,.18), transparent 40%),
+        linear-gradient(145deg, rgba(20,27,51,.98), rgba(9,13,28,.98));
+      box-shadow: 0 24px 90px rgba(0,0,0,.62), 0 0 44px rgba(213,122,255,.13);
+    }
+    .draft-modal-head { text-align: center; margin-bottom: 11px; }
+    .draft-modal-kicker {
+      color: #65f5c9;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .16em;
+    }
+    .draft-modal-title {
+      margin-top: 2px;
+      font-size: 23px;
+      font-weight: 950;
+      letter-spacing: -.035em;
+    }
+    .draft-modal-sub { margin-top: 3px; color: var(--text-secondary); font-size: 11px; }
+    #draft-choices { display: grid; gap: 8px; }
+    .draft-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: 46px minmax(0,1fr) auto;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 88px;
+      padding: 10px;
+      text-align: left;
+      overflow: hidden;
+      border-color: rgba(255,255,255,.15);
+      background: rgba(255,255,255,.045);
+      touch-action: manipulation;
+    }
+    .draft-card::after {
+      content: '';
+      position: absolute;
+      inset: auto -20% -70% 20%;
+      height: 100%;
+      background: radial-gradient(circle, var(--card-glow, rgba(84,216,255,.18)), transparent 68%);
+      pointer-events: none;
+    }
+    .draft-card.common { --card-glow: rgba(84,216,255,.18); }
+    .draft-card.rare {
+      --card-glow: rgba(213,122,255,.27);
+      border-color: rgba(213,122,255,.42);
+      background: rgba(213,122,255,.075);
+    }
+    .draft-card.epic {
+      --card-glow: rgba(255,207,74,.32);
+      border-color: rgba(255,207,74,.55);
+      background: linear-gradient(120deg, rgba(255,207,74,.095), rgba(213,122,255,.07));
+      box-shadow: inset 0 0 20px rgba(255,207,74,.035);
+    }
+    .draft-card:active { transform: scale(.985); }
+    .draft-card-icon {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 13px;
+      background: rgba(0,0,0,.23);
+      font-size: 25px;
+      box-shadow: 0 0 18px var(--card-glow, rgba(84,216,255,.15));
+    }
+    .draft-card-name { display:block; font-size: 14px; font-weight: 900; }
+    .draft-card-desc { display:block; margin-top: 3px; color: #aeb8d2; font-size: 10px; line-height: 1.35; }
+    .draft-card-level { display:block; margin-top: 4px; color: #65f5c9; font-size: 9px; font-weight: 800; }
+    .draft-rarity {
+      align-self: start;
+      padding: 3px 5px;
+      border-radius: 5px;
+      color: #91ddff;
+      background: rgba(84,216,255,.08);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .07em;
+    }
+    .draft-card.rare .draft-rarity { color: #e5a6ff; background: rgba(213,122,255,.12); }
+    .draft-card.epic .draft-rarity { color: #ffda68; background: rgba(255,207,74,.12); }
+    @keyframes draftOverlayIn {
+      from { opacity: 0; transform: scale(1.015); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
     @media (max-width: 365px) {
       body { padding-left: 8px; padding-right: 8px; }
       .mode-btn { font-size: 12px; padding-left: 8px; padding-right: 8px; }
@@ -842,7 +997,7 @@
 
     <div class="mode-bar" aria-label="게임 모드">
       <button class="mode-btn active" data-mode="classic" type="button">클래식</button>
-      <button class="mode-btn" data-mode="timed" type="button">타임어택 180초</button>
+      <button class="mode-btn" data-mode="draft" type="button">CORE DRAFT</button>
       <button class="mode-btn" data-mode="meltdown" type="button">CORE MELTDOWN</button>
       <button id="sound-btn" type="button" aria-label="소리 끄기" title="소리 끄기">🔊</button>
     </div>
@@ -859,10 +1014,6 @@
       <div id="combo-wrap" class="stat-card">
         <div class="stat-label">combo</div>
         <div id="combo" class="stat-value">0</div>
-      </div>
-      <div id="timer-wrap" class="stat-card" hidden>
-        <div class="stat-label">time</div>
-        <div id="timer" class="stat-value">180</div>
       </div>
     </section>
     <section class="fever-panel" aria-label="코어 오버드라이브 상태">
@@ -882,6 +1033,14 @@
       </div>
       <div class="meltdown-track"><div id="meltdown-fill"></div></div>
       <div id="meltdown-rule" class="meltdown-rule">블록을 놓으면 가열 · 라인을 지우면 냉각</div>
+    </section>
+
+    <section id="draft-panel" class="draft-panel" aria-label="코어 드래프트 빌드">
+      <div class="draft-head">
+        <span class="draft-title">CORE DRAFT BUILD</span>
+        <strong id="draft-status">첫 선택 준비</strong>
+      </div>
+      <div id="draft-build"><span class="build-empty">아직 선택한 강화가 없어.</span></div>
     </section>
 
     <div class="nickname-row">
@@ -904,6 +1063,16 @@
       <button id="restart-btn" class="full-btn" type="button">다시 시작</button>
     </section>
   </main>
+  <section id="draft-overlay" aria-modal="true" role="dialog" aria-labelledby="draft-modal-title">
+    <div class="draft-modal">
+      <header class="draft-modal-head">
+        <div class="draft-modal-kicker">RUN UPGRADE</div>
+        <div id="draft-modal-title" class="draft-modal-title">CORE DRAFT</div>
+        <div id="draft-modal-sub" class="draft-modal-sub">강화 하나를 선택해 이번 런의 빌드를 완성해.</div>
+      </header>
+      <div id="draft-choices"></div>
+    </div>
+  </section>
   <div id="screen-flash" aria-hidden="true"></div>
   <div id="effects-layer" aria-hidden="true"></div>
   <div id="event-banner" aria-live="polite"><div class="event-main"></div><div class="event-sub"></div></div>
@@ -914,7 +1083,6 @@
 
   const SIZE = 10;
   const RESOLVE_DELAY_MS = 260;
-  const TIMED_DURATION_SECONDS = 180;
   const FEVER_MAX = 100;
   const FEVER_MOVES = 8;
   const FEVER_MULTIPLIER = 2;
@@ -922,6 +1090,8 @@
   const OVERDRIVE_BANK_MULTIPLIER = 3;
   const SPECIAL_MIN_TRAY = 5;
   const SPECIAL_FORCE_TRAY = 14;
+  const DRAFT_FIRST_TRAY = 3;
+  const DRAFT_INTERVAL_TRAYS = 4;
   const MELTDOWN_MAX = 100;
   const MELTDOWN_WARNING_MOVES = 3;
   const MELTDOWN_ESCAPE_BASE_BONUS = 500;
@@ -950,10 +1120,39 @@
     [SPECIAL_TYPES.LASER_ROW]: { icon:'↔️', name:'가로 레이저', short:'LASER H', color:'#50e7ff', glow:'rgba(80,231,255,.82)' },
     [SPECIAL_TYPES.LASER_COL]: { icon:'↕️', name:'세로 레이저', short:'LASER V', color:'#54a6ff', glow:'rgba(84,166,255,.82)' },
     [SPECIAL_TYPES.MAGNET]: { icon:'🧲', name:'자력 코어', short:'MAGNET', color:'#d57aff', glow:'rgba(213,122,255,.84)' },
-    [SPECIAL_TYPES.TIME]: { icon:'⏳', name:'시간 균열', short:'RIFT', color:'#ffd75a', glow:'rgba(255,215,90,.84)' }
+    [SPECIAL_TYPES.TIME]: { icon:'◈', name:'에너지 균열', short:'RIFT', color:'#ffd75a', glow:'rgba(255,215,90,.84)' }
   });
 
-  const PHASE = Object.freeze({ PLAYING:'PLAYING', RESOLVING:'RESOLVING', GAME_OVER:'GAME_OVER' });
+  const DRAFT_CARDS = Object.freeze([
+    { id:'placementPower', icon:'⚡', name:'셀 출력 증폭', short:'CELL', rarity:'common', max:3,
+      description: level => `일반 블록의 칸당 직접 점수 +1. 다음 단계: ${2 + level} → ${3 + level}` },
+    { id:'bankBoost', icon:'🔋', name:'뱅크 축전기', short:'BANK', rarity:'common', max:4,
+      description: () => '모든 CORE BANK 충전량이 25% 증가해.' },
+    { id:'comboBuffer', icon:'⛓️', name:'콤보 버퍼', short:'GRACE', rarity:'common', max:3,
+      description: () => '라인을 못 지워도 콤보를 유지하는 유예가 1회 늘어나.' },
+    { id:'linePower', icon:'✦', name:'라인 압축탄', short:'LINE', rarity:'rare', max:4,
+      description: () => '라인 삭제 기본 보너스가 20% 증가해.' },
+    { id:'releaseBoost', icon:'☄️', name:'방출 증폭기', short:'REL', rarity:'rare', max:4,
+      description: () => 'CORE BANK 방출 점수가 25% 증가해.' },
+    { id:'gaugeBoost', icon:'◉', name:'오버드라이브 인젝터', short:'OD+', rarity:'rare', max:3,
+      description: () => '라인 삭제의 오버드라이브 충전량이 20% 증가해.' },
+    { id:'overdriveMoves', icon:'♾️', name:'폭주 연장 회로', short:'MOVE', rarity:'rare', max:4,
+      description: () => '오버드라이브 시작 횟수와 최대 유지 횟수가 1회 증가해.' },
+    { id:'specialBeacon', icon:'📡', name:'특수 코어 비콘', short:'SP', rarity:'rare', max:3,
+      description: () => '특수 코어 등장률이 오르고 강제 등장까지 필요한 트레이가 줄어.' },
+    { id:'magnetRange', icon:'🧲', name:'자력장 확장', short:'MAG', rarity:'rare', max:2,
+      description: () => '자력 코어의 영향 반경이 1칸 넓어져.' },
+    { id:'riftPower', icon:'◇', name:'균열 촉매', short:'RIFT', rarity:'rare', max:3,
+      description: () => '에너지 균열의 충전·냉각·연장 효과가 강화돼.' },
+    { id:'blastRadius', icon:'💥', name:'폭발 매트릭스', short:'BLAST', rarity:'epic', max:1,
+      description: () => '폭발 코어가 일반 상태에서도 5×5 범위를 폭파해.' },
+    { id:'laserPrism', icon:'✚', name:'레이저 프리즘', short:'PRISM', rarity:'epic', max:1,
+      description: () => '레이저 코어가 일반 상태에서도 가로·세로를 동시에 관통해.' },
+    { id:'coreCache', icon:'🎁', name:'즉시 코어 캐시', short:'CACHE', rarity:'common', max:99, instant:true,
+      description: () => '즉시 300점과 CORE BANK 180을 획득해.' }
+  ]);
+
+  const PHASE = Object.freeze({ PLAYING:'PLAYING', RESOLVING:'RESOLVING', DRAFT:'DRAFT', GAME_OVER:'GAME_OVER' });
 
   let board = createEmptyBoard();
   let score = 0;
@@ -967,9 +1166,6 @@
   let cellEls = [];
   let previewCells = [];
   let recentCells = new Set();
-  let timerHandle = null;
-  let timerEndAt = 0;
-  let timeLeft = TIMED_DURATION_SECONDS;
   let feverGauge = 0;
   let feverActive = false;
   let feverMovesLeft = 0;
@@ -997,6 +1193,12 @@
   let meltdownEscapes = 0;
   let heatFreezeMoves = 0;
   let gameOverReason = 'NO_MOVES';
+  let draftLevel = 0;
+  let nextDraftAtTray = DRAFT_FIRST_TRAY;
+  let draftChoices = [];
+  let draftStacks = Object.create(null);
+  let draftEffects = createDraftEffects();
+
   const pendingTimeouts = new Set();
   const memoryStore = new Map();
 
@@ -1008,8 +1210,6 @@
     best: document.getElementById('best'),
     combo: document.getElementById('combo'),
     comboWrap: document.getElementById('combo-wrap'),
-    timer: document.getElementById('timer'),
-    timerWrap: document.getElementById('timer-wrap'),
     nickname: document.getElementById('nickname'),
     soundBtn: document.getElementById('sound-btn'),
     gameover: document.getElementById('gameover'),
@@ -1032,8 +1232,128 @@
     meltdownFill: document.getElementById('meltdown-fill'),
     meltdownStatus: document.getElementById('meltdown-status'),
     meltdownRule: document.getElementById('meltdown-rule'),
-    gameHint: document.getElementById('game-hint')
+    gameHint: document.getElementById('game-hint'),
+    draftPanel: document.getElementById('draft-panel'),
+    draftStatus: document.getElementById('draft-status'),
+    draftBuild: document.getElementById('draft-build'),
+    draftOverlay: document.getElementById('draft-overlay'),
+    draftChoices: document.getElementById('draft-choices'),
+    draftModalSub: document.getElementById('draft-modal-sub')
   };
+
+  function createDraftEffects() {
+    return {
+      placementPower:0, bankBoost:0, comboBuffer:0, linePower:0,
+      releaseBoost:0, gaugeBoost:0, overdriveMoves:0, specialBeacon:0,
+      magnetRange:0, riftPower:0, blastRadius:0, laserPrism:0
+    };
+  }
+
+  function isDraftMode() { return mode === 'draft'; }
+
+  function draftCardById(id) { return DRAFT_CARDS.find(card => card.id === id); }
+
+  function draftRarityWeight(card) {
+    if (card.rarity === 'epic') return draftLevel < 2 ? 4 : 8 + draftLevel * 1.5;
+    if (card.rarity === 'rare') return 27 + draftLevel * 1.8;
+    return 58;
+  }
+
+  function generateDraftChoices() {
+    const pool = DRAFT_CARDS.filter(card => (draftStacks[card.id] || 0) < card.max);
+    const choices = [];
+    while (choices.length < 3 && pool.length > 0) {
+      const weights = pool.map(draftRarityWeight);
+      const picked = weightedPick(pool, weights);
+      choices.push(picked);
+      pool.splice(pool.indexOf(picked), 1);
+    }
+    return choices;
+  }
+
+  function updateDraftUI() {
+    const active = isDraftMode();
+    els.draftPanel.hidden = !active;
+    els.game.classList.toggle('draft-mode', active);
+    if (!active) return;
+    const remaining = Math.max(0, nextDraftAtTray - trayRound);
+    els.draftStatus.textContent = phase === PHASE.DRAFT
+      ? `DRAFT ${draftLevel + 1} · 선택 중`
+      : `LV ${draftLevel} · ${remaining === 0 ? '다음 트레이 전 선택' : `${remaining} 트레이 후 선택`}`;
+    const selectedCards = DRAFT_CARDS.filter(card => (draftStacks[card.id] || 0) > 0 && !card.instant);
+    els.draftBuild.innerHTML = '';
+    if (selectedCards.length === 0) {
+      const empty = document.createElement('span');
+      empty.className = 'build-empty';
+      empty.textContent = '아직 선택한 강화가 없어.';
+      els.draftBuild.appendChild(empty);
+      return;
+    }
+    for (const card of selectedCards) {
+      const chip = document.createElement('span');
+      chip.className = 'build-chip';
+      chip.textContent = `${card.short} ×${draftStacks[card.id]}`;
+      els.draftBuild.appendChild(chip);
+    }
+  }
+
+  function renderDraftChoices() {
+    els.draftChoices.innerHTML = '';
+    draftChoices.forEach(card => {
+      const level = draftStacks[card.id] || 0;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `draft-card ${card.rarity}`;
+      button.style.setProperty('--card-glow', card.rarity === 'epic' ? 'rgba(255,207,74,.32)' : card.rarity === 'rare' ? 'rgba(213,122,255,.27)' : 'rgba(84,216,255,.18)');
+      const rarityText = card.rarity === 'epic' ? 'EPIC' : card.rarity === 'rare' ? 'RARE' : 'COMMON';
+      button.innerHTML = `<span class="draft-card-icon">${card.icon}</span><span><span class="draft-card-name">${card.name}</span><span class="draft-card-desc">${card.description(level)}</span><span class="draft-card-level">${card.instant ? '즉시 획득' : `LV ${level} → ${level + 1}`}</span></span><span class="draft-rarity">${rarityText}</span>`;
+      button.addEventListener('click', () => chooseDraftCard(card.id), { once:true });
+      els.draftChoices.appendChild(button);
+    });
+  }
+
+  function openDraft() {
+    if (!isDraftMode() || gameOver || phase === PHASE.DRAFT) return;
+    cancelDragInteraction(true);
+    selected = -1;
+    clearPreview();
+    renderTray();
+    phase = PHASE.DRAFT;
+    draftChoices = generateDraftChoices();
+    els.draftModalSub.textContent = `DRAFT ${draftLevel + 1} · 3개 중 하나를 선택해 이번 런에 누적해.`;
+    renderDraftChoices();
+    els.draftOverlay.classList.add('visible');
+    document.body.classList.add('draft-open');
+    burstParticles(14, ['#d57aff','#57f3ff','#ffffff'], 115);
+    beepSequence([420,560,760], .07);
+    updateDraftUI();
+  }
+
+  function chooseDraftCard(cardId) {
+    if (phase !== PHASE.DRAFT || gameOver) return;
+    const card = draftCardById(cardId);
+    if (!card || !draftChoices.some(choice => choice.id === cardId)) return;
+    draftStacks[cardId] = (draftStacks[cardId] || 0) + 1;
+    if (card.instant) {
+      addCoreBank(180);
+      addScorePoints(300, 'release');
+    } else if (Object.prototype.hasOwnProperty.call(draftEffects, cardId)) {
+      draftEffects[cardId]++;
+    }
+    draftLevel++;
+    nextDraftAtTray = trayRound + DRAFT_INTERVAL_TRAYS;
+    draftChoices = [];
+    els.draftOverlay.classList.remove('visible');
+    document.body.classList.remove('draft-open');
+    phase = PHASE.PLAYING;
+    announceEvent('MODULE INSTALLED', `${card.name} · ${card.instant ? '획득 완료' : `LV ${draftStacks[cardId]}`}`, card.rarity === 'epic' ? 'fever' : '');
+    flashScreen(card.rarity === 'epic' ? 'fever' : 'normal');
+    createShockwave(card.rarity === 'epic' ? '#ffcf4a' : '#65f5c9', card.rarity === 'epic' ? .78 : .56);
+    burstParticles(card.rarity === 'epic' ? 38 : 22, [card.rarity === 'epic' ? '#ffcf4a' : '#65f5c9','#57f3ff','#ffffff'], 175);
+    beepSequence(card.rarity === 'epic' ? [460,680,940,1220] : [440,620,840], .07);
+    updateDraftUI();
+    initTray();
+  }
 
   function createEmptyBoard() {
     return Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
@@ -1184,9 +1504,12 @@
   }
 
   function shouldSpawnSpecial() {
-    if (trayRound < 4 || traysSinceSpecial < SPECIAL_MIN_TRAY) return false;
-    if (traysSinceSpecial >= SPECIAL_FORCE_TRAY) return true;
-    const chance = Math.min(.10, .055 + Math.min(score, 50000) / 900000);
+    const beacon = isDraftMode() ? draftEffects.specialBeacon : 0;
+    const minTray = Math.max(2, SPECIAL_MIN_TRAY - beacon);
+    const forceTray = Math.max(8, SPECIAL_FORCE_TRAY - beacon * 2);
+    if (trayRound < 4 || traysSinceSpecial < minTray) return false;
+    if (traysSinceSpecial >= forceTray) return true;
+    const chance = Math.min(.16, .055 + Math.min(score, 50000) / 900000 + beacon * .015);
     return rng() < chance;
   }
 
@@ -1198,7 +1521,7 @@
       SPECIAL_TYPES.MAGNET,
       SPECIAL_TYPES.TIME
     ];
-    const weights = mode === 'timed' ? [34,14,14,20,18] : [36,15,15,22,12];
+    const weights = isDraftMode() ? [34,14,14,20,18] : [36,15,15,22,12];
     let picked = weightedPick(types, weights);
     const lastFamily = lastSpecialType.startsWith('laser') ? 'laser' : lastSpecialType;
     let guard = 0;
@@ -1226,6 +1549,7 @@
     }
     selected = -1;
     renderTray();
+    updateDraftUI();
     if (specialSpawned) {
       const meta = SPECIAL_META[specialType];
       announceEvent('SPECIAL CORE', meta.name, specialType === SPECIAL_TYPES.EXPLOSION ? 'danger' : 'fever');
@@ -1390,8 +1714,9 @@
 
   function addCoreBank(baseAmount) {
     if (baseAmount <= 0) return 0;
-    const multiplier = feverActive ? OVERDRIVE_BANK_MULTIPLIER : 1;
-    const gained = Math.max(0, Math.round(baseAmount * multiplier));
+    const overdriveMultiplier = feverActive ? OVERDRIVE_BANK_MULTIPLIER : 1;
+    const draftMultiplier = isDraftMode() ? 1 + draftEffects.bankBoost * .25 : 1;
+    const gained = Math.max(0, Math.round(baseAmount * overdriveMultiplier * draftMultiplier));
     coreBank += gained;
     updateFeverUI();
     return gained;
@@ -1399,7 +1724,8 @@
 
   function releaseCoreBank(lineCount) {
     if (lineCount <= 0 || coreBank <= 0) return 0;
-    const released = Math.round(coreBank * lineReleaseMultiplier(lineCount) * comboMultiplier(combo));
+    const draftMultiplier = isDraftMode() ? 1 + draftEffects.releaseBoost * .25 : 1;
+    const released = Math.round(coreBank * lineReleaseMultiplier(lineCount) * comboMultiplier(combo) * draftMultiplier);
     coreBank = 0;
     updateFeverUI();
     return released;
@@ -1443,7 +1769,7 @@
   }
 
   function updateFeverUI() {
-    const percent = feverActive ? Math.max(0, Math.round(feverMovesLeft / OVERDRIVE_MAX_MOVES * 100)) : feverGauge;
+    const percent = feverActive ? Math.max(0, Math.round(feverMovesLeft / getOverdriveMaxMoves() * 100)) : feverGauge;
     els.feverFill.style.width = `${Math.min(100, percent)}%`;
     els.game.classList.toggle('fever-active', feverActive);
     els.game.classList.toggle('core-ready', coreReady && !feverActive);
@@ -1457,6 +1783,14 @@
 
   function isMeltdownMode() {
     return mode === 'meltdown';
+  }
+
+  function getOverdriveStartMoves() {
+    return FEVER_MOVES + (isDraftMode() ? draftEffects.overdriveMoves : 0);
+  }
+
+  function getOverdriveMaxMoves() {
+    return OVERDRIVE_MAX_MOVES + (isDraftMode() ? draftEffects.overdriveMoves : 0);
   }
 
   function updateMeltdownUI() {
@@ -1487,7 +1821,7 @@
   }
 
   function meltdownHeatForTurn(placedCount, specialType = '', clearedCount = 0, movedCount = 0) {
-    if (specialType === SPECIAL_TYPES.TIME) return -12;
+    if (specialType === SPECIAL_TYPES.TIME) return -(12 + (isDraftMode() ? draftEffects.riftPower * 4 : 0));
     if (specialType === SPECIAL_TYPES.LASER_ROW || specialType === SPECIAL_TYPES.LASER_COL) {
       return -(8 + Math.min(10, clearedCount));
     }
@@ -1523,7 +1857,7 @@
     let heatDelta = meltdownHeatForTurn(placedCount, specialType, clearedCount, movedCount);
 
     if (specialType === SPECIAL_TYPES.TIME) {
-      heatFreezeMoves = Math.max(heatFreezeMoves, 3);
+      heatFreezeMoves = Math.max(heatFreezeMoves, 3 + (isDraftMode() ? draftEffects.riftPower : 0));
     } else if (heatDelta > 0 && heatFreezeMoves > 0) {
       heatDelta = 0;
       heatFreezeMoves--;
@@ -1568,7 +1902,7 @@
     if (feverActive) return;
     feverActive = true;
     coreReady = false;
-    feverMovesLeft = FEVER_MOVES;
+    feverMovesLeft = getOverdriveStartMoves();
     feverGauge = FEVER_MAX;
     feverCount++;
     overdriveScoreStart = score;
@@ -1586,7 +1920,8 @@
 
   function addFever(amount) {
     if (feverActive || coreReady || amount <= 0) return;
-    feverGauge = Math.min(FEVER_MAX, feverGauge + amount);
+    const boostedAmount = amount * (isDraftMode() ? 1 + draftEffects.gaugeBoost * .20 : 1);
+    feverGauge = Math.min(FEVER_MAX, feverGauge + boostedAmount);
     if (feverGauge >= FEVER_MAX) {
       feverGauge = FEVER_MAX;
       coreReady = true;
@@ -1599,7 +1934,7 @@
 
   function finishFeverMove(startedInFever, lineCount = 0) {
     if (!startedInFever || !feverActive) return;
-    if (lineCount > 0) feverMovesLeft = Math.min(OVERDRIVE_MAX_MOVES, feverMovesLeft + 1);
+    if (lineCount > 0) feverMovesLeft = Math.min(getOverdriveMaxMoves(), feverMovesLeft + 1);
     feverMovesLeft = Math.max(0, feverMovesLeft - 1);
     if (feverMovesLeft <= 0) {
       const gained = Math.max(0, score - overdriveScoreStart);
@@ -1636,18 +1971,20 @@
 
     const activationBonus = pendingOverdriveBonus;
     pendingOverdriveBonus = 0;
-    const directPoints = placedCount * 2 + activationBonus;
+    const perCell = 2 + (isDraftMode() ? draftEffects.placementPower : 0);
+    const directPoints = placedCount * perCell + activationBonus;
     const bankGained = addCoreBank(placedCount * 10);
     let release = 0;
     let lineBonus = 0;
 
     if (lineCount > 0) {
       combo++;
-      comboGrace = 2;
+      comboGrace = 2 + (isDraftMode() ? draftEffects.comboBuffer : 0);
       maxCombo = Math.max(maxCombo, combo);
       totalLines += lineCount;
       release = releaseCoreBank(lineCount);
-      lineBonus = Math.round(lineBaseBonus(lineCount) * comboMultiplier(combo));
+      const lineDraftMultiplier = isDraftMode() ? 1 + draftEffects.linePower * .20 : 1;
+      lineBonus = Math.round(lineBaseBonus(lineCount) * comboMultiplier(combo) * lineDraftMultiplier);
       addFever(Math.min(100, (lineCount === 1 ? 18 : lineCount === 2 ? 42 : lineCount === 3 ? 75 : 100) + (combo >= 4 ? 8 : 0)));
       retriggerClass(els.combo, 'combo-pop');
     } else if (!feverActive) {
@@ -1677,7 +2014,7 @@
       bank = movedCount * 4;
     } else if (type === SPECIAL_TYPES.TIME) {
       base = 25;
-      bank = mode === 'timed' ? 80 : isMeltdownMode() ? 100 : 120;
+      bank = (isMeltdownMode() ? 100 : 120) * (1 + (isDraftMode() ? draftEffects.riftPower * .35 : 0));
     }
     addCoreBank(bank);
     return addScorePoints(base, type === SPECIAL_TYPES.EXPLOSION ? 'bomb' : feverActive ? 'overdrive' : 'release');
@@ -1735,35 +2072,14 @@
     els.comboWrap.classList.toggle('active', combo > 0);
   }
 
-  function updateTimerDisplay() {
-    const timed = mode === 'timed';
-    els.timerWrap.hidden = !timed;
-    els.stats.classList.toggle('timed-mode', timed);
-    if (timed) els.timer.textContent = String(timeLeft);
+  function updateModeUI() {
     els.gameHint.textContent = isMeltdownMode()
       ? '드래그 또는 터치 배치 · 과열되기 전에 라인을 지워 코어를 냉각해.'
-      : '드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.';
+      : isDraftMode()
+        ? '드래그 또는 터치 배치 · 트레이를 돌파하고 강화 모듈을 누적해.'
+        : '드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.';
     updateMeltdownUI();
-  }
-
-  function startTimer() {
-    window.clearInterval(timerHandle);
-    timeLeft = TIMED_DURATION_SECONDS;
-    timerEndAt = performance.now() + TIMED_DURATION_SECONDS * 1000;
-    updateTimerDisplay();
-
-    const tick = () => {
-      if (gameOver || mode !== 'timed') return;
-      const next = Math.max(0, Math.ceil((timerEndAt - performance.now()) / 1000));
-      if (next !== timeLeft) {
-        timeLeft = next;
-        updateTimerDisplay();
-      }
-      if (timeLeft <= 0) triggerGameOver();
-    };
-
-    timerHandle = window.setInterval(tick, 200);
-    tick();
+    updateDraftUI();
   }
 
   function renderBoard() {
@@ -1819,18 +2135,19 @@
       if (!seen.has(key)) { seen.add(key); cells.push([r,c]); }
     };
     if (piece.specialType === SPECIAL_TYPES.EXPLOSION) {
-      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) push(row + dr, col + dc);
-      if (feverActive) {
+      const radius = isDraftMode() && draftEffects.blastRadius > 0 ? 2 : 1;
+      for (let dr = -radius; dr <= radius; dr++) for (let dc = -radius; dc <= radius; dc++) push(row + dr, col + dc);
+      if (feverActive && radius < 2) {
         push(row - 2, col); push(row + 2, col); push(row, col - 2); push(row, col + 2);
       }
     } else if (piece.specialType === SPECIAL_TYPES.LASER_ROW) {
       for (let c = 0; c < SIZE; c++) push(row, c);
-      if (feverActive) for (let r = 0; r < SIZE; r++) push(r, col);
+      if (feverActive || (isDraftMode() && draftEffects.laserPrism > 0)) for (let r = 0; r < SIZE; r++) push(r, col);
     } else if (piece.specialType === SPECIAL_TYPES.LASER_COL) {
       for (let r = 0; r < SIZE; r++) push(r, col);
-      if (feverActive) for (let c = 0; c < SIZE; c++) push(row, c);
+      if (feverActive || (isDraftMode() && draftEffects.laserPrism > 0)) for (let c = 0; c < SIZE; c++) push(row, c);
     } else if (piece.specialType === SPECIAL_TYPES.MAGNET) {
-      const radius = feverActive ? 3 : 2;
+      const radius = (feverActive ? 3 : 2) + (isDraftMode() ? draftEffects.magnetRange : 0);
       for (let r = row - radius; r <= row + radius; r++) {
         for (let c = col - radius; c <= col + radius; c++) push(r, c);
       }
@@ -1880,8 +2197,10 @@
     if (gameOver) return;
     finishFeverMove(startedInFever, lineCount);
     phase = PHASE.PLAYING;
-    if (tray.every(piece => piece === null)) initTray();
-    else {
+    if (tray.every(piece => piece === null)) {
+      if (isDraftMode() && trayRound >= nextDraftAtTray) openDraft();
+      else initTray();
+    } else {
       renderTray();
       checkGameOver();
     }
@@ -1970,21 +2289,18 @@
     consumeSelectedPiece();
 
     if (piece.specialType === SPECIAL_TYPES.TIME) {
-      if (mode === 'timed') {
-        const bonusSeconds = feverActive ? 18 : 12;
-        timerEndAt += bonusSeconds * 1000;
-        timeLeft += bonusSeconds;
-        updateTimerDisplay();
-        announceEvent('TIME RIFT', `+${bonusSeconds} SEC`, 'fever');
-      } else if (isMeltdownMode()) {
-        if (feverActive) feverMovesLeft = Math.min(OVERDRIVE_MAX_MOVES, feverMovesLeft + 1);
-        announceEvent('THERMAL RIFT', `온도 -12 · 가열 3회 정지${feverActive ? ' · OVERDRIVE +1' : ''}`, 'fever');
+      const riftLevel = isDraftMode() ? draftEffects.riftPower : 0;
+      if (isMeltdownMode()) {
+        if (feverActive) feverMovesLeft = Math.min(getOverdriveMaxMoves(), feverMovesLeft + 1);
+        announceEvent('THERMAL RIFT', `온도 -${12 + riftLevel * 4} · 가열 ${3 + riftLevel}회 정지${feverActive ? ' · OVERDRIVE +1' : ''}`, 'fever');
       } else if (feverActive) {
-        feverMovesLeft = Math.min(OVERDRIVE_MAX_MOVES, feverMovesLeft + 2);
-        announceEvent('RIFT EXTEND', 'OVERDRIVE +2회', 'fever');
+        const extension = 2 + riftLevel;
+        feverMovesLeft = Math.min(getOverdriveMaxMoves(), feverMovesLeft + extension);
+        announceEvent('RIFT EXTEND', `OVERDRIVE +${extension}회`, 'fever');
       } else {
-        addFever(25);
-        announceEvent('TIME RIFT', 'CORE +25% · BANK 충전', 'fever');
+        const charge = 25 + riftLevel * 10;
+        addFever(charge);
+        announceEvent('ENERGY RIFT', `CORE +${charge}% · BANK 충전`, 'fever');
       }
       scoreSpecial(piece);
       if (resolveMeltdownTurn({ specialType: piece.specialType })) return;
@@ -2355,7 +2671,7 @@
   }
 
   function setMode(nextMode) {
-    if (!['classic', 'timed', 'meltdown'].includes(nextMode)) return;
+    if (!['classic', 'draft', 'meltdown'].includes(nextMode)) return;
     mode = nextMode;
     document.querySelectorAll('.mode-btn').forEach(button => {
       button.classList.toggle('active', button.dataset.mode === mode);
@@ -2370,7 +2686,6 @@
     gameOver = true;
     phase = PHASE.GAME_OVER;
     selected = -1;
-    window.clearInterval(timerHandle);
     cancelPendingTimeouts();
     clearPreview();
     renderTray();
@@ -2379,8 +2694,8 @@
     els.finalScore.textContent = formatNumber(score);
     els.finalLines.textContent = formatNumber(totalLines);
     els.finalCombo.textContent = `×${maxCombo}`;
-    els.finalModeLabel.textContent = isMeltdownMode() ? '위기 탈출' : '오버드라이브';
-    els.finalFever.textContent = String(isMeltdownMode() ? meltdownEscapes : feverCount);
+    els.finalModeLabel.textContent = isMeltdownMode() ? '위기 탈출' : isDraftMode() ? '강화 선택' : '오버드라이브';
+    els.finalFever.textContent = String(isMeltdownMode() ? meltdownEscapes : isDraftMode() ? draftLevel : feverCount);
     els.gameoverTitle.textContent = reason === 'MELTDOWN' ? 'CORE MELTDOWN' : '게임 종료';
     els.gameover.classList.add('visible');
     announceEvent(reason === 'MELTDOWN' ? 'CORE MELTDOWN' : 'RUN OVER', formatNumber(score), reason === 'MELTDOWN' ? 'danger' : '');
@@ -2419,7 +2734,6 @@
     cancelDragInteraction(true);
     gameSessionId++;
     cancelPendingTimeouts();
-    window.clearInterval(timerHandle);
 
     board = createEmptyBoard();
     score = 0;
@@ -2448,6 +2762,11 @@
     meltdownEscapes = 0;
     heatFreezeMoves = 0;
     gameOverReason = 'NO_MOVES';
+    draftLevel = 0;
+    nextDraftAtTray = DRAFT_FIRST_TRAY;
+    draftChoices = [];
+    draftStacks = Object.create(null);
+    draftEffects = createDraftEffects();
     selected = -1;
     gameOver = false;
     phase = PHASE.PLAYING;
@@ -2458,8 +2777,10 @@
     rng = Math.random;
     els.gameover.classList.remove('visible');
     els.gameoverTitle.textContent = '게임 종료';
+    els.draftOverlay.classList.remove('visible');
+    document.body.classList.remove('draft-open');
     els.effectsLayer.innerHTML = '';
-    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning');
+    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning', 'draft-mode');
     document.body.classList.remove('overdrive-active');
     els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid', 'combo-surge', 'combo-breaker', 'combo-critical');
     updateFeverUI();
@@ -2467,11 +2788,9 @@
 
     renderBoard();
     updateStats();
-    updateTimerDisplay();
+    updateModeUI();
     void loadBest();
     initTray();
-
-    if (mode === 'timed') startTimer();
   }
 
   document.querySelectorAll('.mode-btn').forEach(button => {
@@ -2491,14 +2810,6 @@
   document.addEventListener('touchmove', event => {
     if (dragState?.dragging) event.preventDefault();
   }, { passive: false });
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && mode === 'timed' && !gameOver) {
-      const next = Math.max(0, Math.ceil((timerEndAt - performance.now()) / 1000));
-      timeLeft = next;
-      updateTimerDisplay();
-      if (timeLeft <= 0) triggerGameOver();
-    }
-  });
 
   const storedSound = safeLocalGet('block-game-sound');
   if (storedSound === '0') {
@@ -2511,7 +2822,7 @@
   void loadNickname();
   restart();
 
-  // Build: CORE MELTDOWN V4 · daily mode removed · special item cadence slightly increased
+  // Build: CORE DRAFT V5 · cumulative roguelike upgrade mode
 
   </script>
 </body>
