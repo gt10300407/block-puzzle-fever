@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>10×10 블록 퍼즐</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #080b16;
+      --surface-1: #11172a;
+      --surface-2: #1a233b;
+      --surface-3: #252f4d;
+      --border: rgba(255,255,255,.13);
+      --border-accent: #54d8ff;
+      --text-primary: #f7f9ff;
+      --text-secondary: #909bb8;
+      --text-accent: #65f5c9;
+      --text-danger: #ff6680;
+      --bg-danger: rgba(255,77,104,.38);
+      --board-gap: 2px;
+      --board-padding: 6px;
+      --fever-1: #57f3ff;
+      --fever-2: #bd5cff;
+      --fever-3: #ffcf4a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      padding:
+        max(14px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(18px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+      background:
+        radial-gradient(circle at 50% -10%, rgba(65,109,255,.22), transparent 36%),
+        var(--background);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    button, input { font: inherit; }
+    button {
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,.045);
+      color: var(--text-primary);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button:active { transform: scale(.97); }
+    button:disabled { opacity: .45; cursor: default; }
+    input {
+      min-height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface-1);
+      color: var(--text-primary);
+      padding: 7px 9px;
+      outline: none;
+    }
+    input:focus { border-color: var(--border-accent); }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    #game {
+      position: relative;
+      width: min(100%, 430px);
+      margin: 0 auto;
+      isolation: isolate;
+    }
+    #game.fever-active {
+      filter: saturate(1.12);
+    }
+
+    .mode-bar {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .mode-btn {
+      flex: 1 1 auto;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .mode-btn.active {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 1px rgba(84,216,255,.12), 0 0 16px rgba(84,216,255,.10);
+      background: rgba(84,216,255,.08);
+    }
+    #sound-btn {
+      flex: 0 0 44px;
+      padding: 0;
+      font-size: 20px;
+      line-height: 1;
+      aria-label: "소리 켜기 또는 끄기";
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .stat-card {
+      min-width: 0;
+      padding: 8px 9px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(17,23,42,.72);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .stat-value {
+      margin-top: 1px;
+      font-size: clamp(20px, 6vw, 26px);
+      font-weight: 700;
+      line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #combo-wrap { opacity: .34; transition: opacity .18s ease; }
+    #combo-wrap.active { opacity: 1; }
+    #combo { color: var(--text-accent); }
+    #timer { color: var(--text-danger); }
+    #timer-wrap[hidden] { display: none; }
+
+    .nickname-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .nickname-row label { font-size: 12px; color: var(--text-secondary); }
+    #nickname { width: 112px; }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: var(--board-gap);
+      width: 100%;
+      padding: var(--board-padding);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(17,23,42,.96);
+      box-shadow: 0 16px 50px rgba(0,0,0,.28);
+      touch-action: manipulation;
+      position: relative;
+      overflow: hidden;
+      transition: box-shadow .25s ease, border-color .25s ease, filter .25s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .board-cell {
+      aspect-ratio: 1;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: clamp(3px, 1vw, 5px);
+      background: var(--surface-2);
+      transition: background-color .08s linear, transform .10s ease, filter .10s ease;
+      touch-action: manipulation;
+    }
+    .board-cell.invalid {
+      animation: invalidPulse .18s ease-out;
+    }
+    .board-cell.clear-flash {
+      animation: clearCell .30s ease-out both;
+      z-index: 2;
+    }
+    #game.fever-active #board {
+      border-color: rgba(120,245,255,.85);
+      box-shadow:
+        0 0 0 2px rgba(189,92,255,.18),
+        0 0 26px rgba(87,243,255,.34),
+        0 0 54px rgba(189,92,255,.20),
+        0 18px 54px rgba(0,0,0,.38);
+      animation: feverBoardPulse 1.05s ease-in-out infinite alternate;
+    }
+    #game.fever-active .board-cell {
+      border-color: rgba(255,255,255,.20);
+    }
+
+    #tray {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      width: 100%;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+    .tray-slot {
+      min-width: 0;
+      min-height: clamp(76px, 23vw, 96px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 7px;
+      background: rgba(17,23,42,.72);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease, opacity .12s ease;
+    }
+    .tray-slot:active { transform: scale(.97); }
+    .tray-slot.selected {
+      transform: translateY(-3px) scale(1.025);
+      border-color: var(--border-accent);
+      background: rgba(84,216,255,.08);
+      box-shadow: 0 0 18px rgba(84,216,255,.13);
+    }
+    .tray-slot.empty {
+      cursor: default;
+      opacity: .28;
+    }
+    .piece-grid { display: grid; gap: 3px; }
+    .piece-square {
+      width: clamp(14px, 4.4vw, 18px);
+      height: clamp(14px, 4.4vw, 18px);
+      border-radius: 4px;
+    }
+    .bomb-icon { font-size: clamp(30px, 9vw, 38px); line-height: 1; }
+    .tray-slot.bomb-slot {
+      border-color: rgba(255,94,94,.85);
+      background: radial-gradient(circle, rgba(255,90,70,.22), rgba(17,23,42,.78) 66%);
+      animation: bombSlotPulse .9s ease-in-out infinite alternate;
+      box-shadow: 0 0 24px rgba(255,72,72,.22);
+    }
+
+    .fever-panel {
+      position: relative;
+      margin: 0 0 10px;
+      padding: 9px 10px 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(17,23,42,.78);
+      overflow: hidden;
+    }
+    .fever-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+    .fever-title {
+      background: linear-gradient(90deg, var(--fever-1), var(--fever-2), var(--fever-3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    #fever-status { color: var(--text-secondary); font-size: 11px; }
+    .fever-track {
+      height: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      background: rgba(0,0,0,.28);
+      overflow: hidden;
+    }
+    #fever-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--fever-1), var(--fever-2), var(--fever-3));
+      box-shadow: 0 0 14px rgba(87,243,255,.42);
+      transition: width .28s cubic-bezier(.2,.8,.2,1);
+    }
+    .fever-rule {
+      margin-top: 5px;
+      color: var(--text-secondary);
+      font-size: 10px;
+      text-align: center;
+    }
+    #game.fever-active .fever-panel {
+      border-color: rgba(87,243,255,.65);
+      background: linear-gradient(120deg, rgba(87,243,255,.10), rgba(189,92,255,.12), rgba(255,207,74,.08));
+      animation: feverPanelGlow .8s ease-in-out infinite alternate;
+    }
+    #game.fever-active #fever-status { color: #fff3a8; }
+
+    #event-banner {
+      position: fixed;
+      left: 50%;
+      top: 43%;
+      z-index: 1002;
+      width: min(88vw, 390px);
+      transform: translate(-50%, -50%) scale(.72);
+      opacity: 0;
+      pointer-events: none;
+      text-align: center;
+      filter: drop-shadow(0 8px 22px rgba(0,0,0,.5));
+    }
+    #event-banner.visible { animation: eventBannerIn .95s cubic-bezier(.18,.85,.25,1) both; }
+    #event-banner .event-main {
+      font-size: clamp(32px, 10vw, 54px);
+      font-weight: 950;
+      line-height: .95;
+      letter-spacing: -.05em;
+      text-transform: uppercase;
+      color: white;
+      text-shadow: 0 0 8px rgba(255,255,255,.78), 0 0 28px rgba(84,216,255,.68);
+    }
+    #event-banner .event-sub {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff3a8;
+      letter-spacing: .06em;
+    }
+    #event-banner.danger .event-main { text-shadow: 0 0 8px #fff, 0 0 30px rgba(255,63,63,.85); }
+    #event-banner.fever .event-main {
+      background: linear-gradient(90deg, var(--fever-1), #fff, var(--fever-2), var(--fever-3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: none;
+      filter: drop-shadow(0 0 18px rgba(87,243,255,.62));
+    }
+    #effects-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1001;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    #screen-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      background: white;
+      mix-blend-mode: screen;
+    }
+    #screen-flash.flash { animation: screenFlash .32s ease-out; }
+    #screen-flash.flash-danger { animation: screenFlashDanger .42s ease-out; }
+    #screen-flash.flash-fever { animation: screenFlashFever .58s ease-out; }
+    .particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      opacity: 0;
+      animation: particleBurst var(--duration, .7s) cubic-bezier(.12,.72,.22,1) forwards;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .floating-score {
+      position: absolute;
+      left: 50%;
+      top: 45%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(24px, 7.5vw, 38px);
+      font-weight: 950;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,.7), 0 0 16px rgba(84,216,255,.9);
+      animation: floatingScore .9s ease-out forwards;
+      white-space: nowrap;
+    }
+    .floating-score.fever { color: #fff3a8; text-shadow: 0 0 18px rgba(255,208,74,.9); }
+    .floating-score.bomb { color: #ffb1a5; text-shadow: 0 0 20px rgba(255,80,60,.95); }
+    .score-pop { animation: scorePop .28s ease-out; }
+    .combo-pop { animation: comboPop .36s ease-out; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin: 10px 0 12px;
+    }
+    .summary-item {
+      padding: 8px 5px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: rgba(255,255,255,.035);
+      text-align: center;
+    }
+    .summary-label { font-size: 10px; color: var(--text-secondary); }
+    .summary-value { margin-top: 2px; font-size: 18px; font-weight: 800; }
+
+    #gameover {
+      display: none;
+      margin-top: 14px;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface-1);
+      box-shadow: 0 16px 42px rgba(0,0,0,.35);
+    }
+    #gameover.visible { display: block; animation: panelIn .2s ease-out; }
+    .gameover-title { font-size: 18px; font-weight: 750; margin-bottom: 4px; }
+    .gameover-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+    #daily-submit, #leaderboard-wrap { display: none; }
+    #daily-submit.visible, #leaderboard-wrap.visible { display: block; }
+    #leaderboard-wrap {
+      margin-bottom: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 9px;
+    }
+    #leaderboard { margin-top: 6px; }
+    .leader-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      padding: 4px 0;
+    }
+    .full-btn { width: 100%; }
+    .hint {
+      margin: 10px 2px 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(.58); opacity: .35; filter: brightness(1.8); }
+      100% { transform: scale(1); opacity: 1; filter: brightness(1); }
+    }
+    @keyframes invalidPulse {
+      0%,100% { transform: translateX(0); }
+      35% { transform: translateX(-3px); }
+      70% { transform: translateX(3px); }
+    }
+    @keyframes panelIn {
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .pop { animation: pop .15s ease-out; }
+
+    @keyframes clearCell {
+      0% { transform: scale(1); filter: brightness(1); }
+      45% { transform: scale(1.18); filter: brightness(3); background: white; }
+      100% { transform: scale(.15); opacity: 0; filter: brightness(4); }
+    }
+    @keyframes shakeSmall {
+      0%,100% { transform: translate(0,0) rotate(0); }
+      25% { transform: translate(-2px,1px) rotate(-.15deg); }
+      50% { transform: translate(2px,-1px) rotate(.15deg); }
+      75% { transform: translate(-1px,-1px); }
+    }
+    @keyframes shakeMedium {
+      0%,100% { transform: translate(0,0) rotate(0); }
+      15% { transform: translate(-5px,2px) rotate(-.35deg); }
+      35% { transform: translate(5px,-3px) rotate(.35deg); }
+      55% { transform: translate(-4px,-2px); }
+      75% { transform: translate(3px,2px); }
+    }
+    @keyframes shakeLarge {
+      0%,100% { transform: translate(0,0) rotate(0); }
+      10% { transform: translate(-8px,4px) rotate(-.6deg); }
+      25% { transform: translate(7px,-5px) rotate(.5deg); }
+      40% { transform: translate(-6px,-4px) rotate(-.35deg); }
+      55% { transform: translate(6px,4px) rotate(.35deg); }
+      70% { transform: translate(-4px,2px); }
+      85% { transform: translate(3px,-2px); }
+    }
+    #game.shake-small { animation: shakeSmall .18s linear; }
+    #game.shake-medium { animation: shakeMedium .30s linear; }
+    #game.shake-large { animation: shakeLarge .42s linear; }
+    @keyframes feverBoardPulse {
+      from { filter: brightness(1) saturate(1.05); }
+      to { filter: brightness(1.14) saturate(1.35); }
+    }
+    @keyframes feverPanelGlow {
+      from { box-shadow: 0 0 8px rgba(87,243,255,.15); }
+      to { box-shadow: 0 0 22px rgba(189,92,255,.30); }
+    }
+    @keyframes bombSlotPulse {
+      from { transform: scale(1); filter: brightness(1); }
+      to { transform: scale(1.035); filter: brightness(1.18); }
+    }
+    @keyframes eventBannerIn {
+      0% { opacity: 0; transform: translate(-50%,-50%) scale(.55) rotate(-4deg); }
+      18% { opacity: 1; transform: translate(-50%,-50%) scale(1.12) rotate(1deg); }
+      38% { transform: translate(-50%,-50%) scale(.98) rotate(0); }
+      72% { opacity: 1; transform: translate(-50%,-54%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%,-72%) scale(1.04); }
+    }
+    @keyframes screenFlash {
+      0% { opacity: 0; }
+      18% { opacity: .58; }
+      100% { opacity: 0; }
+    }
+    @keyframes screenFlashDanger {
+      0% { opacity: 0; background: #ff2f2f; }
+      20% { opacity: .62; }
+      100% { opacity: 0; }
+    }
+    @keyframes screenFlashFever {
+      0% { opacity: 0; background: #62f7ff; }
+      16% { opacity: .78; }
+      42% { opacity: .22; background: #c75cff; }
+      100% { opacity: 0; }
+    }
+    @keyframes particleBurst {
+      0% { opacity: 1; transform: translate(-50%,-50%) scale(.4); }
+      70% { opacity: 1; }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(.1); }
+    }
+    @keyframes floatingScore {
+      0% { opacity: 0; transform: translate(-50%,-25%) scale(.65); }
+      18% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+      55% { opacity: 1; transform: translate(-50%,-75%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%,-150%) scale(.9); }
+    }
+    @keyframes scorePop {
+      0%,100% { transform: scale(1); }
+      45% { transform: scale(1.22); color: #fff3a8; }
+    }
+    @keyframes comboPop {
+      0%,100% { transform: scale(1) rotate(0); }
+      45% { transform: scale(1.25) rotate(-3deg); }
+    }
+
+    @media (max-width: 365px) {
+      body { padding-left: 8px; padding-right: 8px; }
+      .mode-btn { font-size: 12px; padding-left: 8px; padding-right: 8px; }
+      .stats { gap: 5px; }
+      .stat-card { padding: 7px 6px; }
+      #tray { gap: 6px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="game">
+    <h1 class="sr-only">10×10 블록 퍼즐 게임</h1>
+
+    <div class="mode-bar" aria-label="게임 모드">
+      <button class="mode-btn active" data-mode="classic" type="button">클래식</button>
+      <button class="mode-btn" data-mode="timed" type="button">타임어택 180초</button>
+      <button class="mode-btn" data-mode="daily" type="button">데일리</button>
+      <button id="sound-btn" type="button" aria-label="소리 끄기" title="소리 끄기">🔊</button>
+    </div>
+
+    <section class="stats" aria-label="게임 상태">
+      <div class="stat-card">
+        <div class="stat-label">score</div>
+        <div id="score" class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">best</div>
+        <div id="best" class="stat-value">0</div>
+      </div>
+      <div id="combo-wrap" class="stat-card">
+        <div class="stat-label">combo</div>
+        <div id="combo" class="stat-value">0</div>
+      </div>
+      <div id="timer-wrap" class="stat-card" hidden>
+        <div class="stat-label">time</div>
+        <div id="timer" class="stat-value">180</div>
+      </div>
+    </section>
+    <section class="fever-panel" aria-label="피버 게이지">
+      <div class="fever-head">
+        <span class="fever-title">FEVER GAUGE</span>
+        <strong id="fever-status">0%</strong>
+      </div>
+      <div class="fever-track"><div id="fever-fill"></div></div>
+      <div class="fever-rule">라인 삭제로 충전 · 발동하면 8회 동안 모든 점수 ×3</div>
+    </section>
+
+    <div class="nickname-row">
+      <label for="nickname">닉네임</label>
+      <input id="nickname" maxlength="12" autocomplete="nickname" placeholder="플레이어">
+    </div>
+
+    <div id="board" role="grid" aria-label="10×10 게임 보드"></div>
+    <div id="tray" aria-label="사용할 블록 3개"></div>
+    <p class="hint">블록 배치 10점/칸 · 라인·콤보·피버로 점수를 폭발시켜.</p>
+
+    <section id="gameover" aria-live="polite">
+      <div class="gameover-title">게임 종료</div>
+      <div class="gameover-sub">최종 점수: <strong id="final-score">0</strong></div>
+      <div class="summary-grid">
+        <div class="summary-item"><div class="summary-label">삭제 라인</div><div id="final-lines" class="summary-value">0</div></div>
+        <div class="summary-item"><div class="summary-label">최대 콤보</div><div id="final-combo" class="summary-value">0</div></div>
+        <div class="summary-item"><div class="summary-label">피버 횟수</div><div id="final-fever" class="summary-value">0</div></div>
+      </div>
+      <div id="daily-submit">
+        <button id="submit-score-btn" class="full-btn" type="button">데일리 기록 저장</button>
+      </div>
+      <div id="leaderboard-wrap">
+        <div style="font-size:13px;font-weight:700;">오늘 이 기기의 순위</div>
+        <div id="leaderboard"></div>
+      </div>
+      <button id="restart-btn" class="full-btn" type="button">다시 시작</button>
+    </section>
+  </main>
+  <div id="screen-flash" aria-hidden="true"></div>
+  <div id="effects-layer" aria-hidden="true"></div>
+  <div id="event-banner" aria-live="polite"><div class="event-main"></div><div class="event-sub"></div></div>
+
+  <script>
+  'use strict';
+
+  const SIZE = 10;
+  const RESOLVE_DELAY_MS = 260;
+  const TIMED_DURATION_SECONDS = 180;
+  const FEVER_MAX = 100;
+  const FEVER_MOVES = 8;
+  const FEVER_MULTIPLIER = 3;
+  const BOMB_MIN_TRAY = 6;
+  const BOMB_FORCE_TRAY = 18;
+  const SHAPES = [
+    [[0,0]], [[0,0],[0,1]], [[0,0],[1,0]], [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]],
+    [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[1,0],[1,1]],
+    [[0,0],[0,1],[0,2],[1,0]], [[0,0],[0,1],[0,2],[1,2]], [[0,0],[1,0],[1,1],[1,2]],
+    [[0,2],[1,0],[1,1],[1,2]], [[0,0],[0,1],[1,1],[1,2]], [[0,1],[0,2],[1,0],[1,1]],
+    [[0,0],[0,1],[0,2],[1,1]], [[0,1],[1,0],[1,1],[1,2]], [[0,0],[1,0],[1,1],[2,1]],
+    [[0,1],[1,0],[1,1],[2,0]], [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]],
+    [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]
+  ];
+  const COLORS = ['#378ADD','#1D9E75','#D85A30','#D4537E','#7F77DD','#639922','#BA7517'];
+
+  const PHASE = Object.freeze({ PLAYING:'PLAYING', RESOLVING:'RESOLVING', GAME_OVER:'GAME_OVER' });
+
+  let board = createEmptyBoard();
+  let score = 0;
+  let best = 0;
+  let combo = 0;
+  let selected = -1;
+  let gameOver = false;
+  let mode = 'classic';
+  let phase = PHASE.PLAYING;
+  let tray = [null, null, null];
+  let cellEls = [];
+  let previewCells = [];
+  let recentCells = new Set();
+  let timerHandle = null;
+  let timerEndAt = 0;
+  let timeLeft = TIMED_DURATION_SECONDS;
+  let feverGauge = 0;
+  let feverActive = false;
+  let feverMovesLeft = 0;
+  let feverCount = 0;
+  let totalLines = 0;
+  let maxCombo = 0;
+  let comboGrace = 0;
+  let trayRound = 0;
+  let traysSinceBomb = 0;
+  let soundOn = true;
+  let audioCtx = null;
+  let rng = Math.random;
+  let gameSessionId = 0;
+  const pendingTimeouts = new Set();
+  const memoryStore = new Map();
+
+  const els = {
+    board: document.getElementById('board'),
+    tray: document.getElementById('tray'),
+    score: document.getElementById('score'),
+    best: document.getElementById('best'),
+    combo: document.getElementById('combo'),
+    comboWrap: document.getElementById('combo-wrap'),
+    timer: document.getElementById('timer'),
+    timerWrap: document.getElementById('timer-wrap'),
+    nickname: document.getElementById('nickname'),
+    soundBtn: document.getElementById('sound-btn'),
+    gameover: document.getElementById('gameover'),
+    finalScore: document.getElementById('final-score'),
+    dailySubmit: document.getElementById('daily-submit'),
+    leaderboardWrap: document.getElementById('leaderboard-wrap'),
+    leaderboard: document.getElementById('leaderboard'),
+    submitScoreBtn: document.getElementById('submit-score-btn'),
+    restartBtn: document.getElementById('restart-btn'),
+    game: document.getElementById('game'),
+    feverFill: document.getElementById('fever-fill'),
+    feverStatus: document.getElementById('fever-status'),
+    effectsLayer: document.getElementById('effects-layer'),
+    screenFlash: document.getElementById('screen-flash'),
+    eventBanner: document.getElementById('event-banner'),
+    finalLines: document.getElementById('final-lines'),
+    finalCombo: document.getElementById('final-combo'),
+    finalFever: document.getElementById('final-fever')
+  };
+
+  function createEmptyBoard() {
+    return Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+  }
+
+  function safeLocalGet(key) {
+    try {
+      const value = window.localStorage.getItem(key);
+      if (value !== null) return value;
+    } catch (_) {}
+    return memoryStore.has(key) ? memoryStore.get(key) : null;
+  }
+
+  function safeLocalSet(key, value) {
+    const stringValue = String(value);
+    memoryStore.set(key, stringValue);
+    try { window.localStorage.setItem(key, stringValue); } catch (_) {}
+  }
+
+  function safeLocalKeys(prefix) {
+    const keys = new Set();
+    for (const key of memoryStore.keys()) if (key.startsWith(prefix)) keys.add(key);
+    try {
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
+        if (key && key.startsWith(prefix)) keys.add(key);
+      }
+    } catch (_) {}
+    return [...keys];
+  }
+
+  const storage = {
+    async get(key, shared = false) {
+      if (window.storage && typeof window.storage.get === 'function') {
+        try {
+          const result = await window.storage.get(key, shared);
+          if (result && typeof result.value !== 'undefined') return result;
+        } catch (_) {}
+      }
+      const value = safeLocalGet(key);
+      return value === null ? null : { value };
+    },
+    async set(key, value, shared = false) {
+      safeLocalSet(key, value);
+      if (window.storage && typeof window.storage.set === 'function') {
+        try { await window.storage.set(key, value, shared); } catch (_) {}
+      }
+    },
+    async list(prefix, shared = false) {
+      const localKeys = safeLocalKeys(prefix);
+      if (window.storage && typeof window.storage.list === 'function') {
+        try {
+          const result = await window.storage.list(prefix, shared);
+          const remoteKeys = result && Array.isArray(result.keys) ? result.keys : [];
+          return { keys: [...new Set([...localKeys, ...remoteKeys])] };
+        } catch (_) {}
+      }
+      return { keys: localKeys };
+    }
+  };
+
+  function mulberry32(a) {
+    return function() {
+      a |= 0;
+      a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function seedFromDate() {
+    const d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+
+  function todayStr() {
+    const d = new Date();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[char]));
+  }
+
+  function bestKey(currentMode = mode) {
+    return `block-game-best-${currentMode}`;
+  }
+
+  function scheduleForCurrentGame(callback, delay) {
+    const sessionAtSchedule = gameSessionId;
+    const timeoutId = window.setTimeout(() => {
+      pendingTimeouts.delete(timeoutId);
+      if (sessionAtSchedule !== gameSessionId || gameOver) return;
+      callback();
+    }, delay);
+    pendingTimeouts.add(timeoutId);
+    return timeoutId;
+  }
+
+  function cancelPendingTimeouts() {
+    for (const timeoutId of pendingTimeouts) window.clearTimeout(timeoutId);
+    pendingTimeouts.clear();
+  }
+
+  function beep(freq, duration) {
+    if (!soundOn) return;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      if (!audioCtx) audioCtx = new AudioContextClass();
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      oscillator.frequency.value = freq;
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+      gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration);
+    } catch (_) {}
+  }
+
+  function toggleSound() {
+    soundOn = !soundOn;
+    els.soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    els.soundBtn.setAttribute('aria-label', soundOn ? '소리 끄기' : '소리 켜기');
+    els.soundBtn.title = soundOn ? '소리 끄기' : '소리 켜기';
+    safeLocalSet('block-game-sound', soundOn ? '1' : '0');
+  }
+
+  function weightedPick(items, weights) {
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
+    let randomValue = rng() * total;
+    for (let i = 0; i < items.length; i++) {
+      randomValue -= weights[i];
+      if (randomValue <= 0) return items[i];
+    }
+    return items[items.length - 1];
+  }
+
+  function randNormalPiece() {
+    const weights = SHAPES.map(shape => {
+      const size = shape.length;
+      if (score < 1200) return size <= 3 ? 3 : 1;
+      if (score < 6000) return 2;
+      return size >= 4 ? 3 : 1;
+    });
+    const shape = weightedPick(SHAPES, weights);
+    const color = COLORS[Math.floor(rng() * COLORS.length)];
+    return { shape, color, isBomb:false };
+  }
+
+  function shouldSpawnBomb() {
+    if (trayRound < 3 || traysSinceBomb < BOMB_MIN_TRAY) return false;
+    if (traysSinceBomb >= BOMB_FORCE_TRAY) return true;
+    const chance = Math.min(0.075, 0.035 + score / 120000);
+    return rng() < chance;
+  }
+
+  function initTray() {
+    if (gameOver) return;
+    trayRound++;
+    const bombSpawned = shouldSpawnBomb();
+    tray = [randNormalPiece(), randNormalPiece(), randNormalPiece()];
+    if (bombSpawned) {
+      const bombIndex = Math.floor(rng() * 3);
+      tray[bombIndex] = { shape:[[0,0]], color:'#E24B4A', isBomb:true };
+      traysSinceBomb = 0;
+    } else {
+      traysSinceBomb++;
+    }
+    selected = -1;
+    renderTray();
+    if (bombSpawned) {
+      announceEvent('BOMB DROP', '희귀 폭탄 등장', 'danger');
+      screenShake('small');
+      beepSequence([260, 340, 460], .055);
+    }
+    checkGameOver();
+  }
+
+  function fitsAt(piece, row, col) {
+    if (!piece) return false;
+    if (piece.isBomb) return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+    for (const [dr, dc] of piece.shape) {
+      const rr = row + dr;
+      const cc = col + dc;
+      if (rr < 0 || rr >= SIZE || cc < 0 || cc >= SIZE || board[rr][cc]) return false;
+    }
+    return true;
+  }
+
+  function canPlaceAnywhere(piece) {
+    if (!piece) return false;
+    if (piece.isBomb) return true;
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        if (fitsAt(piece, row, col)) return true;
+      }
+    }
+    return false;
+  }
+
+  function checkGameOver() {
+    if (gameOver || phase !== PHASE.PLAYING) return;
+    const anyAvailable = tray.some(piece => piece && canPlaceAnywhere(piece));
+    if (!anyAvailable) triggerGameOver();
+  }
+
+  function formatNumber(value) {
+    return Math.round(value).toLocaleString('ko-KR');
+  }
+
+  function beepSequence(frequencies, duration = .06) {
+    frequencies.forEach((frequency, index) => {
+      window.setTimeout(() => beep(frequency, duration), index * 65);
+    });
+  }
+
+  function retriggerClass(element, className) {
+    if (!element) return;
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+  }
+
+  function screenShake(level = 'small') {
+    const className = `shake-${level}`;
+    els.game.classList.remove('shake-small', 'shake-medium', 'shake-large');
+    void els.game.offsetWidth;
+    els.game.classList.add(className);
+    window.setTimeout(() => els.game.classList.remove(className), 520);
+  }
+
+  function flashScreen(tone = 'normal') {
+    const className = tone === 'danger' ? 'flash-danger' : tone === 'fever' ? 'flash-fever' : 'flash';
+    els.screenFlash.className = '';
+    void els.screenFlash.offsetWidth;
+    els.screenFlash.classList.add(className);
+  }
+
+  function boardCenter() {
+    const rect = els.board.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+
+  function burstParticles(count, colors, spread = 150, origin = boardCenter()) {
+    const palette = Array.isArray(colors) ? colors : [colors];
+    const safeCount = Math.min(42, Math.max(4, count));
+    for (let i = 0; i < safeCount; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      const angle = (Math.PI * 2 * i / safeCount) + (Math.random() - .5) * .5;
+      const distance = spread * (.45 + Math.random() * .65);
+      particle.style.left = `${origin.x}px`;
+      particle.style.top = `${origin.y}px`;
+      particle.style.color = palette[i % palette.length];
+      particle.style.background = palette[i % palette.length];
+      particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+      particle.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+      particle.style.setProperty('--rot', `${Math.round(Math.random() * 540 - 270)}deg`);
+      particle.style.setProperty('--duration', `${.5 + Math.random() * .45}s`);
+      els.effectsLayer.appendChild(particle);
+      window.setTimeout(() => particle.remove(), 1100);
+    }
+  }
+
+  function showFloatingScore(points, tone = '') {
+    const floating = document.createElement('div');
+    floating.className = `floating-score ${tone}`.trim();
+    floating.textContent = `+${formatNumber(points)}${feverActive ? '  ×3 FEVER' : ''}`;
+    const center = boardCenter();
+    floating.style.left = `${center.x}px`;
+    floating.style.top = `${center.y}px`;
+    els.effectsLayer.appendChild(floating);
+    window.setTimeout(() => floating.remove(), 1000);
+  }
+
+  function announceEvent(main, sub = '', tone = '') {
+    const mainEl = els.eventBanner.querySelector('.event-main');
+    const subEl = els.eventBanner.querySelector('.event-sub');
+    mainEl.textContent = main;
+    subEl.textContent = sub;
+    els.eventBanner.className = tone;
+    void els.eventBanner.offsetWidth;
+    els.eventBanner.classList.add('visible');
+  }
+
+  function updateFeverUI() {
+    const percent = feverActive ? Math.max(0, Math.round(feverMovesLeft / FEVER_MOVES * 100)) : feverGauge;
+    els.feverFill.style.width = `${percent}%`;
+    els.game.classList.toggle('fever-active', feverActive);
+    els.feverStatus.textContent = feverActive
+      ? `×${FEVER_MULTIPLIER} · ${feverMovesLeft}회 남음`
+      : `${Math.round(feverGauge)}%`;
+  }
+
+  function activateFever() {
+    if (feverActive) return;
+    feverActive = true;
+    feverMovesLeft = FEVER_MOVES;
+    feverGauge = FEVER_MAX;
+    feverCount++;
+    updateFeverUI();
+    announceEvent('FEVER TIME', `8회 동안 점수 ×${FEVER_MULTIPLIER}`, 'fever');
+    flashScreen('fever');
+    screenShake('large');
+    burstParticles(38, ['#57f3ff','#bd5cff','#ffcf4a','#ffffff'], 210);
+    beepSequence([520, 660, 820, 1040], .09);
+    if (navigator.vibrate) navigator.vibrate([35,25,50,25,75]);
+  }
+
+  function addFever(amount) {
+    if (feverActive || amount <= 0) return;
+    feverGauge = Math.min(FEVER_MAX, feverGauge + amount);
+    updateFeverUI();
+    if (feverGauge >= FEVER_MAX) activateFever();
+  }
+
+  function finishFeverMove(startedInFever) {
+    if (!startedInFever || !feverActive) return;
+    feverMovesLeft = Math.max(0, feverMovesLeft - 1);
+    if (feverMovesLeft <= 0) {
+      feverActive = false;
+      feverGauge = 0;
+      els.game.classList.remove('fever-active');
+      announceEvent('FEVER END', '다시 게이지를 채워', '');
+      beepSequence([540, 410, 300], .06);
+    }
+    updateFeverUI();
+  }
+
+  function addScorePoints(basePoints, tone = '') {
+    const multiplier = feverActive ? FEVER_MULTIPLIER : 1;
+    const awarded = Math.max(0, Math.round(basePoints * multiplier));
+    score += awarded;
+    if (score > best) {
+      best = score;
+      saveBest();
+    }
+    updateStats();
+    showFloatingScore(awarded, tone || (feverActive ? 'fever' : ''));
+    retriggerClass(els.score, 'score-pop');
+    return awarded;
+  }
+
+  function scorePlacement(placedCount, lineCount = 0) {
+    let basePoints = placedCount * 10;
+    let feverGain = 0;
+
+    if (lineCount > 0) {
+      combo++;
+      comboGrace = 2;
+      maxCombo = Math.max(maxCombo, combo);
+      totalLines += lineCount;
+      const lineBase = lineCount * 120;
+      const multiLineBonus = Math.max(0, lineCount - 1) * 220;
+      const comboMultiplier = 1 + Math.min(combo - 1, 8) * .25;
+      basePoints += Math.round((lineBase + multiLineBonus) * comboMultiplier);
+      feverGain = Math.min(100, 30 + Math.max(0, lineCount - 1) * 38);
+    } else if (!feverActive) {
+      if (combo > 0 && comboGrace > 0) comboGrace--;
+      else {
+        combo = 0;
+        comboGrace = 0;
+      }
+    }
+
+    const awarded = addScorePoints(basePoints);
+    if (lineCount > 0) {
+      addFever(feverGain);
+      retriggerClass(els.combo, 'combo-pop');
+    }
+    return awarded;
+  }
+
+  function scoreBomb(clearedCount) {
+    const basePoints = clearedCount > 0 ? 300 + clearedCount * 75 : 50;
+    comboGrace = Math.max(comboGrace, 1);
+    const awarded = addScorePoints(basePoints, 'bomb');
+    addFever(Math.min(42, 12 + clearedCount * 4));
+    return awarded;
+  }
+
+  function isBoardEmpty() {
+    return board.every(row => row.every(cell => !cell));
+  }
+
+  function awardAllClear() {
+    addScorePoints(2500, feverActive ? 'fever' : '');
+    announceEvent('ALL CLEAR', `보드 완전 정리 +${formatNumber(feverActive ? 2500 * FEVER_MULTIPLIER : 2500)}`, 'fever');
+    flashScreen('fever');
+    screenShake('large');
+    burstParticles(42, ['#ffffff','#57f3ff','#ffcf4a','#bd5cff'], 230);
+    beepSequence([650, 820, 980, 1240], .085);
+  }
+
+  function getFullLines() {
+    const rows = [];
+    const cols = [];
+    for (let row = 0; row < SIZE; row++) {
+      if (board[row].every(Boolean)) rows.push(row);
+    }
+    for (let col = 0; col < SIZE; col++) {
+      let full = true;
+      for (let row = 0; row < SIZE; row++) {
+        if (!board[row][col]) { full = false; break; }
+      }
+      if (full) cols.push(col);
+    }
+    return { rows, cols };
+  }
+
+  function updateStats() {
+    els.score.textContent = formatNumber(score);
+    els.best.textContent = formatNumber(best);
+    els.combo.textContent = combo > 0 ? `×${combo}` : '0';
+    els.comboWrap.classList.toggle('active', combo > 0);
+  }
+
+  function updateTimerDisplay() {
+    const timed = mode === 'timed';
+    els.timerWrap.hidden = !timed;
+    if (timed) els.timer.textContent = String(timeLeft);
+  }
+
+  function startTimer() {
+    window.clearInterval(timerHandle);
+    timeLeft = TIMED_DURATION_SECONDS;
+    timerEndAt = performance.now() + TIMED_DURATION_SECONDS * 1000;
+    updateTimerDisplay();
+
+    const tick = () => {
+      if (gameOver || mode !== 'timed') return;
+      const next = Math.max(0, Math.ceil((timerEndAt - performance.now()) / 1000));
+      if (next !== timeLeft) {
+        timeLeft = next;
+        updateTimerDisplay();
+      }
+      if (timeLeft <= 0) triggerGameOver();
+    };
+
+    timerHandle = window.setInterval(tick, 200);
+    tick();
+  }
+
+  function renderBoard() {
+    els.board.innerHTML = '';
+    cellEls = [];
+
+    for (let row = 0; row < SIZE; row++) {
+      const rowEls = [];
+      for (let col = 0; col < SIZE; col++) {
+        const cell = document.createElement('div');
+        cell.dataset.r = String(row);
+        cell.dataset.c = String(col);
+        cell.className = 'board-cell';
+        cell.setAttribute('role', 'gridcell');
+        cell.setAttribute('aria-label', `${row + 1}행 ${col + 1}열`);
+        cell.style.background = board[row][col] || 'var(--surface-2)';
+        if (recentCells.has(`${row},${col}`)) cell.classList.add('pop');
+        cell.addEventListener('click', () => onCellClick(row, col));
+        cell.addEventListener('mouseenter', () => onCellHover(row, col));
+        cell.addEventListener('mouseleave', clearPreview);
+        els.board.appendChild(cell);
+        rowEls.push(cell);
+      }
+      cellEls.push(rowEls);
+    }
+    recentCells.clear();
+  }
+
+  function clearPreview() {
+    for (const cell of previewCells) {
+      const row = Number(cell.dataset.r);
+      const col = Number(cell.dataset.c);
+      cell.style.background = board[row][col] || 'var(--surface-2)';
+    }
+    previewCells = [];
+  }
+
+  function flashCells(list, color) {
+    for (const [row, col] of list) {
+      if (cellEls[row] && cellEls[row][col]) {
+        cellEls[row][col].style.background = color;
+        cellEls[row][col].classList.add('clear-flash');
+      }
+    }
+  }
+
+  function onCellHover(row, col) {
+    if (gameOver || phase !== PHASE.PLAYING || selected < 0) return;
+    const piece = tray[selected];
+    if (!piece) return;
+    clearPreview();
+
+    if (piece.isBomb) {
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const rr = row + dr;
+          const cc = col + dc;
+          if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) {
+            const cell = cellEls[rr][cc];
+            cell.style.background = '#E24B4A66';
+            previewCells.push(cell);
+          }
+        }
+      }
+      return;
+    }
+
+    const valid = fitsAt(piece, row, col);
+    for (const [dr, dc] of piece.shape) {
+      const rr = row + dr;
+      const cc = col + dc;
+      if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) {
+        const cell = cellEls[rr][cc];
+        cell.style.background = valid ? `${piece.color}99` : 'var(--bg-danger)';
+        previewCells.push(cell);
+      }
+    }
+  }
+
+  function afterPlacementFlow(startedInFever = false) {
+    if (gameOver) return;
+    finishFeverMove(startedInFever);
+    phase = PHASE.PLAYING;
+    if (tray.every(piece => piece === null)) initTray();
+    else {
+      renderTray();
+      checkGameOver();
+    }
+  }
+
+  function rejectPlacement(row, col) {
+    const cell = cellEls[row] && cellEls[row][col];
+    if (!cell) return;
+    cell.classList.remove('invalid');
+    void cell.offsetWidth;
+    cell.classList.add('invalid');
+    if (navigator.vibrate) navigator.vibrate(20);
+  }
+
+  function consumeSelectedPiece() {
+    const index = selected;
+    tray[index] = null;
+    selected = -1;
+    clearPreview();
+    renderTray();
+  }
+
+  function onCellClick(row, col) {
+    if (gameOver || phase !== PHASE.PLAYING || selected < 0) return;
+    const piece = tray[selected];
+    if (!piece) return;
+    const startedInFever = feverActive;
+
+    if (piece.isBomb) {
+      const affected = [];
+      let clearedCount = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const rr = row + dr;
+          const cc = col + dc;
+          if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) {
+            affected.push([rr, cc]);
+            if (board[rr][cc]) clearedCount++;
+          }
+        }
+      }
+      phase = PHASE.RESOLVING;
+      consumeSelectedPiece();
+      scoreBomb(clearedCount);
+      flashCells(affected, '#ff4f43');
+      announceEvent(clearedCount > 0 ? 'BOOM' : 'DUD', clearedCount > 0 ? `${clearedCount}칸 폭파` : '빈 공간에서 불발', 'danger');
+      flashScreen('danger');
+      screenShake('large');
+      burstParticles(34, ['#ff493d','#ffb23f','#ffffff'], 190);
+      beepSequence([170, 120, 80], .12);
+      if (navigator.vibrate) navigator.vibrate([45,25,80]);
+
+      scheduleForCurrentGame(() => {
+        for (const [rr, cc] of affected) board[rr][cc] = null;
+        renderBoard();
+        if (isBoardEmpty()) awardAllClear();
+        afterPlacementFlow(startedInFever);
+      }, RESOLVE_DELAY_MS + 80);
+      return;
+    }
+
+    if (!fitsAt(piece, row, col)) {
+      rejectPlacement(row, col);
+      return;
+    }
+
+    phase = PHASE.RESOLVING;
+    recentCells = new Set();
+    for (const [dr, dc] of piece.shape) {
+      board[row + dr][col + dc] = piece.color;
+      recentCells.add(`${row + dr},${col + dc}`);
+    }
+    const placedCount = piece.shape.length;
+    consumeSelectedPiece();
+    beep(440, 0.08);
+    renderBoard();
+
+    const { rows, cols } = getFullLines();
+    const lineCount = rows.length + cols.length;
+    scorePlacement(placedCount, lineCount);
+
+    if (lineCount > 0) {
+      const clearCells = [];
+      for (const fullRow of rows) {
+        for (let c = 0; c < SIZE; c++) clearCells.push([fullRow, c]);
+      }
+      for (const fullCol of cols) {
+        for (let r = 0; r < SIZE; r++) clearCells.push([r, fullCol]);
+      }
+
+      const mainText = lineCount === 1 ? 'LINE CLEAR' : lineCount === 2 ? 'DOUBLE CLEAR' : lineCount === 3 ? 'TRIPLE CLEAR' : `${lineCount} LINE BLAST`;
+      announceEvent(mainText, combo > 1 ? `COMBO ×${combo}` : '게이지 충전', lineCount >= 3 ? 'fever' : '');
+      flashCells(clearCells, '#ffffff');
+      flashScreen(lineCount >= 3 ? 'fever' : 'normal');
+      screenShake(lineCount >= 3 ? 'large' : lineCount === 2 ? 'medium' : 'small');
+      burstParticles(lineCount >= 3 ? 38 : lineCount === 2 ? 26 : 16,
+        lineCount >= 3 ? ['#57f3ff','#bd5cff','#ffcf4a','#ffffff'] : ['#ffffff','#54d8ff'],
+        120 + lineCount * 35);
+      beepSequence(lineCount >= 3 ? [720,900,1120] : lineCount === 2 ? [720,920] : [760], .1);
+      if (navigator.vibrate) navigator.vibrate(lineCount >= 3 ? [35,20,55,20,80] : lineCount === 2 ? [30,20,50] : 25);
+
+      scheduleForCurrentGame(() => {
+        for (const fullRow of rows) board[fullRow].fill(null);
+        for (const fullCol of cols) {
+          for (let r = 0; r < SIZE; r++) board[r][fullCol] = null;
+        }
+        renderBoard();
+        if (isBoardEmpty()) awardAllClear();
+        afterPlacementFlow(startedInFever);
+      }, RESOLVE_DELAY_MS);
+    } else {
+      if (feverActive) {
+        screenShake('small');
+        burstParticles(7, ['#57f3ff','#bd5cff','#ffcf4a'], 70);
+      }
+      afterPlacementFlow(startedInFever);
+    }
+  }
+
+  function renderTray() {
+    els.tray.innerHTML = '';
+
+    tray.forEach((piece, index) => {
+      const slot = document.createElement('div');
+      slot.className = 'tray-slot';
+      slot.dataset.index = String(index);
+      slot.setAttribute('role', 'button');
+      slot.setAttribute('tabindex', piece && !gameOver ? '0' : '-1');
+      slot.setAttribute('aria-label', piece ? `${index + 1}번째 블록` : `${index + 1}번째 블록 사용됨`);
+      if (index === selected) slot.classList.add('selected');
+      if (!piece) slot.classList.add('empty');
+
+      if (piece) {
+        if (piece.isBomb) {
+          slot.classList.add('bomb-slot');
+          const bomb = document.createElement('div');
+          bomb.className = 'bomb-icon';
+          bomb.textContent = '💣';
+          slot.appendChild(bomb);
+        } else {
+          const maxRow = Math.max(...piece.shape.map(cell => cell[0])) + 1;
+          const maxCol = Math.max(...piece.shape.map(cell => cell[1])) + 1;
+          const shapeSet = new Set(piece.shape.map(cell => `${cell[0]},${cell[1]}`));
+          const grid = document.createElement('div');
+          grid.className = 'piece-grid';
+          grid.style.gridTemplateColumns = `repeat(${maxCol}, auto)`;
+          grid.style.gridTemplateRows = `repeat(${maxRow}, auto)`;
+
+          for (let r = 0; r < maxRow; r++) {
+            for (let c = 0; c < maxCol; c++) {
+              const square = document.createElement('div');
+              square.className = 'piece-square';
+              square.style.background = shapeSet.has(`${r},${c}`) ? piece.color : 'transparent';
+              grid.appendChild(square);
+            }
+          }
+          slot.appendChild(grid);
+        }
+
+        const selectPiece = () => {
+          if (gameOver || phase !== PHASE.PLAYING) return;
+          selected = selected === index ? -1 : index;
+          clearPreview();
+          renderTray();
+          if (selected >= 0) beep(330, 0.04);
+        };
+        slot.addEventListener('click', selectPiece);
+        slot.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectPiece();
+          }
+        });
+      }
+
+      els.tray.appendChild(slot);
+    });
+  }
+
+  function setMode(nextMode) {
+    if (!['classic', 'timed', 'daily'].includes(nextMode)) return;
+    mode = nextMode;
+    document.querySelectorAll('.mode-btn').forEach(button => {
+      button.classList.toggle('active', button.dataset.mode === mode);
+    });
+    restart();
+  }
+
+  function triggerGameOver() {
+    if (gameOver) return;
+    gameOver = true;
+    phase = PHASE.GAME_OVER;
+    selected = -1;
+    window.clearInterval(timerHandle);
+    cancelPendingTimeouts();
+    clearPreview();
+    renderTray();
+    beep(220, 0.3);
+
+    els.finalScore.textContent = formatNumber(score);
+    els.finalLines.textContent = formatNumber(totalLines);
+    els.finalCombo.textContent = `×${maxCombo}`;
+    els.finalFever.textContent = String(feverCount);
+    els.gameover.classList.add('visible');
+    announceEvent('RUN OVER', formatNumber(score), '');
+    screenShake('medium');
+    const daily = mode === 'daily';
+    els.dailySubmit.classList.toggle('visible', daily);
+    els.leaderboardWrap.classList.toggle('visible', daily);
+    if (daily) loadLeaderboard();
+  }
+
+  async function loadBest() {
+    const requestedMode = mode;
+    const result = await storage.get(bestKey(requestedMode), false);
+    if (requestedMode !== mode) return;
+    const loadedBest = result ? Number.parseInt(result.value, 10) || 0 : 0;
+    best = Math.max(best, loadedBest);
+    updateStats();
+  }
+
+  function saveBest() {
+    const key = bestKey();
+    const value = String(best);
+    void storage.set(key, value, false);
+  }
+
+  async function loadNickname() {
+    const result = await storage.get('block-game-nickname', false);
+    if (result) els.nickname.value = String(result.value).slice(0, 12);
+  }
+
+  function saveNickname() {
+    const value = els.nickname.value.trim().slice(0, 12);
+    els.nickname.value = value;
+    void storage.set('block-game-nickname', value, false);
+  }
+
+  async function submitScore() {
+    if (mode !== 'daily' || !gameOver) return;
+    const name = (els.nickname.value.trim() || '익명').slice(0, 12);
+    els.nickname.value = name;
+    const key = `daily:${todayStr()}:${name}`;
+
+    try {
+      const previous = await storage.get(key, true);
+      const previousScore = previous ? (JSON.parse(previous.value).score || 0) : 0;
+      const storedScore = Math.max(previousScore, score);
+      await storage.set(key, JSON.stringify({ name, score: storedScore }), true);
+      saveNickname();
+      els.dailySubmit.classList.remove('visible');
+      await loadLeaderboard();
+    } catch (_) {
+      els.leaderboard.innerHTML = '<div style="font-size:13px;color:var(--text-danger);">기록 저장에 실패했지만 게임은 정상적으로 계속할 수 있어.</div>';
+    }
+  }
+
+  async function loadLeaderboard() {
+    const prefix = `daily:${todayStr()}:`;
+    try {
+      const result = await storage.list(prefix, true);
+      const entries = [];
+      for (const key of result.keys || []) {
+        try {
+          const record = await storage.get(key, true);
+          if (!record) continue;
+          const parsed = JSON.parse(record.value);
+          if (parsed && typeof parsed.name === 'string' && Number.isFinite(Number(parsed.score))) {
+            entries.push({ name: parsed.name.slice(0, 12), score: Number(parsed.score) });
+          }
+        } catch (_) {}
+      }
+
+      const bestByName = new Map();
+      for (const entry of entries) {
+        const previous = bestByName.get(entry.name);
+        if (!previous || entry.score > previous.score) bestByName.set(entry.name, entry);
+      }
+      const top = [...bestByName.values()].sort((a, b) => b.score - a.score).slice(0, 5);
+
+      if (top.length === 0) {
+        els.leaderboard.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);">아직 저장된 기록 없음</div>';
+        return;
+      }
+
+      els.leaderboard.innerHTML = top.map((entry, index) =>
+        `<div class="leader-row"><span>${index + 1}. ${escapeHtml(entry.name)}</span><strong>${entry.score}</strong></div>`
+      ).join('');
+    } catch (_) {
+      els.leaderboard.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);">기록을 불러오지 못했어.</div>';
+    }
+  }
+
+  function restart() {
+    gameSessionId++;
+    cancelPendingTimeouts();
+    window.clearInterval(timerHandle);
+
+    board = createEmptyBoard();
+    score = 0;
+    best = 0;
+    combo = 0;
+    comboGrace = 0;
+    maxCombo = 0;
+    totalLines = 0;
+    feverGauge = 0;
+    feverActive = false;
+    feverMovesLeft = 0;
+    feverCount = 0;
+    trayRound = 0;
+    traysSinceBomb = 0;
+    selected = -1;
+    gameOver = false;
+    phase = PHASE.PLAYING;
+    recentCells.clear();
+    previewCells = [];
+    tray = [null, null, null];
+
+    rng = mode === 'daily' ? mulberry32(seedFromDate()) : Math.random;
+    els.gameover.classList.remove('visible');
+    els.dailySubmit.classList.remove('visible');
+    els.leaderboardWrap.classList.remove('visible');
+    els.leaderboard.innerHTML = '';
+    els.effectsLayer.innerHTML = '';
+    els.game.classList.remove('fever-active', 'shake-small', 'shake-medium', 'shake-large');
+    updateFeverUI();
+
+    renderBoard();
+    updateStats();
+    updateTimerDisplay();
+    void loadBest();
+    initTray();
+
+    if (mode === 'timed') startTimer();
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(button => {
+    button.addEventListener('click', () => setMode(button.dataset.mode));
+  });
+  els.soundBtn.addEventListener('click', toggleSound);
+  els.nickname.addEventListener('change', saveNickname);
+  els.nickname.addEventListener('blur', saveNickname);
+  els.submitScoreBtn.addEventListener('click', submitScore);
+  els.restartBtn.addEventListener('click', restart);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && mode === 'timed' && !gameOver) {
+      const next = Math.max(0, Math.ceil((timerEndAt - performance.now()) / 1000));
+      timeLeft = next;
+      updateTimerDisplay();
+      if (timeLeft <= 0) triggerGameOver();
+    }
+  });
+
+  const storedSound = safeLocalGet('block-game-sound');
+  if (storedSound === '0') {
+    soundOn = false;
+    els.soundBtn.textContent = '🔇';
+    els.soundBtn.setAttribute('aria-label', '소리 켜기');
+    els.soundBtn.title = '소리 켜기';
+  }
+
+  void loadNickname();
+  restart();
+
+  </script>
+</body>
+</html>
