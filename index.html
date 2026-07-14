@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V5.3: viewport-root game over modal hotfix -->
-  <title>10×10 블록 퍼즐 · Core Draft V5.1</title>
+  <!-- V5.4: thermal optimization · burst impact redesign -->
+  <title>10×10 블록 퍼즐 · Core Overdrive V5.4</title>
   <style>
     :root {
       color-scheme: dark;
@@ -1226,6 +1226,118 @@
       }
     }
 
+
+
+    /* V5.4 THERMAL OPTIMIZATION
+       지속 GPU 애니메이션은 정적 네온으로 바꾸고, 성공 순간에만 짧고 강하게 재생한다. */
+    #game.fever-active { filter: none; }
+    #board {
+      contain: layout paint style;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+    #tray, .fever-panel, .meltdown-panel, .draft-panel { contain: layout paint style; }
+
+    #game.fever-active #board {
+      animation: none;
+      filter: none;
+      border-color: rgba(120,245,255,.88);
+      box-shadow:
+        0 0 0 2px rgba(189,92,255,.16),
+        0 0 22px rgba(87,243,255,.28),
+        0 18px 48px rgba(0,0,0,.36);
+    }
+    #game.fever-active .fever-panel {
+      animation: none;
+      box-shadow: 0 0 18px rgba(87,243,255,.14);
+    }
+    #game.core-ready .fever-panel {
+      animation: none;
+      box-shadow: 0 0 20px rgba(255,207,74,.18);
+    }
+    #game.fever-active #board::after {
+      content: none;
+      animation: none;
+      mix-blend-mode: normal;
+    }
+    #game.fever-active #board.overdrive-sweep::after {
+      content: '';
+      position: absolute;
+      inset: -32% -18%;
+      pointer-events: none;
+      opacity: 0;
+      background: linear-gradient(112deg, transparent 40%, rgba(255,255,255,.36) 49%, rgba(87,243,255,.22) 52%, transparent 61%);
+      animation: overdriveSweepOnce .72s cubic-bezier(.2,.75,.25,1) 1;
+      mix-blend-mode: normal;
+    }
+    #board.overdrive-hit { animation: overdriveHit .46s cubic-bezier(.18,.8,.2,1) 1; }
+
+    .tray-slot.special-slot,
+    .tray-slot.bomb-slot {
+      animation: none;
+      filter: none;
+    }
+    .tray-slot.special-slot {
+      box-shadow: 0 0 16px var(--special-shadow, rgba(255,255,255,.11));
+    }
+
+    #game.meltdown-warning .meltdown-panel,
+    #game.meltdown-warning #board,
+    #game.meltdown-warning #meltdown-fill {
+      animation: none;
+      filter: none;
+    }
+    #game.meltdown-warning-hit .meltdown-panel { animation: warningPanelHit .48s ease-out 1; }
+    #game.meltdown-warning-hit #board { animation: warningBoardHit .42s ease-out 1; }
+
+    #screen-flash { mix-blend-mode: normal; }
+    #gameover, #draft-overlay {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .particle {
+      width: 9px;
+      height: 9px;
+      box-shadow: 0 0 6px currentColor;
+      will-change: transform, opacity;
+    }
+    .particle.shard {
+      width: 6px;
+      height: 15px;
+      border-radius: 2px;
+      box-shadow: 0 0 4px currentColor;
+    }
+    .shockwave { box-shadow: 0 0 13px var(--wave-color, #62f7ff); }
+    #effects-layer { contain: strict; }
+
+    body.drag-lock {
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+    html.page-hidden *, html.page-hidden *::before, html.page-hidden *::after {
+      animation-play-state: paused !important;
+    }
+
+    @keyframes overdriveSweepOnce {
+      0% { opacity: 0; transform: translateX(-55%) skewX(-8deg); }
+      18% { opacity: .92; }
+      100% { opacity: 0; transform: translateX(55%) skewX(-8deg); }
+    }
+    @keyframes overdriveHit {
+      0%, 100% { transform: translateZ(0) scale(1); }
+      32% { transform: translateZ(0) scale(1.018); }
+      58% { transform: translateZ(0) scale(.995); }
+    }
+    @keyframes warningPanelHit {
+      0%,100% { transform: scale(1); box-shadow: 0 0 30px rgba(255,52,88,.25); }
+      35% { transform: scale(1.018); box-shadow: 0 0 42px rgba(255,52,88,.42); }
+    }
+    @keyframes warningBoardHit {
+      0%,100% { transform: translateZ(0) scale(1); }
+      35% { transform: translateZ(0) scale(1.012); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: .01ms !important;
@@ -1345,6 +1457,9 @@
   const DRAG_THRESHOLD_PX = 7;
   const DRAG_LIFT_MIN_PX = 70;
   const DRAG_LIFT_MAX_PX = 92;
+  const IS_MOBILE_DEVICE = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+  const MAX_EFFECT_PARTICLES = IS_MOBILE_DEVICE ? 22 : 30;
+  const MAX_EFFECT_NODES = IS_MOBILE_DEVICE ? 34 : 48;
   const SHAPES = [
     [[0,0]], [[0,0],[0,1]], [[0,0],[1,0]], [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]],
     [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[1,0],[1,1]],
@@ -1874,28 +1989,37 @@
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   }
 
+  function trimEffectsLayer(reserve = 0) {
+    const maxNodes = Math.max(8, MAX_EFFECT_NODES - reserve);
+    while (els.effectsLayer.childElementCount > maxNodes) {
+      els.effectsLayer.firstElementChild?.remove();
+    }
+  }
+
   function burstParticles(count, colors, spread = 150, origin = boardCenter()) {
     const palette = Array.isArray(colors) ? colors : [colors];
-    const safeCount = Math.min(42, Math.max(4, count));
+    const safeCount = Math.min(MAX_EFFECT_PARTICLES, Math.max(4, count));
+    trimEffectsLayer(safeCount);
     for (let i = 0; i < safeCount; i++) {
       const particle = document.createElement('div');
-      particle.className = 'particle';
-      const angle = (Math.PI * 2 * i / safeCount) + (Math.random() - .5) * .5;
-      const distance = spread * (.45 + Math.random() * .65);
+      particle.className = `particle${i % 4 === 0 ? ' shard' : ''}`;
+      const angle = (Math.PI * 2 * i / safeCount) + (Math.random() - .5) * .42;
+      const distance = spread * (.52 + Math.random() * .58);
       particle.style.left = `${origin.x}px`;
       particle.style.top = `${origin.y}px`;
       particle.style.color = palette[i % palette.length];
       particle.style.background = palette[i % palette.length];
       particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
       particle.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
-      particle.style.setProperty('--rot', `${Math.round(Math.random() * 540 - 270)}deg`);
-      particle.style.setProperty('--duration', `${.5 + Math.random() * .45}s`);
+      particle.style.setProperty('--rot', `${Math.round(Math.random() * 420 - 210)}deg`);
+      particle.style.setProperty('--duration', `${.46 + Math.random() * .30}s`);
       els.effectsLayer.appendChild(particle);
-      window.setTimeout(() => particle.remove(), 1100);
+      window.setTimeout(() => particle.remove(), 900);
     }
   }
 
   function createShockwave(color = '#62f7ff', duration = .55, origin = boardCenter()) {
+    trimEffectsLayer(1);
     const wave = document.createElement('div');
     wave.className = 'shockwave';
     wave.style.left = `${origin.x}px`;
@@ -1904,6 +2028,20 @@
     wave.style.setProperty('--wave-duration', `${duration}s`);
     els.effectsLayer.appendChild(wave);
     window.setTimeout(() => wave.remove(), Math.ceil(duration * 1000) + 120);
+  }
+
+  function triggerOverdriveImpact(strong = false) {
+    if (!feverActive) return;
+    retriggerClass(els.board, 'overdrive-sweep');
+    retriggerClass(els.board, 'overdrive-hit');
+    window.setTimeout(() => els.board.classList.remove('overdrive-hit'), 520);
+    if (strong) createShockwave('#ffcf4a', .64);
+  }
+
+  function pulseMeltdownWarning() {
+    if (!meltdownWarning) return;
+    retriggerClass(els.game, 'meltdown-warning-hit');
+    window.setTimeout(() => els.game.classList.remove('meltdown-warning-hit'), 540);
   }
 
   function comboTier(value = combo) {
@@ -1945,8 +2083,14 @@
     const from = displayedScore;
     const started = performance.now();
     const total = Math.max(120, duration);
+    let lastPaint = 0;
     const frame = now => {
       const t = Math.min(1, (now - started) / total);
+      if (t < 1 && now - lastPaint < 33) {
+        scoreAnimationFrame = requestAnimationFrame(frame);
+        return;
+      }
+      lastPaint = now;
       const eased = 1 - Math.pow(1 - t, 3);
       displayedScore = Math.round(from + (target - from) * eased);
       setAdaptiveStatValue(els.score, displayedScore);
@@ -1986,13 +2130,14 @@
     if (className) {
       void els.board.offsetWidth;
       els.board.classList.add(className);
-      window.setTimeout(() => els.board.classList.remove(className), 680);
+      window.setTimeout(() => els.board.classList.remove(className), 620);
     }
     const color = tier === 'critical' ? '#d57aff' : tier === 'breaker' ? '#ffd75a' : tier === 'surge' ? '#65f5c9' : '#54d8ff';
-    createShockwave(color, tier === 'critical' ? .72 : tier === 'breaker' ? .64 : .52);
-    if (tier === 'critical') createShockwave('#57f3ff', .88);
-    const particles = Math.min(42, 14 + lineCount * 7 + Math.max(0, combo - 1) * 3);
-    burstParticles(particles, [color, '#ffffff', feverActive ? '#ffcf4a' : '#54d8ff'], 125 + lineCount * 30 + Math.min(combo, 7) * 8);
+    createShockwave(color, tier === 'critical' ? .68 : tier === 'breaker' ? .60 : .48);
+    if (tier === 'critical' || (feverActive && lineCount >= 2)) createShockwave('#57f3ff', .78);
+    const particles = Math.min(MAX_EFFECT_PARTICLES, 9 + lineCount * 4 + Math.min(8, Math.max(0, combo - 1)) * 2);
+    burstParticles(particles, [color, '#ffffff', feverActive ? '#ffcf4a' : '#54d8ff'], 145 + lineCount * 32 + Math.min(combo, 7) * 10);
+    if (feverActive) triggerOverdriveImpact(tier === 'critical' || lineCount >= 2);
   }
 
   function showFloatingScore(points, tone = '') {
@@ -2097,6 +2242,7 @@
     beepSequence([520,360,220,150], .095);
     if (navigator.vibrate) navigator.vibrate([70,30,90,30,120]);
     updateMeltdownUI();
+    pulseMeltdownWarning();
   }
 
   function resolveMeltdownTurn({ placedCount = 0, lineCount = 0, specialType = '', clearedCount = 0, movedCount = 0 } = {}) {
@@ -2132,6 +2278,7 @@
       }
     } else if (wasWarning) {
       meltdownMovesLeft = Math.max(0, meltdownMovesLeft - 1);
+      pulseMeltdownWarning();
       if (meltdownMovesLeft <= 0) {
         gameOverReason = 'MELTDOWN';
         updateMeltdownUI();
@@ -2156,6 +2303,7 @@
     overdriveScoreStart = score;
     pendingOverdriveBonus = 500;
     updateFeverUI();
+    triggerOverdriveImpact(true);
     announceEvent('CORE OVERDRIVE', `BANK ×${OVERDRIVE_BANK_MULTIPLIER} · SCORE ×${FEVER_MULTIPLIER}`, 'fever');
     flashScreen('fever');
     screenShake('large');
@@ -2331,27 +2479,39 @@
   }
 
   function renderBoard() {
-    els.board.innerHTML = '';
-    cellEls = [];
+    const needsBuild = cellEls.length !== SIZE || cellEls.some(row => row.length !== SIZE) || els.board.childElementCount !== SIZE * SIZE;
+    if (needsBuild) {
+      els.board.innerHTML = '';
+      cellEls = [];
+      for (let row = 0; row < SIZE; row++) {
+        const rowEls = [];
+        for (let col = 0; col < SIZE; col++) {
+          const cell = document.createElement('div');
+          cell.dataset.r = String(row);
+          cell.dataset.c = String(col);
+          cell.className = 'board-cell';
+          cell.setAttribute('role', 'gridcell');
+          cell.setAttribute('aria-label', `${row + 1}행 ${col + 1}열`);
+          cell.addEventListener('click', () => onCellClick(row, col));
+          cell.addEventListener('mouseenter', () => onCellHover(row, col));
+          cell.addEventListener('mouseleave', clearPreview);
+          els.board.appendChild(cell);
+          rowEls.push(cell);
+        }
+        cellEls.push(rowEls);
+      }
+    }
 
     for (let row = 0; row < SIZE; row++) {
-      const rowEls = [];
       for (let col = 0; col < SIZE; col++) {
-        const cell = document.createElement('div');
-        cell.dataset.r = String(row);
-        cell.dataset.c = String(col);
-        cell.className = 'board-cell';
-        cell.setAttribute('role', 'gridcell');
-        cell.setAttribute('aria-label', `${row + 1}행 ${col + 1}열`);
+        const cell = cellEls[row][col];
         cell.style.background = board[row][col] || 'var(--surface-2)';
-        if (recentCells.has(`${row},${col}`)) cell.classList.add('pop');
-        cell.addEventListener('click', () => onCellClick(row, col));
-        cell.addEventListener('mouseenter', () => onCellHover(row, col));
-        cell.addEventListener('mouseleave', clearPreview);
-        els.board.appendChild(cell);
-        rowEls.push(cell);
+        cell.classList.remove('clear-flash', 'invalid', 'pop');
+        if (recentCells.has(`${row},${col}`)) {
+          void cell.offsetWidth;
+          cell.classList.add('pop');
+        }
       }
-      cellEls.push(rowEls);
     }
     recentCells.clear();
   }
@@ -2764,6 +2924,22 @@
     beep(300, .035);
   }
 
+  function attachDragListeners() {
+    window.addEventListener('pointermove', movePiecePointer, { passive: false });
+    window.addEventListener('pointerup', finishPiecePointer, { passive: false });
+    window.addEventListener('pointercancel', handlePointerCancel, { passive: false });
+  }
+
+  function detachDragListeners() {
+    window.removeEventListener('pointermove', movePiecePointer);
+    window.removeEventListener('pointerup', finishPiecePointer);
+    window.removeEventListener('pointercancel', handlePointerCancel);
+  }
+
+  function handlePointerCancel() {
+    cancelDragInteraction();
+  }
+
   function beginPiecePointer(event, index, slot) {
     if (gameOver || phase !== PHASE.PLAYING || !tray[index]) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -2783,6 +2959,7 @@
     };
 
     try { slot.setPointerCapture(event.pointerId); } catch (_) {}
+    attachDragListeners();
   }
 
   function movePiecePointer(event) {
@@ -2834,6 +3011,7 @@
   }
 
   function cancelDragInteraction(resetSelection = false) {
+    detachDragListeners();
     if (dragState?.slot) {
       dragState.slot.classList.remove('dragging');
       try {
@@ -3042,9 +3220,9 @@
     els.draftOverlay.classList.remove('visible');
     document.body.classList.remove('draft-open');
     els.effectsLayer.innerHTML = '';
-    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning', 'draft-mode');
+    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning', 'meltdown-warning-hit', 'draft-mode');
     document.body.classList.remove('overdrive-active');
-    els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid', 'combo-surge', 'combo-breaker', 'combo-critical');
+    els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid', 'combo-surge', 'combo-breaker', 'combo-critical', 'overdrive-sweep', 'overdrive-hit');
     updateFeverUI();
     updateMeltdownUI();
 
@@ -3062,16 +3240,19 @@
   els.nickname.addEventListener('change', saveNickname);
   els.nickname.addEventListener('blur', saveNickname);
   els.restartBtn.addEventListener('click', restart);
-  window.addEventListener('pointermove', movePiecePointer, { passive: false });
-  window.addEventListener('pointerup', finishPiecePointer, { passive: false });
-  window.addEventListener('pointercancel', () => cancelDragInteraction(), { passive: false });
   window.addEventListener('blur', () => cancelDragInteraction());
   window.addEventListener('resize', () => {
     if (dragState) cancelDragInteraction();
   });
-  document.addEventListener('touchmove', event => {
-    if (dragState?.dragging) event.preventDefault();
-  }, { passive: false });
+  document.addEventListener('visibilitychange', () => {
+    document.documentElement.classList.toggle('page-hidden', document.hidden);
+    if (document.hidden) {
+      cancelDragInteraction();
+      els.effectsLayer.innerHTML = '';
+      els.board.classList.remove('overdrive-sweep', 'overdrive-hit', 'combo-surge', 'combo-breaker', 'combo-critical');
+      els.game.classList.remove('meltdown-warning-hit');
+    }
+  });
 
   const storedSound = safeLocalGet('block-game-sound');
   if (storedSound === '0') {
@@ -3084,7 +3265,7 @@
   void loadNickname();
   restart();
 
-  // Build: CORE DRAFT V5.2 · mobile compact layout hotfix
+  // Build: CORE OVERDRIVE V5.4 · thermal optimized burst-impact edition
 
   </script>
 </body>
