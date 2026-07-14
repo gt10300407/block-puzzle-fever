@@ -119,10 +119,13 @@
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
       align-items: center;
       margin-bottom: 10px;
+    }
+    .stats.timed-mode {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
     .stat-card {
       min-width: 0;
@@ -139,11 +142,16 @@
     }
     .stat-value {
       margin-top: 1px;
+      min-width: 0;
       font-size: clamp(20px, 6vw, 26px);
       font-weight: 700;
       line-height: 1.1;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+      letter-spacing: -.035em;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: 'tnum' 1;
     }
     #combo-wrap { opacity: .34; transition: opacity .18s ease; }
     #combo-wrap.active { opacity: 1; }
@@ -687,6 +695,7 @@
   const els = {
     board: document.getElementById('board'),
     tray: document.getElementById('tray'),
+    stats: document.querySelector('.stats'),
     score: document.getElementById('score'),
     best: document.getElementById('best'),
     combo: document.getElementById('combo'),
@@ -1131,9 +1140,22 @@
     return { rows, cols };
   }
 
+  function setAdaptiveStatValue(element, value) {
+    element.textContent = formatNumber(value);
+    element.style.fontSize = '';
+
+    const available = element.clientWidth;
+    const required = element.scrollWidth;
+    if (!available || required <= available) return;
+
+    const currentSize = Number.parseFloat(getComputedStyle(element).fontSize) || 20;
+    const fittedSize = Math.max(11, Math.floor(currentSize * (available / required) * 0.96));
+    element.style.fontSize = `${fittedSize}px`;
+  }
+
   function updateStats() {
-    els.score.textContent = formatNumber(score);
-    els.best.textContent = formatNumber(best);
+    setAdaptiveStatValue(els.score, score);
+    setAdaptiveStatValue(els.best, best);
     els.combo.textContent = combo > 0 ? `×${combo}` : '0';
     els.comboWrap.classList.toggle('active', combo > 0);
   }
@@ -1141,6 +1163,7 @@
   function updateTimerDisplay() {
     const timed = mode === 'timed';
     els.timerWrap.hidden = !timed;
+    els.stats.classList.toggle('timed-mode', timed);
     if (timed) els.timer.textContent = String(timeLeft);
   }
 
