@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>10×10 블록 퍼즐 · Core Overdrive V3</title>
+  <title>10×10 블록 퍼즐 · Core Meltdown V4</title>
   <style>
     :root {
       color-scheme: dark;
@@ -164,6 +164,81 @@
     #combo { color: var(--text-accent); }
     #timer { color: var(--text-danger); }
     #timer-wrap[hidden] { display: none; }
+
+
+    .meltdown-panel {
+      position: relative;
+      display: none;
+      margin: 0 0 10px;
+      padding: 9px 10px 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(17,23,42,.82);
+      overflow: hidden;
+      transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    }
+    #game.meltdown-mode .meltdown-panel { display: block; }
+    .meltdown-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .06em;
+    }
+    .meltdown-title { color: #ffb35a; }
+    #meltdown-status {
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+    .meltdown-track {
+      height: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      background: rgba(0,0,0,.3);
+      overflow: hidden;
+    }
+    #meltdown-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #4fe09b 0%, #ffcf4a 58%, #ff704f 82%, #ff3458 100%);
+      box-shadow: 0 0 14px rgba(255,112,79,.34);
+      transition: width .3s cubic-bezier(.2,.8,.2,1), filter .2s ease;
+    }
+    .meltdown-rule {
+      margin-top: 5px;
+      color: var(--text-secondary);
+      font-size: 10px;
+      text-align: center;
+    }
+    #game.meltdown-hot .meltdown-panel {
+      border-color: rgba(255,179,90,.72);
+      background: linear-gradient(120deg, rgba(255,179,90,.11), rgba(255,75,74,.07));
+      box-shadow: 0 0 24px rgba(255,139,74,.12);
+    }
+    #game.meltdown-critical .meltdown-panel,
+    #game.meltdown-warning .meltdown-panel {
+      border-color: rgba(255,52,88,.9);
+      background: linear-gradient(120deg, rgba(255,52,88,.18), rgba(255,111,67,.09));
+      box-shadow: 0 0 30px rgba(255,52,88,.25);
+    }
+    #game.meltdown-warning .meltdown-panel {
+      animation: meltdownPanelPulse .42s ease-in-out infinite alternate;
+    }
+    #game.meltdown-warning #board {
+      border-color: rgba(255,52,88,.9);
+      box-shadow: 0 0 0 2px rgba(255,52,88,.18), 0 0 38px rgba(255,52,88,.32), 0 18px 54px rgba(0,0,0,.38);
+      animation: meltdownBoardPulse .46s ease-in-out infinite alternate;
+    }
+    #game.meltdown-warning #meltdown-status { color: #fff; }
+    #game.meltdown-warning #meltdown-fill {
+      filter: brightness(1.28) saturate(1.25);
+      animation: meltdownFillPulse .32s ease-in-out infinite alternate;
+    }
 
     .nickname-row {
       display: flex;
@@ -603,21 +678,6 @@
     #gameover.visible { display: block; animation: panelIn .2s ease-out; }
     .gameover-title { font-size: 18px; font-weight: 750; margin-bottom: 4px; }
     .gameover-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
-    #daily-submit, #leaderboard-wrap { display: none; }
-    #daily-submit.visible, #leaderboard-wrap.visible { display: block; }
-    #leaderboard-wrap {
-      margin-bottom: 12px;
-      border-top: 1px solid var(--border);
-      padding-top: 9px;
-    }
-    #leaderboard { margin-top: 6px; }
-    .leader-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 13px;
-      padding: 4px 0;
-    }
     .full-btn { width: 100%; }
     .hint {
       margin: 10px 2px 0;
@@ -727,6 +787,20 @@
     }
 
 
+
+    @keyframes meltdownPanelPulse {
+      from { filter: brightness(1); transform: translateZ(0); }
+      to { filter: brightness(1.22); transform: translateZ(0); }
+    }
+    @keyframes meltdownBoardPulse {
+      from { filter: brightness(1); }
+      to { filter: brightness(1.16) saturate(1.2); }
+    }
+    @keyframes meltdownFillPulse {
+      from { opacity: .78; }
+      to { opacity: 1; }
+    }
+
     @keyframes coreReadyPulse {
       from { filter: brightness(1); transform: translateZ(0); }
       to { filter: brightness(1.16); transform: translateZ(0); }
@@ -769,7 +843,7 @@
     <div class="mode-bar" aria-label="게임 모드">
       <button class="mode-btn active" data-mode="classic" type="button">클래식</button>
       <button class="mode-btn" data-mode="timed" type="button">타임어택 180초</button>
-      <button class="mode-btn" data-mode="daily" type="button">데일리</button>
+      <button class="mode-btn" data-mode="meltdown" type="button">CORE MELTDOWN</button>
       <button id="sound-btn" type="button" aria-label="소리 끄기" title="소리 끄기">🔊</button>
     </div>
 
@@ -801,6 +875,15 @@
       <div class="fever-rule">블록으로 에너지 축적 · 라인 삭제 순간 점수로 방출</div>
     </section>
 
+    <section id="meltdown-panel" class="meltdown-panel" aria-label="코어 온도 상태">
+      <div class="meltdown-head">
+        <span class="meltdown-title">CORE TEMPERATURE</span>
+        <strong id="meltdown-status">0%</strong>
+      </div>
+      <div class="meltdown-track"><div id="meltdown-fill"></div></div>
+      <div id="meltdown-rule" class="meltdown-rule">블록을 놓으면 가열 · 라인을 지우면 냉각</div>
+    </section>
+
     <div class="nickname-row">
       <label for="nickname">닉네임</label>
       <input id="nickname" maxlength="12" autocomplete="nickname" placeholder="플레이어">
@@ -808,22 +891,15 @@
 
     <div id="board" role="grid" aria-label="10×10 게임 보드"></div>
     <div id="tray" aria-label="사용할 블록 3개"></div>
-    <p class="hint">드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.</p>
+    <p id="game-hint" class="hint">드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.</p>
 
     <section id="gameover" aria-live="polite">
-      <div class="gameover-title">게임 종료</div>
+      <div id="gameover-title" class="gameover-title">게임 종료</div>
       <div class="gameover-sub">최종 점수: <strong id="final-score">0</strong></div>
       <div class="summary-grid">
         <div class="summary-item"><div class="summary-label">삭제 라인</div><div id="final-lines" class="summary-value">0</div></div>
         <div class="summary-item"><div class="summary-label">최대 콤보</div><div id="final-combo" class="summary-value">0</div></div>
-        <div class="summary-item"><div class="summary-label">오버드라이브</div><div id="final-fever" class="summary-value">0</div></div>
-      </div>
-      <div id="daily-submit">
-        <button id="submit-score-btn" class="full-btn" type="button">데일리 기록 저장</button>
-      </div>
-      <div id="leaderboard-wrap">
-        <div style="font-size:13px;font-weight:700;">오늘 이 기기의 순위</div>
-        <div id="leaderboard"></div>
+        <div class="summary-item"><div id="final-mode-label" class="summary-label">오버드라이브</div><div id="final-fever" class="summary-value">0</div></div>
       </div>
       <button id="restart-btn" class="full-btn" type="button">다시 시작</button>
     </section>
@@ -844,8 +920,11 @@
   const FEVER_MULTIPLIER = 2;
   const OVERDRIVE_MAX_MOVES = 12;
   const OVERDRIVE_BANK_MULTIPLIER = 3;
-  const SPECIAL_MIN_TRAY = 6;
-  const SPECIAL_FORCE_TRAY = 16;
+  const SPECIAL_MIN_TRAY = 5;
+  const SPECIAL_FORCE_TRAY = 14;
+  const MELTDOWN_MAX = 100;
+  const MELTDOWN_WARNING_MOVES = 3;
+  const MELTDOWN_ESCAPE_BASE_BONUS = 500;
   const DRAG_THRESHOLD_PX = 7;
   const DRAG_LIFT_MIN_PX = 70;
   const DRAG_LIFT_MAX_PX = 92;
@@ -912,6 +991,12 @@
   let dragState = null;
   let displayedScore = 0;
   let scoreAnimationFrame = null;
+  let coreTemperature = 0;
+  let meltdownWarning = false;
+  let meltdownMovesLeft = 0;
+  let meltdownEscapes = 0;
+  let heatFreezeMoves = 0;
+  let gameOverReason = 'NO_MOVES';
   const pendingTimeouts = new Set();
   const memoryStore = new Map();
 
@@ -929,10 +1014,7 @@
     soundBtn: document.getElementById('sound-btn'),
     gameover: document.getElementById('gameover'),
     finalScore: document.getElementById('final-score'),
-    dailySubmit: document.getElementById('daily-submit'),
-    leaderboardWrap: document.getElementById('leaderboard-wrap'),
-    leaderboard: document.getElementById('leaderboard'),
-    submitScoreBtn: document.getElementById('submit-score-btn'),
+    gameoverTitle: document.getElementById('gameover-title'),
     restartBtn: document.getElementById('restart-btn'),
     game: document.getElementById('game'),
     feverFill: document.getElementById('fever-fill'),
@@ -944,7 +1026,13 @@
     dragGhost: document.getElementById('drag-ghost'),
     finalLines: document.getElementById('final-lines'),
     finalCombo: document.getElementById('final-combo'),
-    finalFever: document.getElementById('final-fever')
+    finalFever: document.getElementById('final-fever'),
+    finalModeLabel: document.getElementById('final-mode-label'),
+    meltdownPanel: document.getElementById('meltdown-panel'),
+    meltdownFill: document.getElementById('meltdown-fill'),
+    meltdownStatus: document.getElementById('meltdown-status'),
+    meltdownRule: document.getElementById('meltdown-rule'),
+    gameHint: document.getElementById('game-hint')
   };
 
   function createEmptyBoard() {
@@ -1007,33 +1095,9 @@
     }
   };
 
-  function mulberry32(a) {
-    return function() {
-      a |= 0;
-      a = a + 0x6D2B79F5 | 0;
-      let t = Math.imul(a ^ a >>> 15, 1 | a);
-      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    };
-  }
 
-  function seedFromDate() {
-    const d = new Date();
-    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-  }
 
-  function todayStr() {
-    const d = new Date();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}-${month}-${day}`;
-  }
 
-  function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, char => ({
-      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-    }[char]));
-  }
 
   function bestKey(currentMode = mode) {
     return `block-game-best-${currentMode}`;
@@ -1122,7 +1186,7 @@
   function shouldSpawnSpecial() {
     if (trayRound < 4 || traysSinceSpecial < SPECIAL_MIN_TRAY) return false;
     if (traysSinceSpecial >= SPECIAL_FORCE_TRAY) return true;
-    const chance = Math.min(.09, .045 + Math.min(score, 50000) / 1000000);
+    const chance = Math.min(.10, .055 + Math.min(score, 50000) / 900000);
     return rng() < chance;
   }
 
@@ -1390,6 +1454,116 @@
     els.coreBank.textContent = formatNumber(coreBank);
   }
 
+
+  function isMeltdownMode() {
+    return mode === 'meltdown';
+  }
+
+  function updateMeltdownUI() {
+    const active = isMeltdownMode();
+    els.meltdownPanel.hidden = !active;
+    els.game.classList.toggle('meltdown-mode', active);
+    els.game.classList.toggle('meltdown-hot', active && coreTemperature >= 70 && !meltdownWarning);
+    els.game.classList.toggle('meltdown-critical', active && coreTemperature >= 90 && !meltdownWarning);
+    els.game.classList.toggle('meltdown-warning', active && meltdownWarning);
+    if (!active) return;
+
+    const percent = Math.max(0, Math.min(MELTDOWN_MAX, Math.round(coreTemperature)));
+    els.meltdownFill.style.width = `${percent}%`;
+    if (meltdownWarning) {
+      els.meltdownStatus.textContent = `WARNING · ${meltdownMovesLeft}회`;
+      els.meltdownRule.textContent = `남은 ${meltdownMovesLeft}회 안에 라인을 지워 코어를 냉각해.`;
+    } else if (heatFreezeMoves > 0) {
+      els.meltdownStatus.textContent = `${percent}% · FREEZE ${heatFreezeMoves}`;
+      els.meltdownRule.textContent = `시간 균열 작동 중 · ${heatFreezeMoves}회 동안 가열 정지`;
+    } else {
+      els.meltdownStatus.textContent = `${percent}%`;
+      els.meltdownRule.textContent = percent >= 90
+        ? '임계 온도 · 다음 배치를 신중하게 선택해.'
+        : percent >= 70
+          ? '고온 상태 · 라인 삭제로 빠르게 냉각해.'
+          : '블록을 놓으면 가열 · 라인을 지우면 냉각';
+    }
+  }
+
+  function meltdownHeatForTurn(placedCount, specialType = '', clearedCount = 0, movedCount = 0) {
+    if (specialType === SPECIAL_TYPES.TIME) return -12;
+    if (specialType === SPECIAL_TYPES.LASER_ROW || specialType === SPECIAL_TYPES.LASER_COL) {
+      return -(8 + Math.min(10, clearedCount));
+    }
+    if (specialType === SPECIAL_TYPES.EXPLOSION) return 7 + Math.min(5, Math.floor(clearedCount / 3));
+    if (specialType === SPECIAL_TYPES.MAGNET) return 3 + Math.min(4, Math.floor(movedCount / 8));
+    return 3 + Math.ceil(placedCount * 1.25);
+  }
+
+  function meltdownCoolingForLines(lineCount) {
+    if (lineCount <= 0) return 0;
+    const table = [0, 22, 48, 76, 100];
+    return (table[Math.min(4, lineCount)] || 100) + Math.max(0, combo - 1) * 2;
+  }
+
+  function startMeltdownWarning() {
+    if (!isMeltdownMode() || meltdownWarning || gameOver) return;
+    coreTemperature = MELTDOWN_MAX;
+    meltdownWarning = true;
+    meltdownMovesLeft = MELTDOWN_WARNING_MOVES;
+    announceEvent('MELTDOWN WARNING', `${MELTDOWN_WARNING_MOVES}회 안에 라인을 삭제해`, 'danger');
+    flashScreen('danger');
+    screenShake('large');
+    createShockwave('#ff3458', .78);
+    burstParticles(38, ['#ff3458','#ff8a4c','#ffffff'], 220);
+    beepSequence([520,360,220,150], .095);
+    if (navigator.vibrate) navigator.vibrate([70,30,90,30,120]);
+    updateMeltdownUI();
+  }
+
+  function resolveMeltdownTurn({ placedCount = 0, lineCount = 0, specialType = '', clearedCount = 0, movedCount = 0 } = {}) {
+    if (!isMeltdownMode() || gameOver) return false;
+    const wasWarning = meltdownWarning;
+    let heatDelta = meltdownHeatForTurn(placedCount, specialType, clearedCount, movedCount);
+
+    if (specialType === SPECIAL_TYPES.TIME) {
+      heatFreezeMoves = Math.max(heatFreezeMoves, 3);
+    } else if (heatDelta > 0 && heatFreezeMoves > 0) {
+      heatDelta = 0;
+      heatFreezeMoves--;
+    }
+
+    coreTemperature = Math.max(0, Math.min(MELTDOWN_MAX, coreTemperature + heatDelta));
+
+    if (lineCount > 0) {
+      const cooling = meltdownCoolingForLines(lineCount);
+      coreTemperature = Math.max(0, coreTemperature - cooling);
+      if (wasWarning) {
+        meltdownWarning = false;
+        meltdownMovesLeft = 0;
+        coreTemperature = Math.min(coreTemperature, Math.max(28, 54 - lineCount * 6));
+        meltdownEscapes++;
+        const bonus = MELTDOWN_ESCAPE_BASE_BONUS + lineCount * 350 + Math.max(0, combo - 1) * 80;
+        addScorePoints(bonus, 'release');
+        announceEvent('CORE STABILIZED', `위기 탈출 +${formatNumber(bonus)}`, 'fever');
+        flashScreen('fever');
+        createShockwave('#65f5c9', .74);
+        burstParticles(36, ['#65f5c9','#57f3ff','#ffffff'], 205);
+        beepSequence([320,520,760,1020], .075);
+        if (navigator.vibrate) navigator.vibrate([35,18,55]);
+      }
+    } else if (wasWarning) {
+      meltdownMovesLeft = Math.max(0, meltdownMovesLeft - 1);
+      if (meltdownMovesLeft <= 0) {
+        gameOverReason = 'MELTDOWN';
+        updateMeltdownUI();
+        triggerGameOver('MELTDOWN');
+        return true;
+      }
+    } else if (coreTemperature >= MELTDOWN_MAX) {
+      startMeltdownWarning();
+    }
+
+    updateMeltdownUI();
+    return gameOver;
+  }
+
   function activateFever() {
     if (feverActive) return;
     feverActive = true;
@@ -1503,7 +1677,7 @@
       bank = movedCount * 4;
     } else if (type === SPECIAL_TYPES.TIME) {
       base = 25;
-      bank = mode === 'timed' ? 80 : 120;
+      bank = mode === 'timed' ? 80 : isMeltdownMode() ? 100 : 120;
     }
     addCoreBank(bank);
     return addScorePoints(base, type === SPECIAL_TYPES.EXPLOSION ? 'bomb' : feverActive ? 'overdrive' : 'release');
@@ -1566,6 +1740,10 @@
     els.timerWrap.hidden = !timed;
     els.stats.classList.toggle('timed-mode', timed);
     if (timed) els.timer.textContent = String(timeLeft);
+    els.gameHint.textContent = isMeltdownMode()
+      ? '드래그 또는 터치 배치 · 과열되기 전에 라인을 지워 코어를 냉각해.'
+      : '드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.';
+    updateMeltdownUI();
   }
 
   function startTimer() {
@@ -1798,6 +1976,9 @@
         timeLeft += bonusSeconds;
         updateTimerDisplay();
         announceEvent('TIME RIFT', `+${bonusSeconds} SEC`, 'fever');
+      } else if (isMeltdownMode()) {
+        if (feverActive) feverMovesLeft = Math.min(OVERDRIVE_MAX_MOVES, feverMovesLeft + 1);
+        announceEvent('THERMAL RIFT', `온도 -12 · 가열 3회 정지${feverActive ? ' · OVERDRIVE +1' : ''}`, 'fever');
       } else if (feverActive) {
         feverMovesLeft = Math.min(OVERDRIVE_MAX_MOVES, feverMovesLeft + 2);
         announceEvent('RIFT EXTEND', 'OVERDRIVE +2회', 'fever');
@@ -1806,6 +1987,7 @@
         announceEvent('TIME RIFT', 'CORE +25% · BANK 충전', 'fever');
       }
       scoreSpecial(piece);
+      if (resolveMeltdownTurn({ specialType: piece.specialType })) return;
       createShockwave(meta.color, .7);
       flashScreen('fever');
       burstParticles(28, [meta.color,'#ffffff','#57f3ff'], 165);
@@ -1845,8 +2027,10 @@
       const lineCount = rows.length + cols.length;
       if (lineCount > 0) {
         const result = scorePlacement(0, lineCount);
+        if (resolveMeltdownTurn({ lineCount, specialType: piece.specialType, clearedCount, movedCount })) return;
         resolveClearedLines(rows, cols, startedInFever, result, meta.short);
       } else {
+        if (resolveMeltdownTurn({ specialType: piece.specialType, clearedCount, movedCount })) return;
         if (isBoardEmpty() && clearedCount > 0) awardAllClear();
         afterPlacementFlow(startedInFever, 0);
       }
@@ -1884,6 +2068,7 @@
     const { rows, cols } = getFullLines();
     const lineCount = rows.length + cols.length;
     const scoreResult = scorePlacement(placedCount, lineCount);
+    if (resolveMeltdownTurn({ placedCount, lineCount })) return;
 
     if (lineCount > 0) {
       resolveClearedLines(rows, cols, startedInFever, scoreResult);
@@ -2170,7 +2355,7 @@
   }
 
   function setMode(nextMode) {
-    if (!['classic', 'timed', 'daily'].includes(nextMode)) return;
+    if (!['classic', 'timed', 'meltdown'].includes(nextMode)) return;
     mode = nextMode;
     document.querySelectorAll('.mode-btn').forEach(button => {
       button.classList.toggle('active', button.dataset.mode === mode);
@@ -2178,8 +2363,9 @@
     restart();
   }
 
-  function triggerGameOver() {
+  function triggerGameOver(reason = 'NO_MOVES') {
     if (gameOver) return;
+    gameOverReason = reason;
     cancelDragInteraction(true);
     gameOver = true;
     phase = PHASE.GAME_OVER;
@@ -2193,14 +2379,13 @@
     els.finalScore.textContent = formatNumber(score);
     els.finalLines.textContent = formatNumber(totalLines);
     els.finalCombo.textContent = `×${maxCombo}`;
-    els.finalFever.textContent = String(feverCount);
+    els.finalModeLabel.textContent = isMeltdownMode() ? '위기 탈출' : '오버드라이브';
+    els.finalFever.textContent = String(isMeltdownMode() ? meltdownEscapes : feverCount);
+    els.gameoverTitle.textContent = reason === 'MELTDOWN' ? 'CORE MELTDOWN' : '게임 종료';
     els.gameover.classList.add('visible');
-    announceEvent('RUN OVER', formatNumber(score), '');
-    screenShake('medium');
-    const daily = mode === 'daily';
-    els.dailySubmit.classList.toggle('visible', daily);
-    els.leaderboardWrap.classList.toggle('visible', daily);
-    if (daily) loadLeaderboard();
+    announceEvent(reason === 'MELTDOWN' ? 'CORE MELTDOWN' : 'RUN OVER', formatNumber(score), reason === 'MELTDOWN' ? 'danger' : '');
+    flashScreen(reason === 'MELTDOWN' ? 'danger' : 'normal');
+    screenShake(reason === 'MELTDOWN' ? 'large' : 'medium');
   }
 
   async function loadBest() {
@@ -2229,60 +2414,6 @@
     void storage.set('block-game-nickname', value, false);
   }
 
-  async function submitScore() {
-    if (mode !== 'daily' || !gameOver) return;
-    const name = (els.nickname.value.trim() || '익명').slice(0, 12);
-    els.nickname.value = name;
-    const key = `daily:${todayStr()}:${name}`;
-
-    try {
-      const previous = await storage.get(key, true);
-      const previousScore = previous ? (JSON.parse(previous.value).score || 0) : 0;
-      const storedScore = Math.max(previousScore, score);
-      await storage.set(key, JSON.stringify({ name, score: storedScore }), true);
-      saveNickname();
-      els.dailySubmit.classList.remove('visible');
-      await loadLeaderboard();
-    } catch (_) {
-      els.leaderboard.innerHTML = '<div style="font-size:13px;color:var(--text-danger);">기록 저장에 실패했지만 게임은 정상적으로 계속할 수 있어.</div>';
-    }
-  }
-
-  async function loadLeaderboard() {
-    const prefix = `daily:${todayStr()}:`;
-    try {
-      const result = await storage.list(prefix, true);
-      const entries = [];
-      for (const key of result.keys || []) {
-        try {
-          const record = await storage.get(key, true);
-          if (!record) continue;
-          const parsed = JSON.parse(record.value);
-          if (parsed && typeof parsed.name === 'string' && Number.isFinite(Number(parsed.score))) {
-            entries.push({ name: parsed.name.slice(0, 12), score: Number(parsed.score) });
-          }
-        } catch (_) {}
-      }
-
-      const bestByName = new Map();
-      for (const entry of entries) {
-        const previous = bestByName.get(entry.name);
-        if (!previous || entry.score > previous.score) bestByName.set(entry.name, entry);
-      }
-      const top = [...bestByName.values()].sort((a, b) => b.score - a.score).slice(0, 5);
-
-      if (top.length === 0) {
-        els.leaderboard.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);">아직 저장된 기록 없음</div>';
-        return;
-      }
-
-      els.leaderboard.innerHTML = top.map((entry, index) =>
-        `<div class="leader-row"><span>${index + 1}. ${escapeHtml(entry.name)}</span><strong>${entry.score}</strong></div>`
-      ).join('');
-    } catch (_) {
-      els.leaderboard.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);">기록을 불러오지 못했어.</div>';
-    }
-  }
 
   function restart() {
     cancelDragInteraction(true);
@@ -2311,6 +2442,12 @@
     trayRound = 0;
     traysSinceSpecial = 0;
     lastSpecialType = '';
+    coreTemperature = 0;
+    meltdownWarning = false;
+    meltdownMovesLeft = 0;
+    meltdownEscapes = 0;
+    heatFreezeMoves = 0;
+    gameOverReason = 'NO_MOVES';
     selected = -1;
     gameOver = false;
     phase = PHASE.PLAYING;
@@ -2318,16 +2455,15 @@
     previewCells = [];
     tray = [null, null, null];
 
-    rng = mode === 'daily' ? mulberry32(seedFromDate()) : Math.random;
+    rng = Math.random;
     els.gameover.classList.remove('visible');
-    els.dailySubmit.classList.remove('visible');
-    els.leaderboardWrap.classList.remove('visible');
-    els.leaderboard.innerHTML = '';
+    els.gameoverTitle.textContent = '게임 종료';
     els.effectsLayer.innerHTML = '';
-    els.game.classList.remove('fever-active', 'core-ready');
+    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning');
     document.body.classList.remove('overdrive-active');
     els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid', 'combo-surge', 'combo-breaker', 'combo-critical');
     updateFeverUI();
+    updateMeltdownUI();
 
     renderBoard();
     updateStats();
@@ -2344,7 +2480,6 @@
   els.soundBtn.addEventListener('click', toggleSound);
   els.nickname.addEventListener('change', saveNickname);
   els.nickname.addEventListener('blur', saveNickname);
-  els.submitScoreBtn.addEventListener('click', submitScore);
   els.restartBtn.addEventListener('click', restart);
   window.addEventListener('pointermove', movePiecePointer, { passive: false });
   window.addEventListener('pointerup', finishPiecePointer, { passive: false });
@@ -2375,6 +2510,8 @@
 
   void loadNickname();
   restart();
+
+  // Build: CORE MELTDOWN V4 · daily mode removed · special item cadence slightly increased
 
   </script>
 </body>
