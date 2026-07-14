@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>10×10 블록 퍼즐 · Drag V2.2</title>
+  <title>10×10 블록 퍼즐 · Core Overdrive V3</title>
   <style>
     :root {
       color-scheme: dark;
@@ -387,6 +387,112 @@
     }
     #game.fever-active #fever-status { color: #fff3a8; }
 
+
+    .core-bank-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 7px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(0,0,0,.22);
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .07em;
+    }
+    #core-bank {
+      color: #8dffdf;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 12px rgba(101,245,201,.42);
+    }
+    #game.core-ready .fever-panel {
+      border-color: rgba(255,207,74,.78);
+      box-shadow: 0 0 24px rgba(255,207,74,.22);
+      animation: coreReadyPulse .72s ease-in-out infinite alternate;
+    }
+    #game.core-ready #fever-status { color: #fff3a8; }
+    body.overdrive-active {
+      background:
+        radial-gradient(circle at 50% -8%, rgba(87,243,255,.30), transparent 36%),
+        radial-gradient(circle at 12% 72%, rgba(189,92,255,.18), transparent 34%),
+        radial-gradient(circle at 88% 72%, rgba(255,207,74,.13), transparent 34%),
+        var(--background);
+    }
+    #game.fever-active #board::after {
+      content: '';
+      position: absolute;
+      inset: -45% -18%;
+      pointer-events: none;
+      background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.20) 49%, transparent 60%);
+      animation: overdriveSweep 1.15s linear infinite;
+      mix-blend-mode: screen;
+    }
+    .special-piece {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      line-height: 1;
+    }
+    .special-icon {
+      font-size: clamp(28px, 8vw, 38px);
+      filter: drop-shadow(0 0 12px var(--special-glow, rgba(255,255,255,.55)));
+    }
+    .special-label {
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .05em;
+      color: rgba(255,255,255,.82);
+      white-space: nowrap;
+    }
+    .tray-slot.special-slot {
+      border-color: var(--special-color, rgba(255,255,255,.65));
+      background: radial-gradient(circle, var(--special-bg, rgba(255,255,255,.12)), rgba(17,23,42,.82) 68%);
+      box-shadow: 0 0 24px var(--special-shadow, rgba(255,255,255,.12));
+      animation: specialSlotPulse .92s ease-in-out infinite alternate;
+    }
+    #drag-ghost.special {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--drag-cell, 32px);
+      height: var(--drag-cell, 32px);
+      font-size: calc(var(--drag-cell, 32px) * .85);
+      border-radius: 10px;
+      background: rgba(15,20,38,.90);
+      border: 2px solid var(--special-color, #fff);
+      box-shadow: 0 0 22px var(--special-color, #fff);
+    }
+    .shockwave {
+      position: fixed;
+      z-index: 1001;
+      width: 24px;
+      height: 24px;
+      margin: -12px 0 0 -12px;
+      border: 3px solid var(--wave-color, #62f7ff);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      animation: shockwaveExpand var(--wave-duration, .55s) cubic-bezier(.12,.72,.18,1) forwards;
+      box-shadow: 0 0 20px var(--wave-color, #62f7ff), inset 0 0 18px var(--wave-color, #62f7ff);
+    }
+    #board.combo-surge { box-shadow: 0 0 0 2px rgba(101,245,201,.24), 0 0 32px rgba(101,245,201,.34), 0 18px 54px rgba(0,0,0,.38); }
+    #board.combo-breaker { box-shadow: 0 0 0 3px rgba(255,207,74,.28), 0 0 44px rgba(255,207,74,.42), 0 18px 54px rgba(0,0,0,.38); }
+    #board.combo-critical { box-shadow: 0 0 0 3px rgba(189,92,255,.32), 0 0 58px rgba(189,92,255,.55), 0 0 80px rgba(87,243,255,.25), 0 18px 54px rgba(0,0,0,.40); }
+    .floating-score.release {
+      color: #8dffdf;
+      font-size: clamp(28px, 9vw, 46px);
+      text-shadow: 0 0 12px rgba(101,245,201,.95), 0 0 30px rgba(87,243,255,.76);
+    }
+    .floating-score.overdrive {
+      color: #fff3a8;
+      font-size: clamp(30px, 9.5vw, 48px);
+      text-shadow: 0 0 14px rgba(255,207,74,.95), 0 0 32px rgba(189,92,255,.76);
+    }
+
     #event-banner {
       position: fixed;
       left: 50%;
@@ -620,6 +726,25 @@
       45% { transform: scale(1.25) rotate(-3deg); }
     }
 
+
+    @keyframes coreReadyPulse {
+      from { filter: brightness(1); transform: translateZ(0); }
+      to { filter: brightness(1.16); transform: translateZ(0); }
+    }
+    @keyframes overdriveSweep {
+      from { transform: translateX(-46%) rotate(0deg); }
+      to { transform: translateX(46%) rotate(0deg); }
+    }
+    @keyframes specialSlotPulse {
+      from { transform: translateY(0) scale(1); filter: brightness(1); }
+      to { transform: translateY(-2px) scale(1.025); filter: brightness(1.18); }
+    }
+    @keyframes shockwaveExpand {
+      0% { opacity: .95; transform: scale(.35); }
+      72% { opacity: .62; }
+      100% { opacity: 0; transform: scale(18); }
+    }
+
     @media (max-width: 365px) {
       body { padding-left: 8px; padding-right: 8px; }
       .mode-btn { font-size: 12px; padding-left: 8px; padding-right: 8px; }
@@ -666,13 +791,14 @@
         <div id="timer" class="stat-value">180</div>
       </div>
     </section>
-    <section class="fever-panel" aria-label="피버 게이지">
+    <section class="fever-panel" aria-label="코어 오버드라이브 상태">
       <div class="fever-head">
-        <span class="fever-title">FEVER GAUGE</span>
+        <span class="fever-title">CORE OVERDRIVE</span>
         <strong id="fever-status">0%</strong>
       </div>
       <div class="fever-track"><div id="fever-fill"></div></div>
-      <div class="fever-rule">라인 삭제로 충전 · 발동하면 8회 동안 모든 점수 ×3</div>
+      <div class="core-bank-line"><span>CORE BANK</span><strong id="core-bank">0</strong></div>
+      <div class="fever-rule">블록으로 에너지 축적 · 라인 삭제 순간 점수로 방출</div>
     </section>
 
     <div class="nickname-row">
@@ -682,7 +808,7 @@
 
     <div id="board" role="grid" aria-label="10×10 게임 보드"></div>
     <div id="tray" aria-label="사용할 블록 3개"></div>
-    <p class="hint">블록을 끌어 놓거나, 선택 후 칸을 눌러 배치해.</p>
+    <p class="hint">드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.</p>
 
     <section id="gameover" aria-live="polite">
       <div class="gameover-title">게임 종료</div>
@@ -690,7 +816,7 @@
       <div class="summary-grid">
         <div class="summary-item"><div class="summary-label">삭제 라인</div><div id="final-lines" class="summary-value">0</div></div>
         <div class="summary-item"><div class="summary-label">최대 콤보</div><div id="final-combo" class="summary-value">0</div></div>
-        <div class="summary-item"><div class="summary-label">피버 횟수</div><div id="final-fever" class="summary-value">0</div></div>
+        <div class="summary-item"><div class="summary-label">오버드라이브</div><div id="final-fever" class="summary-value">0</div></div>
       </div>
       <div id="daily-submit">
         <button id="submit-score-btn" class="full-btn" type="button">데일리 기록 저장</button>
@@ -715,9 +841,11 @@
   const TIMED_DURATION_SECONDS = 180;
   const FEVER_MAX = 100;
   const FEVER_MOVES = 8;
-  const FEVER_MULTIPLIER = 3;
-  const BOMB_MIN_TRAY = 6;
-  const BOMB_FORCE_TRAY = 18;
+  const FEVER_MULTIPLIER = 2;
+  const OVERDRIVE_MAX_MOVES = 12;
+  const OVERDRIVE_BANK_MULTIPLIER = 3;
+  const SPECIAL_MIN_TRAY = 6;
+  const SPECIAL_FORCE_TRAY = 16;
   const DRAG_THRESHOLD_PX = 7;
   const DRAG_LIFT_MIN_PX = 70;
   const DRAG_LIFT_MAX_PX = 92;
@@ -731,6 +859,20 @@
     [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]
   ];
   const COLORS = ['#378ADD','#1D9E75','#D85A30','#D4537E','#7F77DD','#639922','#BA7517'];
+  const SPECIAL_TYPES = Object.freeze({
+    EXPLOSION:'explosion',
+    LASER_ROW:'laser-row',
+    LASER_COL:'laser-col',
+    MAGNET:'magnet',
+    TIME:'time'
+  });
+  const SPECIAL_META = Object.freeze({
+    [SPECIAL_TYPES.EXPLOSION]: { icon:'💥', name:'폭발 코어', short:'BLAST', color:'#ff604d', glow:'rgba(255,84,68,.84)' },
+    [SPECIAL_TYPES.LASER_ROW]: { icon:'↔️', name:'가로 레이저', short:'LASER H', color:'#50e7ff', glow:'rgba(80,231,255,.82)' },
+    [SPECIAL_TYPES.LASER_COL]: { icon:'↕️', name:'세로 레이저', short:'LASER V', color:'#54a6ff', glow:'rgba(84,166,255,.82)' },
+    [SPECIAL_TYPES.MAGNET]: { icon:'🧲', name:'자력 코어', short:'MAGNET', color:'#d57aff', glow:'rgba(213,122,255,.84)' },
+    [SPECIAL_TYPES.TIME]: { icon:'⏳', name:'시간 균열', short:'RIFT', color:'#ffd75a', glow:'rgba(255,215,90,.84)' }
+  });
 
   const PHASE = Object.freeze({ PLAYING:'PLAYING', RESOLVING:'RESOLVING', GAME_OVER:'GAME_OVER' });
 
@@ -753,16 +895,23 @@
   let feverActive = false;
   let feverMovesLeft = 0;
   let feverCount = 0;
+  let coreBank = 0;
+  let coreReady = false;
+  let overdriveScoreStart = 0;
+  let pendingOverdriveBonus = 0;
   let totalLines = 0;
   let maxCombo = 0;
   let comboGrace = 0;
   let trayRound = 0;
-  let traysSinceBomb = 0;
+  let traysSinceSpecial = 0;
+  let lastSpecialType = '';
   let soundOn = true;
   let audioCtx = null;
   let rng = Math.random;
   let gameSessionId = 0;
   let dragState = null;
+  let displayedScore = 0;
+  let scoreAnimationFrame = null;
   const pendingTimeouts = new Set();
   const memoryStore = new Map();
 
@@ -788,6 +937,7 @@
     game: document.getElementById('game'),
     feverFill: document.getElementById('fever-fill'),
     feverStatus: document.getElementById('fever-status'),
+    coreBank: document.getElementById('core-bank'),
     effectsLayer: document.getElementById('effects-layer'),
     screenFlash: document.getElementById('screen-flash'),
     eventBanner: document.getElementById('event-banner'),
@@ -951,41 +1101,81 @@
     });
     const shape = weightedPick(SHAPES, weights);
     const color = COLORS[Math.floor(rng() * COLORS.length)];
-    return { shape, color, isBomb:false };
+    return { shape, color, specialType:null };
   }
 
-  function shouldSpawnBomb() {
-    if (trayRound < 3 || traysSinceBomb < BOMB_MIN_TRAY) return false;
-    if (traysSinceBomb >= BOMB_FORCE_TRAY) return true;
-    const chance = Math.min(0.075, 0.035 + score / 120000);
+  function isSpecialPiece(piece) {
+    return Boolean(piece && piece.specialType);
+  }
+
+  function makeSpecialPiece(type) {
+    const meta = SPECIAL_META[type];
+    return {
+      shape:[[0,0]],
+      color:meta.color,
+      specialType:type,
+      icon:meta.icon,
+      name:meta.name
+    };
+  }
+
+  function shouldSpawnSpecial() {
+    if (trayRound < 4 || traysSinceSpecial < SPECIAL_MIN_TRAY) return false;
+    if (traysSinceSpecial >= SPECIAL_FORCE_TRAY) return true;
+    const chance = Math.min(.09, .045 + Math.min(score, 50000) / 1000000);
     return rng() < chance;
+  }
+
+  function pickSpecialType() {
+    const types = [
+      SPECIAL_TYPES.EXPLOSION,
+      SPECIAL_TYPES.LASER_ROW,
+      SPECIAL_TYPES.LASER_COL,
+      SPECIAL_TYPES.MAGNET,
+      SPECIAL_TYPES.TIME
+    ];
+    const weights = mode === 'timed' ? [34,14,14,20,18] : [36,15,15,22,12];
+    let picked = weightedPick(types, weights);
+    const lastFamily = lastSpecialType.startsWith('laser') ? 'laser' : lastSpecialType;
+    let guard = 0;
+    while (((picked.startsWith('laser') ? 'laser' : picked) === lastFamily) && guard < 5) {
+      picked = weightedPick(types, weights);
+      guard++;
+    }
+    lastSpecialType = picked;
+    return picked;
   }
 
   function initTray() {
     if (gameOver) return;
     trayRound++;
-    const bombSpawned = shouldSpawnBomb();
+    const specialSpawned = shouldSpawnSpecial();
     tray = [randNormalPiece(), randNormalPiece(), randNormalPiece()];
-    if (bombSpawned) {
-      const bombIndex = Math.floor(rng() * 3);
-      tray[bombIndex] = { shape:[[0,0]], color:'#E24B4A', isBomb:true };
-      traysSinceBomb = 0;
+    let specialType = '';
+    if (specialSpawned) {
+      const specialIndex = Math.floor(rng() * 3);
+      specialType = pickSpecialType();
+      tray[specialIndex] = makeSpecialPiece(specialType);
+      traysSinceSpecial = 0;
     } else {
-      traysSinceBomb++;
+      traysSinceSpecial++;
     }
     selected = -1;
     renderTray();
-    if (bombSpawned) {
-      announceEvent('BOMB DROP', '희귀 폭탄 등장', 'danger');
+    if (specialSpawned) {
+      const meta = SPECIAL_META[specialType];
+      announceEvent('SPECIAL CORE', meta.name, specialType === SPECIAL_TYPES.EXPLOSION ? 'danger' : 'fever');
+      createShockwave(meta.color, .5);
+      burstParticles(24, [meta.color, '#ffffff'], 145);
       screenShake('small');
-      beepSequence([260, 340, 460], .055);
+      beepSequence([300, 420, 620], .055);
     }
     checkGameOver();
   }
 
   function fitsAt(piece, row, col) {
     if (!piece) return false;
-    if (piece.isBomb) return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+    if (isSpecialPiece(piece)) return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
     for (const [dr, dc] of piece.shape) {
       const rr = row + dr;
       const cc = col + dc;
@@ -996,7 +1186,7 @@
 
   function canPlaceAnywhere(piece) {
     if (!piece) return false;
-    if (piece.isBomb) return true;
+    if (isSpecialPiece(piece)) return true;
     for (let row = 0; row < SIZE; row++) {
       for (let col = 0; col < SIZE; col++) {
         if (fitsAt(piece, row, col)) return true;
@@ -1069,13 +1259,111 @@
     }
   }
 
+  function createShockwave(color = '#62f7ff', duration = .55, origin = boardCenter()) {
+    const wave = document.createElement('div');
+    wave.className = 'shockwave';
+    wave.style.left = `${origin.x}px`;
+    wave.style.top = `${origin.y}px`;
+    wave.style.setProperty('--wave-color', color);
+    wave.style.setProperty('--wave-duration', `${duration}s`);
+    els.effectsLayer.appendChild(wave);
+    window.setTimeout(() => wave.remove(), Math.ceil(duration * 1000) + 120);
+  }
+
+  function comboTier(value = combo) {
+    if (value >= 7) return 'critical';
+    if (value >= 5) return 'breaker';
+    if (value >= 3) return 'surge';
+    return 'charge';
+  }
+
+  function comboMultiplier(value = combo) {
+    if (value >= 7) return 4;
+    if (value === 6) return 3.5;
+    if (value === 5) return 3;
+    if (value === 4) return 2.2;
+    if (value === 3) return 1.7;
+    if (value === 2) return 1.3;
+    return 1;
+  }
+
+  function lineReleaseMultiplier(lineCount) {
+    if (lineCount <= 1) return 1;
+    if (lineCount === 2) return 2.5;
+    if (lineCount === 3) return 5;
+    if (lineCount === 4) return 9;
+    return 9 + (lineCount - 4) * 5;
+  }
+
+  function lineBaseBonus(lineCount) {
+    if (lineCount <= 0) return 0;
+    if (lineCount === 1) return 15;
+    if (lineCount === 2) return 80;
+    if (lineCount === 3) return 250;
+    if (lineCount === 4) return 600;
+    return 600 + (lineCount - 4) * 500;
+  }
+
+  function animateScoreTo(target, duration = 420) {
+    if (scoreAnimationFrame) cancelAnimationFrame(scoreAnimationFrame);
+    const from = displayedScore;
+    const started = performance.now();
+    const total = Math.max(120, duration);
+    const frame = now => {
+      const t = Math.min(1, (now - started) / total);
+      const eased = 1 - Math.pow(1 - t, 3);
+      displayedScore = Math.round(from + (target - from) * eased);
+      setAdaptiveStatValue(els.score, displayedScore);
+      if (t < 1) scoreAnimationFrame = requestAnimationFrame(frame);
+      else {
+        displayedScore = target;
+        scoreAnimationFrame = null;
+        setAdaptiveStatValue(els.score, displayedScore);
+      }
+    };
+    scoreAnimationFrame = requestAnimationFrame(frame);
+  }
+
+  function addCoreBank(baseAmount) {
+    if (baseAmount <= 0) return 0;
+    const multiplier = feverActive ? OVERDRIVE_BANK_MULTIPLIER : 1;
+    const gained = Math.max(0, Math.round(baseAmount * multiplier));
+    coreBank += gained;
+    updateFeverUI();
+    return gained;
+  }
+
+  function releaseCoreBank(lineCount) {
+    if (lineCount <= 0 || coreBank <= 0) return 0;
+    const released = Math.round(coreBank * lineReleaseMultiplier(lineCount) * comboMultiplier(combo));
+    coreBank = 0;
+    updateFeverUI();
+    return released;
+  }
+
+  function applyComboImpact(lineCount, released) {
+    const tier = comboTier();
+    const className = tier === 'critical' ? 'combo-critical' : tier === 'breaker' ? 'combo-breaker' : tier === 'surge' ? 'combo-surge' : '';
+    els.board.classList.remove('combo-surge', 'combo-breaker', 'combo-critical');
+    if (className) {
+      void els.board.offsetWidth;
+      els.board.classList.add(className);
+      window.setTimeout(() => els.board.classList.remove(className), 680);
+    }
+    const color = tier === 'critical' ? '#d57aff' : tier === 'breaker' ? '#ffd75a' : tier === 'surge' ? '#65f5c9' : '#54d8ff';
+    createShockwave(color, tier === 'critical' ? .72 : tier === 'breaker' ? .64 : .52);
+    if (tier === 'critical') createShockwave('#57f3ff', .88);
+    const particles = Math.min(42, 14 + lineCount * 7 + Math.max(0, combo - 1) * 3);
+    burstParticles(particles, [color, '#ffffff', feverActive ? '#ffcf4a' : '#54d8ff'], 125 + lineCount * 30 + Math.min(combo, 7) * 8);
+  }
+
   function showFloatingScore(points, tone = '') {
     const floating = document.createElement('div');
     floating.className = `floating-score ${tone}`.trim();
-    floating.textContent = `+${formatNumber(points)}${feverActive ? '  ×3 FEVER' : ''}`;
+    floating.textContent = `+${formatNumber(points)}${feverActive ? `  ×${FEVER_MULTIPLIER} OVERDRIVE` : ''}`;
     const center = boardCenter();
     floating.style.left = `${center.x}px`;
-    floating.style.top = `${center.y}px`;
+    floating.style.top = `${center.y + Math.min(84, Math.max(58, els.board.getBoundingClientRect().height * .18))}px`;
     els.effectsLayer.appendChild(floating);
     window.setTimeout(() => floating.remove(), 1000);
   }
@@ -1091,45 +1379,65 @@
   }
 
   function updateFeverUI() {
-    const percent = feverActive ? Math.max(0, Math.round(feverMovesLeft / FEVER_MOVES * 100)) : feverGauge;
-    els.feverFill.style.width = `${percent}%`;
+    const percent = feverActive ? Math.max(0, Math.round(feverMovesLeft / OVERDRIVE_MAX_MOVES * 100)) : feverGauge;
+    els.feverFill.style.width = `${Math.min(100, percent)}%`;
     els.game.classList.toggle('fever-active', feverActive);
+    els.game.classList.toggle('core-ready', coreReady && !feverActive);
+    document.body.classList.toggle('overdrive-active', feverActive);
     els.feverStatus.textContent = feverActive
-      ? `×${FEVER_MULTIPLIER} · ${feverMovesLeft}회 남음`
-      : `${Math.round(feverGauge)}%`;
+      ? `OVERDRIVE · ${feverMovesLeft}회`
+      : coreReady ? 'CORE READY' : `${Math.round(feverGauge)}%`;
+    els.coreBank.textContent = formatNumber(coreBank);
   }
 
   function activateFever() {
     if (feverActive) return;
     feverActive = true;
+    coreReady = false;
     feverMovesLeft = FEVER_MOVES;
     feverGauge = FEVER_MAX;
     feverCount++;
+    overdriveScoreStart = score;
+    pendingOverdriveBonus = 500;
     updateFeverUI();
-    announceEvent('FEVER TIME', `8회 동안 점수 ×${FEVER_MULTIPLIER}`, 'fever');
+    announceEvent('CORE OVERDRIVE', `BANK ×${OVERDRIVE_BANK_MULTIPLIER} · SCORE ×${FEVER_MULTIPLIER}`, 'fever');
     flashScreen('fever');
     screenShake('large');
-    burstParticles(38, ['#57f3ff','#bd5cff','#ffcf4a','#ffffff'], 210);
-    beepSequence([520, 660, 820, 1040], .09);
-    if (navigator.vibrate) navigator.vibrate([35,25,50,25,75]);
+    createShockwave('#57f3ff', .7);
+    createShockwave('#bd5cff', .92);
+    burstParticles(42, ['#57f3ff','#bd5cff','#ffcf4a','#ffffff'], 235);
+    beepSequence([420,560,720,920,1160], .085);
+    if (navigator.vibrate) navigator.vibrate([40,20,55,20,85]);
   }
 
   function addFever(amount) {
-    if (feverActive || amount <= 0) return;
+    if (feverActive || coreReady || amount <= 0) return;
     feverGauge = Math.min(FEVER_MAX, feverGauge + amount);
+    if (feverGauge >= FEVER_MAX) {
+      feverGauge = FEVER_MAX;
+      coreReady = true;
+      announceEvent('CORE READY', '다음 라인 삭제에서 오버드라이브', 'fever');
+      createShockwave('#ffcf4a', .58);
+      beepSequence([520,680,860], .065);
+    }
     updateFeverUI();
-    if (feverGauge >= FEVER_MAX) activateFever();
   }
 
-  function finishFeverMove(startedInFever) {
+  function finishFeverMove(startedInFever, lineCount = 0) {
     if (!startedInFever || !feverActive) return;
+    if (lineCount > 0) feverMovesLeft = Math.min(OVERDRIVE_MAX_MOVES, feverMovesLeft + 1);
     feverMovesLeft = Math.max(0, feverMovesLeft - 1);
     if (feverMovesLeft <= 0) {
+      const gained = Math.max(0, score - overdriveScoreStart);
       feverActive = false;
       feverGauge = 0;
+      coreReady = false;
       els.game.classList.remove('fever-active');
-      announceEvent('FEVER END', '다시 게이지를 채워', '');
-      beepSequence([540, 410, 300], .06);
+      document.body.classList.remove('overdrive-active');
+      announceEvent('OVERDRIVE CASH OUT', `이번 폭주 +${formatNumber(gained)}`, 'fever');
+      createShockwave('#ffcf4a', .7);
+      burstParticles(30, ['#ffcf4a','#57f3ff','#ffffff'], 175);
+      beepSequence([620,500,390], .065);
     }
     updateFeverUI();
   }
@@ -1142,26 +1450,32 @@
       best = score;
       saveBest();
     }
+    animateScoreTo(score, Math.min(1050, 300 + Math.sqrt(Math.max(0, awarded)) * 18));
     updateStats();
-    showFloatingScore(awarded, tone || (feverActive ? 'fever' : ''));
+    showFloatingScore(awarded, tone || (feverActive ? 'overdrive' : ''));
     retriggerClass(els.score, 'score-pop');
     return awarded;
   }
 
   function scorePlacement(placedCount, lineCount = 0) {
-    let basePoints = placedCount * 10;
-    let feverGain = 0;
+    if (lineCount > 0 && coreReady && !feverActive) activateFever();
+
+    const activationBonus = pendingOverdriveBonus;
+    pendingOverdriveBonus = 0;
+    const directPoints = placedCount * 2 + activationBonus;
+    const bankGained = addCoreBank(placedCount * 10);
+    let release = 0;
+    let lineBonus = 0;
 
     if (lineCount > 0) {
       combo++;
       comboGrace = 2;
       maxCombo = Math.max(maxCombo, combo);
       totalLines += lineCount;
-      const lineBase = lineCount * 120;
-      const multiLineBonus = Math.max(0, lineCount - 1) * 220;
-      const comboMultiplier = 1 + Math.min(combo - 1, 8) * .25;
-      basePoints += Math.round((lineBase + multiLineBonus) * comboMultiplier);
-      feverGain = Math.min(100, 30 + Math.max(0, lineCount - 1) * 38);
+      release = releaseCoreBank(lineCount);
+      lineBonus = Math.round(lineBaseBonus(lineCount) * comboMultiplier(combo));
+      addFever(Math.min(100, (lineCount === 1 ? 18 : lineCount === 2 ? 42 : lineCount === 3 ? 75 : 100) + (combo >= 4 ? 8 : 0)));
+      retriggerClass(els.combo, 'combo-pop');
     } else if (!feverActive) {
       if (combo > 0 && comboGrace > 0) comboGrace--;
       else {
@@ -1170,20 +1484,29 @@
       }
     }
 
-    const awarded = addScorePoints(basePoints);
-    if (lineCount > 0) {
-      addFever(feverGain);
-      retriggerClass(els.combo, 'combo-pop');
-    }
-    return awarded;
+    const awarded = addScorePoints(directPoints + lineBonus + release, release > 0 ? (feverActive ? 'overdrive' : 'release') : '');
+    return { awarded, release, lineBonus, bankGained };
   }
 
-  function scoreBomb(clearedCount) {
-    const basePoints = clearedCount > 0 ? 300 + clearedCount * 75 : 50;
-    comboGrace = Math.max(comboGrace, 1);
-    const awarded = addScorePoints(basePoints, 'bomb');
-    addFever(Math.min(42, 12 + clearedCount * 4));
-    return awarded;
+  function scoreSpecial(piece, clearedCount = 0, movedCount = 0) {
+    const type = piece.specialType;
+    let base = 20;
+    let bank = 0;
+    if (type === SPECIAL_TYPES.EXPLOSION) {
+      base = 30 + clearedCount * 20;
+      bank = clearedCount * 8;
+    } else if (type === SPECIAL_TYPES.LASER_ROW || type === SPECIAL_TYPES.LASER_COL) {
+      base = 40 + clearedCount * 15;
+      bank = clearedCount * 6;
+    } else if (type === SPECIAL_TYPES.MAGNET) {
+      base = 40 + movedCount * 6;
+      bank = movedCount * 4;
+    } else if (type === SPECIAL_TYPES.TIME) {
+      base = 25;
+      bank = mode === 'timed' ? 80 : 120;
+    }
+    addCoreBank(bank);
+    return addScorePoints(base, type === SPECIAL_TYPES.EXPLOSION ? 'bomb' : feverActive ? 'overdrive' : 'release');
   }
 
   function isBoardEmpty() {
@@ -1191,8 +1514,8 @@
   }
 
   function awardAllClear() {
-    addScorePoints(2500, feverActive ? 'fever' : '');
-    announceEvent('ALL CLEAR', `보드 완전 정리 +${formatNumber(feverActive ? 2500 * FEVER_MULTIPLIER : 2500)}`, 'fever');
+    addScorePoints(1800, feverActive ? 'overdrive' : 'release');
+    announceEvent('CORE RESET', `보드 완전 정리 +${formatNumber(feverActive ? 1800 * FEVER_MULTIPLIER : 1800)}`, 'fever');
     flashScreen('fever');
     screenShake('large');
     burstParticles(42, ['#ffffff','#57f3ff','#ffcf4a','#bd5cff'], 230);
@@ -1229,7 +1552,10 @@
   }
 
   function updateStats() {
-    setAdaptiveStatValue(els.score, score);
+    if (!scoreAnimationFrame) {
+      displayedScore = score;
+      setAdaptiveStatValue(els.score, displayedScore);
+    }
     setAdaptiveStatValue(els.best, best);
     els.combo.textContent = combo > 0 ? `×${combo}` : '0';
     els.comboWrap.classList.toggle('active', combo > 0);
@@ -1306,22 +1632,48 @@
     }
   }
 
+  function specialAffectedCells(piece, row, col) {
+    const cells = [];
+    const seen = new Set();
+    const push = (r, c) => {
+      if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) return;
+      const key = `${r},${c}`;
+      if (!seen.has(key)) { seen.add(key); cells.push([r,c]); }
+    };
+    if (piece.specialType === SPECIAL_TYPES.EXPLOSION) {
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) push(row + dr, col + dc);
+      if (feverActive) {
+        push(row - 2, col); push(row + 2, col); push(row, col - 2); push(row, col + 2);
+      }
+    } else if (piece.specialType === SPECIAL_TYPES.LASER_ROW) {
+      for (let c = 0; c < SIZE; c++) push(row, c);
+      if (feverActive) for (let r = 0; r < SIZE; r++) push(r, col);
+    } else if (piece.specialType === SPECIAL_TYPES.LASER_COL) {
+      for (let r = 0; r < SIZE; r++) push(r, col);
+      if (feverActive) for (let c = 0; c < SIZE; c++) push(row, c);
+    } else if (piece.specialType === SPECIAL_TYPES.MAGNET) {
+      const radius = feverActive ? 3 : 2;
+      for (let r = row - radius; r <= row + radius; r++) {
+        for (let c = col - radius; c <= col + radius; c++) push(r, c);
+      }
+    } else {
+      push(row, col);
+    }
+    return cells;
+  }
+
   function previewPieceAt(piece, row, col) {
     clearPreview();
     if (!piece) return false;
 
-    if (piece.isBomb) {
+    if (isSpecialPiece(piece)) {
       const valid = fitsAt(piece, row, col);
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          const rr = row + dr;
-          const cc = col + dc;
-          if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) {
-            const cell = cellEls[rr][cc];
-            cell.style.background = valid ? '#E24B4A66' : 'var(--bg-danger)';
-            previewCells.push(cell);
-          }
-        }
+      const meta = SPECIAL_META[piece.specialType];
+      for (const [rr, cc] of specialAffectedCells(piece, row, col)) {
+        const cell = cellEls[rr] && cellEls[rr][cc];
+        if (!cell) continue;
+        cell.style.background = valid ? `${meta.color}88` : 'var(--bg-danger)';
+        previewCells.push(cell);
       }
       return valid;
     }
@@ -1346,9 +1698,9 @@
     previewPieceAt(piece, row, col);
   }
 
-  function afterPlacementFlow(startedInFever = false) {
+  function afterPlacementFlow(startedInFever = false, lineCount = 0) {
     if (gameOver) return;
-    finishFeverMove(startedInFever);
+    finishFeverMove(startedInFever, lineCount);
     phase = PHASE.PLAYING;
     if (tray.every(piece => piece === null)) initTray();
     else {
@@ -1374,42 +1726,142 @@
     renderTray();
   }
 
+  function magnetizeArea(row, col) {
+    const radius = feverActive ? 3 : 2;
+    const r0 = Math.max(0, row - radius);
+    const r1 = Math.min(SIZE - 1, row + radius);
+    const c0 = Math.max(0, col - radius);
+    const c1 = Math.min(SIZE - 1, col + radius);
+    const before = [];
+    const colors = [];
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        before.push([r,c,board[r][c]]);
+        if (board[r][c]) colors.push(board[r][c]);
+        board[r][c] = null;
+      }
+    }
+    const targets = [];
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) targets.push([r,c]);
+    targets.sort((a,b) => {
+      const da = Math.abs(a[0]-row) + Math.abs(a[1]-col);
+      const db = Math.abs(b[0]-row) + Math.abs(b[1]-col);
+      return da - db || a[0] - b[0] || a[1] - b[1];
+    });
+    colors.forEach((color, index) => {
+      const [r,c] = targets[index];
+      board[r][c] = color;
+    });
+    let moved = 0;
+    for (const [r,c,oldColor] of before) if (board[r][c] !== oldColor) moved++;
+    return moved;
+  }
+
+  function resolveClearedLines(rows, cols, startedInFever, scoreResult, sourceLabel = '') {
+    const lineCount = rows.length + cols.length;
+    const clearCells = [];
+    for (const fullRow of rows) for (let c = 0; c < SIZE; c++) clearCells.push([fullRow, c]);
+    for (const fullCol of cols) for (let r = 0; r < SIZE; r++) clearCells.push([r, fullCol]);
+
+    const tier = comboTier();
+    const mainText = tier === 'critical' ? 'CRITICAL CHAIN' : tier === 'breaker' ? 'CORE BREAKER' : tier === 'surge' ? 'ENERGY SURGE' : lineCount === 1 ? 'LINE RELEASE' : lineCount === 2 ? 'DOUBLE RELEASE' : `${lineCount} LINE BURST`;
+    const releaseText = scoreResult.release > 0 ? ` · CORE +${formatNumber(scoreResult.release * (feverActive ? FEVER_MULTIPLIER : 1))}` : '';
+    announceEvent(mainText, `${sourceLabel ? `${sourceLabel} · ` : ''}COMBO ×${combo}${releaseText}`, combo >= 5 || feverActive ? 'fever' : '');
+    flashCells(clearCells, feverActive ? '#fff3a8' : '#ffffff');
+    flashScreen(combo >= 5 || lineCount >= 3 || feverActive ? 'fever' : 'normal');
+    screenShake(combo >= 7 || lineCount >= 3 ? 'large' : combo >= 4 || lineCount === 2 ? 'medium' : 'small');
+    applyComboImpact(lineCount, scoreResult.release);
+    const baseTone = 680 + Math.min(combo, 8) * 55;
+    const notes = combo >= 7 ? [baseTone, baseTone+180, baseTone+360, baseTone+520] : combo >= 5 ? [baseTone, baseTone+180, baseTone+340] : lineCount >= 2 ? [baseTone, baseTone+180] : [baseTone];
+    beepSequence(notes, combo >= 5 ? .095 : .08);
+    if (navigator.vibrate) navigator.vibrate(combo >= 7 ? [35,18,55,18,80] : combo >= 4 ? [30,18,50] : 24);
+
+    const impactDelay = combo >= 7 ? 90 : combo >= 5 ? 65 : combo >= 3 ? 40 : 0;
+    scheduleForCurrentGame(() => {
+      for (const fullRow of rows) board[fullRow].fill(null);
+      for (const fullCol of cols) for (let r = 0; r < SIZE; r++) board[r][fullCol] = null;
+      renderBoard();
+      if (isBoardEmpty()) awardAllClear();
+      afterPlacementFlow(startedInFever, lineCount);
+    }, RESOLVE_DELAY_MS + impactDelay);
+  }
+
+  function handleSpecialPiece(piece, row, col, startedInFever) {
+    const meta = SPECIAL_META[piece.specialType];
+    phase = PHASE.RESOLVING;
+    consumeSelectedPiece();
+
+    if (piece.specialType === SPECIAL_TYPES.TIME) {
+      if (mode === 'timed') {
+        const bonusSeconds = feverActive ? 18 : 12;
+        timerEndAt += bonusSeconds * 1000;
+        timeLeft += bonusSeconds;
+        updateTimerDisplay();
+        announceEvent('TIME RIFT', `+${bonusSeconds} SEC`, 'fever');
+      } else if (feverActive) {
+        feverMovesLeft = Math.min(OVERDRIVE_MAX_MOVES, feverMovesLeft + 2);
+        announceEvent('RIFT EXTEND', 'OVERDRIVE +2회', 'fever');
+      } else {
+        addFever(25);
+        announceEvent('TIME RIFT', 'CORE +25% · BANK 충전', 'fever');
+      }
+      scoreSpecial(piece);
+      createShockwave(meta.color, .7);
+      flashScreen('fever');
+      burstParticles(28, [meta.color,'#ffffff','#57f3ff'], 165);
+      beepSequence([420,580,760,960], .07);
+      scheduleForCurrentGame(() => afterPlacementFlow(startedInFever, 0), 260);
+      return;
+    }
+
+    let affected = specialAffectedCells(piece, row, col);
+    let clearedCount = 0;
+    let movedCount = 0;
+
+    if (piece.specialType === SPECIAL_TYPES.MAGNET) {
+      movedCount = magnetizeArea(row, col);
+      scoreSpecial(piece, 0, movedCount);
+      announceEvent('MAGNET PULSE', `${movedCount}칸 재배열`, 'fever');
+      renderBoard();
+    } else {
+      for (const [r,c] of affected) if (board[r][c]) clearedCount++;
+      scoreSpecial(piece, clearedCount, 0);
+      flashCells(affected, meta.color);
+      announceEvent(piece.specialType === SPECIAL_TYPES.EXPLOSION ? 'CORE BLAST' : 'LASER SWEEP', `${clearedCount}칸 제거`, piece.specialType === SPECIAL_TYPES.EXPLOSION ? 'danger' : 'fever');
+    }
+
+    flashScreen(piece.specialType === SPECIAL_TYPES.EXPLOSION ? 'danger' : 'fever');
+    screenShake(piece.specialType === SPECIAL_TYPES.EXPLOSION ? 'large' : 'medium');
+    createShockwave(meta.color, piece.specialType === SPECIAL_TYPES.EXPLOSION ? .72 : .62);
+    burstParticles(piece.specialType === SPECIAL_TYPES.EXPLOSION ? 38 : 30, [meta.color,'#ffffff'], 185);
+    beepSequence(piece.specialType === SPECIAL_TYPES.EXPLOSION ? [190,130,80] : [480,720,980], .105);
+
+    scheduleForCurrentGame(() => {
+      if (piece.specialType !== SPECIAL_TYPES.MAGNET) {
+        for (const [r,c] of affected) board[r][c] = null;
+      }
+      renderBoard();
+      const {rows, cols} = getFullLines();
+      const lineCount = rows.length + cols.length;
+      if (lineCount > 0) {
+        const result = scorePlacement(0, lineCount);
+        resolveClearedLines(rows, cols, startedInFever, result, meta.short);
+      } else {
+        if (isBoardEmpty() && clearedCount > 0) awardAllClear();
+        afterPlacementFlow(startedInFever, 0);
+      }
+    }, RESOLVE_DELAY_MS + 70);
+  }
+
   function onCellClick(row, col) {
     if (gameOver || phase !== PHASE.PLAYING || selected < 0) return;
     const piece = tray[selected];
     if (!piece) return;
     const startedInFever = feverActive;
 
-    if (piece.isBomb) {
-      const affected = [];
-      let clearedCount = 0;
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          const rr = row + dr;
-          const cc = col + dc;
-          if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) {
-            affected.push([rr, cc]);
-            if (board[rr][cc]) clearedCount++;
-          }
-        }
-      }
-      phase = PHASE.RESOLVING;
-      consumeSelectedPiece();
-      scoreBomb(clearedCount);
-      flashCells(affected, '#ff4f43');
-      announceEvent(clearedCount > 0 ? 'BOOM' : 'DUD', clearedCount > 0 ? `${clearedCount}칸 폭파` : '빈 공간에서 불발', 'danger');
-      flashScreen('danger');
-      screenShake('large');
-      burstParticles(34, ['#ff493d','#ffb23f','#ffffff'], 190);
-      beepSequence([170, 120, 80], .12);
-      if (navigator.vibrate) navigator.vibrate([45,25,80]);
-
-      scheduleForCurrentGame(() => {
-        for (const [rr, cc] of affected) board[rr][cc] = null;
-        renderBoard();
-        if (isBoardEmpty()) awardAllClear();
-        afterPlacementFlow(startedInFever);
-      }, RESOLVE_DELAY_MS + 80);
+    if (isSpecialPiece(piece)) {
+      if (!fitsAt(piece, row, col)) { rejectPlacement(row, col); return; }
+      handleSpecialPiece(piece, row, col, startedInFever);
       return;
     }
 
@@ -1426,54 +1878,29 @@
     }
     const placedCount = piece.shape.length;
     consumeSelectedPiece();
-    beep(440, 0.08);
+    beep(feverActive ? 570 : 440, 0.08);
     renderBoard();
 
     const { rows, cols } = getFullLines();
     const lineCount = rows.length + cols.length;
-    scorePlacement(placedCount, lineCount);
+    const scoreResult = scorePlacement(placedCount, lineCount);
 
     if (lineCount > 0) {
-      const clearCells = [];
-      for (const fullRow of rows) {
-        for (let c = 0; c < SIZE; c++) clearCells.push([fullRow, c]);
-      }
-      for (const fullCol of cols) {
-        for (let r = 0; r < SIZE; r++) clearCells.push([r, fullCol]);
-      }
-
-      const mainText = lineCount === 1 ? 'LINE CLEAR' : lineCount === 2 ? 'DOUBLE CLEAR' : lineCount === 3 ? 'TRIPLE CLEAR' : `${lineCount} LINE BLAST`;
-      announceEvent(mainText, combo > 1 ? `COMBO ×${combo}` : '게이지 충전', lineCount >= 3 ? 'fever' : '');
-      flashCells(clearCells, '#ffffff');
-      flashScreen(lineCount >= 3 ? 'fever' : 'normal');
-      screenShake(lineCount >= 3 ? 'large' : lineCount === 2 ? 'medium' : 'small');
-      burstParticles(lineCount >= 3 ? 38 : lineCount === 2 ? 26 : 16,
-        lineCount >= 3 ? ['#57f3ff','#bd5cff','#ffcf4a','#ffffff'] : ['#ffffff','#54d8ff'],
-        120 + lineCount * 35);
-      beepSequence(lineCount >= 3 ? [720,900,1120] : lineCount === 2 ? [720,920] : [760], .1);
-      if (navigator.vibrate) navigator.vibrate(lineCount >= 3 ? [35,20,55,20,80] : lineCount === 2 ? [30,20,50] : 25);
-
-      scheduleForCurrentGame(() => {
-        for (const fullRow of rows) board[fullRow].fill(null);
-        for (const fullCol of cols) {
-          for (let r = 0; r < SIZE; r++) board[r][fullCol] = null;
-        }
-        renderBoard();
-        if (isBoardEmpty()) awardAllClear();
-        afterPlacementFlow(startedInFever);
-      }, RESOLVE_DELAY_MS);
+      resolveClearedLines(rows, cols, startedInFever, scoreResult);
     } else {
       if (feverActive) {
         screenShake('small');
-        burstParticles(7, ['#57f3ff','#bd5cff','#ffcf4a'], 70);
+        createShockwave('#57f3ff', .32);
+        burstParticles(12, ['#57f3ff','#bd5cff','#ffcf4a'], 85);
+        beepSequence([520,650], .04);
       }
-      afterPlacementFlow(startedInFever);
+      afterPlacementFlow(startedInFever, 0);
     }
   }
 
 
   function pieceBounds(piece) {
-    if (!piece || piece.isBomb) return { rows: 1, cols: 1 };
+    if (!piece || isSpecialPiece(piece)) return { rows: 1, cols: 1 };
     return {
       rows: Math.max(...piece.shape.map(cell => cell[0])) + 1,
       cols: Math.max(...piece.shape.map(cell => cell[1])) + 1
@@ -1514,9 +1941,11 @@
     els.dragGhost.style.setProperty('--drag-cell', `${geometry.cell}px`);
     els.dragGhost.style.setProperty('--drag-gap', `${geometry.columnGap}px`);
 
-    if (piece.isBomb) {
-      els.dragGhost.classList.add('bomb');
-      els.dragGhost.textContent = '💣';
+    if (isSpecialPiece(piece)) {
+      const meta = SPECIAL_META[piece.specialType];
+      els.dragGhost.classList.add('special');
+      els.dragGhost.textContent = meta.icon;
+      els.dragGhost.style.setProperty('--special-color', meta.color);
       return;
     }
 
@@ -1683,17 +2112,22 @@
       slot.dataset.index = String(index);
       slot.setAttribute('role', 'button');
       slot.setAttribute('tabindex', piece && !gameOver ? '0' : '-1');
-      slot.setAttribute('aria-label', piece ? `${index + 1}번째 블록` : `${index + 1}번째 블록 사용됨`);
+      slot.setAttribute('aria-label', piece ? (isSpecialPiece(piece) ? `${index + 1}번째 ${SPECIAL_META[piece.specialType].name}` : `${index + 1}번째 블록`) : `${index + 1}번째 블록 사용됨`);
       if (index === selected) slot.classList.add('selected');
       if (!piece) slot.classList.add('empty');
 
       if (piece) {
-        if (piece.isBomb) {
-          slot.classList.add('bomb-slot');
-          const bomb = document.createElement('div');
-          bomb.className = 'bomb-icon';
-          bomb.textContent = '💣';
-          slot.appendChild(bomb);
+        if (isSpecialPiece(piece)) {
+          const meta = SPECIAL_META[piece.specialType];
+          slot.classList.add('special-slot');
+          slot.style.setProperty('--special-color', meta.color);
+          slot.style.setProperty('--special-bg', `${meta.color}33`);
+          slot.style.setProperty('--special-shadow', `${meta.color}44`);
+          slot.style.setProperty('--special-glow', meta.glow);
+          const special = document.createElement('div');
+          special.className = 'special-piece';
+          special.innerHTML = `<div class="special-icon">${meta.icon}</div><div class="special-label">${meta.short}</div>`;
+          slot.appendChild(special);
         } else {
           const maxRow = Math.max(...piece.shape.map(cell => cell[0])) + 1;
           const maxCol = Math.max(...piece.shape.map(cell => cell[1])) + 1;
@@ -1858,6 +2292,9 @@
 
     board = createEmptyBoard();
     score = 0;
+    displayedScore = 0;
+    if (scoreAnimationFrame) cancelAnimationFrame(scoreAnimationFrame);
+    scoreAnimationFrame = null;
     best = 0;
     combo = 0;
     comboGrace = 0;
@@ -1867,8 +2304,13 @@
     feverActive = false;
     feverMovesLeft = 0;
     feverCount = 0;
+    coreBank = 0;
+    coreReady = false;
+    overdriveScoreStart = 0;
+    pendingOverdriveBonus = 0;
     trayRound = 0;
-    traysSinceBomb = 0;
+    traysSinceSpecial = 0;
+    lastSpecialType = '';
     selected = -1;
     gameOver = false;
     phase = PHASE.PLAYING;
@@ -1882,8 +2324,9 @@
     els.leaderboardWrap.classList.remove('visible');
     els.leaderboard.innerHTML = '';
     els.effectsLayer.innerHTML = '';
-    els.game.classList.remove('fever-active');
-    els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid');
+    els.game.classList.remove('fever-active', 'core-ready');
+    document.body.classList.remove('overdrive-active');
+    els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid', 'combo-surge', 'combo-breaker', 'combo-critical');
     updateFeverUI();
 
     renderBoard();
