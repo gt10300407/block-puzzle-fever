@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>10×10 블록 퍼즐</title>
+  <title>10×10 블록 퍼즐 · Drag V2.2</title>
   <style>
     :root {
       color-scheme: dark;
@@ -44,7 +44,13 @@
       font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
       -webkit-font-smoothing: antialiased;
       -webkit-tap-highlight-color: transparent;
+      width: 100%;
+      overflow-x: hidden;
       overscroll-behavior: none;
+      overscroll-behavior-y: none;
+    }
+    body.drag-lock {
+      cursor: grabbing;
     }
 
     button, input { font: inherit; }
@@ -179,7 +185,7 @@
       border-radius: 12px;
       background: rgba(17,23,42,.96);
       box-shadow: 0 16px 50px rgba(0,0,0,.28);
-      touch-action: manipulation;
+      touch-action: none;
       position: relative;
       overflow: hidden;
       transition: box-shadow .25s ease, border-color .25s ease, filter .25s ease;
@@ -193,7 +199,7 @@
       border-radius: clamp(3px, 1vw, 5px);
       background: var(--surface-2);
       transition: background-color .08s linear, transform .10s ease, filter .10s ease;
-      touch-action: manipulation;
+      touch-action: none;
     }
     .board-cell.invalid {
       animation: invalidPulse .18s ease-out;
@@ -222,6 +228,9 @@
       width: 100%;
       margin-top: 12px;
       align-items: stretch;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .tray-slot {
       min-width: 0;
@@ -233,8 +242,8 @@
       border-radius: 12px;
       padding: 7px;
       background: rgba(17,23,42,.72);
-      cursor: pointer;
-      touch-action: manipulation;
+      cursor: grab;
+      touch-action: none;
       user-select: none;
       -webkit-user-select: none;
       transition: transform .12s ease, border-color .12s ease, background .12s ease, opacity .12s ease;
@@ -245,6 +254,11 @@
       border-color: var(--border-accent);
       background: rgba(84,216,255,.08);
       box-shadow: 0 0 18px rgba(84,216,255,.13);
+    }
+    .tray-slot.dragging {
+      opacity: .34;
+      cursor: grabbing;
+      transform: translateY(-2px) scale(.97);
     }
     .tray-slot.empty {
       cursor: default;
@@ -262,6 +276,61 @@
       background: radial-gradient(circle, rgba(255,90,70,.22), rgba(17,23,42,.78) 66%);
       animation: bombSlotPulse .9s ease-in-out infinite alternate;
       box-shadow: 0 0 24px rgba(255,72,72,.22);
+    }
+
+    #drag-ghost {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 1200;
+      display: grid;
+      gap: var(--drag-gap, 2px);
+      pointer-events: none;
+      opacity: 0;
+      transform: translate3d(-50%, -50%, 0) scale(.84);
+      transform-origin: center;
+      filter: drop-shadow(0 12px 20px rgba(0,0,0,.48));
+      transition: opacity .08s ease, transform .08s ease, filter .08s ease;
+      will-change: left, top, transform;
+    }
+    #drag-ghost.visible {
+      opacity: .96;
+      transform: translate3d(-50%, -50%, 0) scale(1);
+    }
+    #drag-ghost.invalid {
+      filter: drop-shadow(0 0 18px rgba(255,67,91,.9));
+    }
+    .drag-ghost-cell {
+      width: var(--drag-cell, 32px);
+      height: var(--drag-cell, 32px);
+      border-radius: clamp(3px, 1vw, 5px);
+      border: 1px solid rgba(255,255,255,.24);
+      background: transparent;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    }
+    .drag-ghost-cell.filled {
+      background: var(--piece-color);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--piece-color) 72%, transparent);
+    }
+    #drag-ghost.invalid .drag-ghost-cell.filled {
+      background: #ff435b !important;
+      box-shadow: 0 0 16px rgba(255,67,91,.9);
+    }
+    #drag-ghost.bomb {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--drag-cell, 32px);
+      height: var(--drag-cell, 32px);
+      font-size: calc(var(--drag-cell, 32px) * .9);
+      filter: drop-shadow(0 0 13px rgba(255,72,72,.8));
+    }
+    #board.drag-over-valid {
+      border-color: rgba(101,245,201,.95);
+      box-shadow: 0 0 0 2px rgba(101,245,201,.16), 0 0 24px rgba(101,245,201,.18);
+    }
+    #board.drag-over-invalid {
+      border-color: rgba(255,67,91,.88);
     }
 
     .fever-panel {
@@ -493,9 +562,9 @@
       70% { transform: translate(-4px,2px); }
       85% { transform: translate(3px,-2px); }
     }
-    #game.shake-small { animation: shakeSmall .18s linear; }
-    #game.shake-medium { animation: shakeMedium .30s linear; }
-    #game.shake-large { animation: shakeLarge .42s linear; }
+    #board.shake-small { animation: shakeSmall .18s linear; }
+    #board.shake-medium { animation: shakeMedium .30s linear; }
+    #board.shake-large { animation: shakeLarge .42s linear; }
     @keyframes feverBoardPulse {
       from { filter: brightness(1) saturate(1.05); }
       to { filter: brightness(1.14) saturate(1.35); }
@@ -613,7 +682,7 @@
 
     <div id="board" role="grid" aria-label="10×10 게임 보드"></div>
     <div id="tray" aria-label="사용할 블록 3개"></div>
-    <p class="hint">블록 배치 10점/칸 · 라인·콤보·피버로 점수를 폭발시켜.</p>
+    <p class="hint">블록을 끌어 놓거나, 선택 후 칸을 눌러 배치해.</p>
 
     <section id="gameover" aria-live="polite">
       <div class="gameover-title">게임 종료</div>
@@ -636,6 +705,7 @@
   <div id="screen-flash" aria-hidden="true"></div>
   <div id="effects-layer" aria-hidden="true"></div>
   <div id="event-banner" aria-live="polite"><div class="event-main"></div><div class="event-sub"></div></div>
+  <div id="drag-ghost" aria-hidden="true"></div>
 
   <script>
   'use strict';
@@ -648,6 +718,9 @@
   const FEVER_MULTIPLIER = 3;
   const BOMB_MIN_TRAY = 6;
   const BOMB_FORCE_TRAY = 18;
+  const DRAG_THRESHOLD_PX = 7;
+  const DRAG_LIFT_MIN_PX = 70;
+  const DRAG_LIFT_MAX_PX = 92;
   const SHAPES = [
     [[0,0]], [[0,0],[0,1]], [[0,0],[1,0]], [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]],
     [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[1,0],[1,1]],
@@ -689,6 +762,7 @@
   let audioCtx = null;
   let rng = Math.random;
   let gameSessionId = 0;
+  let dragState = null;
   const pendingTimeouts = new Set();
   const memoryStore = new Map();
 
@@ -717,6 +791,7 @@
     effectsLayer: document.getElementById('effects-layer'),
     screenFlash: document.getElementById('screen-flash'),
     eventBanner: document.getElementById('event-banner'),
+    dragGhost: document.getElementById('drag-ghost'),
     finalLines: document.getElementById('final-lines'),
     finalCombo: document.getElementById('final-combo'),
     finalFever: document.getElementById('final-fever')
@@ -955,10 +1030,10 @@
 
   function screenShake(level = 'small') {
     const className = `shake-${level}`;
-    els.game.classList.remove('shake-small', 'shake-medium', 'shake-large');
-    void els.game.offsetWidth;
-    els.game.classList.add(className);
-    window.setTimeout(() => els.game.classList.remove(className), 520);
+    els.board.classList.remove('shake-small', 'shake-medium', 'shake-large');
+    void els.board.offsetWidth;
+    els.board.classList.add(className);
+    window.setTimeout(() => els.board.classList.remove(className), 520);
   }
 
   function flashScreen(tone = 'normal') {
@@ -1231,25 +1306,24 @@
     }
   }
 
-  function onCellHover(row, col) {
-    if (gameOver || phase !== PHASE.PLAYING || selected < 0) return;
-    const piece = tray[selected];
-    if (!piece) return;
+  function previewPieceAt(piece, row, col) {
     clearPreview();
+    if (!piece) return false;
 
     if (piece.isBomb) {
+      const valid = fitsAt(piece, row, col);
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
           const rr = row + dr;
           const cc = col + dc;
           if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) {
             const cell = cellEls[rr][cc];
-            cell.style.background = '#E24B4A66';
+            cell.style.background = valid ? '#E24B4A66' : 'var(--bg-danger)';
             previewCells.push(cell);
           }
         }
       }
-      return;
+      return valid;
     }
 
     const valid = fitsAt(piece, row, col);
@@ -1262,6 +1336,14 @@
         previewCells.push(cell);
       }
     }
+    return valid;
+  }
+
+  function onCellHover(row, col) {
+    if (gameOver || phase !== PHASE.PLAYING || selected < 0 || dragState?.dragging) return;
+    const piece = tray[selected];
+    if (!piece) return;
+    previewPieceAt(piece, row, col);
   }
 
   function afterPlacementFlow(startedInFever = false) {
@@ -1389,6 +1471,209 @@
     }
   }
 
+
+  function pieceBounds(piece) {
+    if (!piece || piece.isBomb) return { rows: 1, cols: 1 };
+    return {
+      rows: Math.max(...piece.shape.map(cell => cell[0])) + 1,
+      cols: Math.max(...piece.shape.map(cell => cell[1])) + 1
+    };
+  }
+
+  function boardGeometry() {
+    const rect = els.board.getBoundingClientRect();
+    const style = window.getComputedStyle(els.board);
+    const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+    const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+    const paddingRight = Number.parseFloat(style.paddingRight) || paddingLeft;
+    const columnGap = Number.parseFloat(style.columnGap) || 0;
+    const rowGap = Number.parseFloat(style.rowGap) || columnGap;
+    const contentWidth = rect.width - paddingLeft - paddingRight;
+    const cell = (contentWidth - columnGap * (SIZE - 1)) / SIZE;
+    return {
+      rect,
+      cell,
+      columnGap,
+      rowGap,
+      pitchX: cell + columnGap,
+      pitchY: cell + rowGap,
+      left: rect.left + paddingLeft,
+      top: rect.top + paddingTop
+    };
+  }
+
+  function dragLiftPixels() {
+    return Math.min(DRAG_LIFT_MAX_PX, Math.max(DRAG_LIFT_MIN_PX, window.innerHeight * .085));
+  }
+
+  function buildDragGhost(piece) {
+    const geometry = boardGeometry();
+    const bounds = pieceBounds(piece);
+    els.dragGhost.innerHTML = '';
+    els.dragGhost.className = '';
+    els.dragGhost.style.setProperty('--drag-cell', `${geometry.cell}px`);
+    els.dragGhost.style.setProperty('--drag-gap', `${geometry.columnGap}px`);
+
+    if (piece.isBomb) {
+      els.dragGhost.classList.add('bomb');
+      els.dragGhost.textContent = '💣';
+      return;
+    }
+
+    const shapeSet = new Set(piece.shape.map(cell => `${cell[0]},${cell[1]}`));
+    els.dragGhost.style.gridTemplateColumns = `repeat(${bounds.cols}, ${geometry.cell}px)`;
+    els.dragGhost.style.gridTemplateRows = `repeat(${bounds.rows}, ${geometry.cell}px)`;
+    els.dragGhost.style.setProperty('--piece-color', piece.color);
+
+    for (let row = 0; row < bounds.rows; row++) {
+      for (let col = 0; col < bounds.cols; col++) {
+        const cell = document.createElement('div');
+        cell.className = 'drag-ghost-cell';
+        if (shapeSet.has(`${row},${col}`)) cell.classList.add('filled');
+        els.dragGhost.appendChild(cell);
+      }
+    }
+  }
+
+  function resolveDragDrop(piece, clientX, liftedClientY) {
+    const geometry = boardGeometry();
+    const bounds = pieceBounds(piece);
+    const pieceWidth = bounds.cols * geometry.cell + Math.max(0, bounds.cols - 1) * geometry.columnGap;
+    const pieceHeight = bounds.rows * geometry.cell + Math.max(0, bounds.rows - 1) * geometry.rowGap;
+    const pieceLeft = clientX - pieceWidth / 2;
+    const pieceTop = liftedClientY - pieceHeight / 2;
+    const col = Math.round((pieceLeft - geometry.left) / geometry.pitchX);
+    const row = Math.round((pieceTop - geometry.top) / geometry.pitchY);
+    const valid = fitsAt(piece, row, col);
+    return { row, col, valid };
+  }
+
+  function updateDragPosition(clientX, clientY) {
+    if (!dragState?.dragging) return;
+    const piece = tray[dragState.index];
+    if (!piece) {
+      cancelDragInteraction();
+      return;
+    }
+
+    const liftedY = clientY - dragLiftPixels();
+    els.dragGhost.style.left = `${clientX}px`;
+    els.dragGhost.style.top = `${liftedY}px`;
+
+    const drop = resolveDragDrop(piece, clientX, liftedY);
+    dragState.drop = drop;
+    els.dragGhost.classList.toggle('invalid', !drop.valid);
+    els.board.classList.toggle('drag-over-valid', drop.valid);
+    els.board.classList.toggle('drag-over-invalid', !drop.valid);
+    previewPieceAt(piece, drop.row, drop.col);
+  }
+
+  function startPieceDrag() {
+    if (!dragState || dragState.dragging) return;
+    const piece = tray[dragState.index];
+    if (!piece) {
+      cancelDragInteraction();
+      return;
+    }
+
+    dragState.dragging = true;
+    selected = dragState.index;
+    document.body.classList.add('drag-lock');
+    dragState.slot.classList.add('selected', 'dragging');
+    buildDragGhost(piece);
+    els.dragGhost.classList.add('visible');
+    updateDragPosition(dragState.lastX, dragState.lastY);
+    beep(300, .035);
+  }
+
+  function beginPiecePointer(event, index, slot) {
+    if (gameOver || phase !== PHASE.PLAYING || !tray[index]) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    cancelDragInteraction();
+    event.preventDefault();
+    dragState = {
+      pointerId: event.pointerId,
+      index,
+      slot,
+      startX: event.clientX,
+      startY: event.clientY,
+      lastX: event.clientX,
+      lastY: event.clientY,
+      dragging: false,
+      drop: null
+    };
+
+    try { slot.setPointerCapture(event.pointerId); } catch (_) {}
+  }
+
+  function movePiecePointer(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    dragState.lastX = event.clientX;
+    dragState.lastY = event.clientY;
+
+    const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
+    if (!dragState.dragging && distance >= DRAG_THRESHOLD_PX) startPieceDrag();
+
+    if (dragState.dragging) {
+      event.preventDefault();
+      updateDragPosition(event.clientX, event.clientY);
+    }
+  }
+
+  function finishPiecePointer(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    event.preventDefault();
+
+    const state = dragState;
+    const wasDragging = state.dragging;
+    const drop = state.drop;
+    const index = state.index;
+    cancelDragInteraction(false);
+
+    if (!tray[index] || gameOver || phase !== PHASE.PLAYING) return;
+
+    if (!wasDragging) {
+      selected = selected === index ? -1 : index;
+      clearPreview();
+      renderTray();
+      if (selected >= 0) beep(330, .04);
+      return;
+    }
+
+    if (drop?.valid) {
+      selected = index;
+      onCellClick(drop.row, drop.col);
+      return;
+    }
+
+    selected = -1;
+    renderTray();
+    const fallbackRow = Number.isInteger(drop?.row) ? Math.max(0, Math.min(SIZE - 1, drop.row)) : 0;
+    const fallbackCol = Number.isInteger(drop?.col) ? Math.max(0, Math.min(SIZE - 1, drop.col)) : 0;
+    rejectPlacement(fallbackRow, fallbackCol);
+    screenShake('small');
+  }
+
+  function cancelDragInteraction(resetSelection = false) {
+    if (dragState?.slot) {
+      dragState.slot.classList.remove('dragging');
+      try {
+        if (dragState.slot.hasPointerCapture?.(dragState.pointerId)) {
+          dragState.slot.releasePointerCapture(dragState.pointerId);
+        }
+      } catch (_) {}
+    }
+
+    dragState = null;
+    document.body.classList.remove('drag-lock');
+    els.dragGhost.className = '';
+    els.dragGhost.innerHTML = '';
+    els.board.classList.remove('drag-over-valid', 'drag-over-invalid');
+    clearPreview();
+    if (resetSelection) selected = -1;
+  }
+
   function renderTray() {
     els.tray.innerHTML = '';
 
@@ -1436,7 +1721,8 @@
           renderTray();
           if (selected >= 0) beep(330, 0.04);
         };
-        slot.addEventListener('click', selectPiece);
+        slot.addEventListener('pointerdown', event => beginPiecePointer(event, index, slot));
+        slot.addEventListener('contextmenu', event => event.preventDefault());
         slot.addEventListener('keydown', event => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -1460,6 +1746,7 @@
 
   function triggerGameOver() {
     if (gameOver) return;
+    cancelDragInteraction(true);
     gameOver = true;
     phase = PHASE.GAME_OVER;
     selected = -1;
@@ -1564,6 +1851,7 @@
   }
 
   function restart() {
+    cancelDragInteraction(true);
     gameSessionId++;
     cancelPendingTimeouts();
     window.clearInterval(timerHandle);
@@ -1594,7 +1882,8 @@
     els.leaderboardWrap.classList.remove('visible');
     els.leaderboard.innerHTML = '';
     els.effectsLayer.innerHTML = '';
-    els.game.classList.remove('fever-active', 'shake-small', 'shake-medium', 'shake-large');
+    els.game.classList.remove('fever-active');
+    els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid');
     updateFeverUI();
 
     renderBoard();
@@ -1614,6 +1903,16 @@
   els.nickname.addEventListener('blur', saveNickname);
   els.submitScoreBtn.addEventListener('click', submitScore);
   els.restartBtn.addEventListener('click', restart);
+  window.addEventListener('pointermove', movePiecePointer, { passive: false });
+  window.addEventListener('pointerup', finishPiecePointer, { passive: false });
+  window.addEventListener('pointercancel', () => cancelDragInteraction(), { passive: false });
+  window.addEventListener('blur', () => cancelDragInteraction());
+  window.addEventListener('resize', () => {
+    if (dragState) cancelDragInteraction();
+  });
+  document.addEventListener('touchmove', event => {
+    if (dragState?.dragging) event.preventDefault();
+  }, { passive: false });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && mode === 'timed' && !gameOver) {
       const next = Math.max(0, Math.ceil((timerEndAt - performance.now()) / 1000));
