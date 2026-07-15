@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V5.5: subtle special-core frequency and pacing tuning -->
+  <!-- V5.5: smooth rAF drag · board-aware TRAY DIRECTOR -->
   <title>10×10 블록 퍼즐 · Core Overdrive V5.5</title>
   <style>
     :root {
@@ -358,15 +358,15 @@
       gap: var(--drag-gap, 2px);
       pointer-events: none;
       opacity: 0;
-      transform: translate3d(-50%, -50%, 0) scale(.84);
+      transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%) scale(1);
       transform-origin: center;
-      filter: drop-shadow(0 12px 20px rgba(0,0,0,.48));
-      transition: opacity .08s ease, transform .08s ease, filter .08s ease;
-      will-change: left, top, transform;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.42));
+      transition: opacity .06s linear, filter .06s linear;
+      will-change: transform, opacity;
+      contain: layout paint style;
     }
     #drag-ghost.visible {
       opacity: .96;
-      transform: translate3d(-50%, -50%, 0) scale(1);
     }
     #drag-ghost.invalid {
       filter: drop-shadow(0 0 18px rgba(255,67,91,.9));
@@ -576,7 +576,7 @@
       text-align: center;
       filter: drop-shadow(0 8px 22px rgba(0,0,0,.5));
     }
-    #event-banner.visible { animation: eventBannerIn .80s cubic-bezier(.18,.85,.25,1) both; }
+    #event-banner.visible { animation: eventBannerIn .95s cubic-bezier(.18,.85,.25,1) both; }
     #event-banner .event-main {
       font-size: clamp(32px, 10vw, 54px);
       font-weight: 950;
@@ -1447,8 +1447,8 @@
   const FEVER_MULTIPLIER = 2;
   const OVERDRIVE_MAX_MOVES = 12;
   const OVERDRIVE_BANK_MULTIPLIER = 3;
-  const SPECIAL_MIN_TRAY = 4;
-  const SPECIAL_FORCE_TRAY = 13;
+  const SPECIAL_MIN_TRAY = 5;
+  const SPECIAL_FORCE_TRAY = 14;
   const DRAFT_FIRST_TRAY = 3;
   const DRAFT_INTERVAL_TRAYS = 4;
   const MELTDOWN_MAX = 100;
@@ -1457,6 +1457,8 @@
   const DRAG_THRESHOLD_PX = 7;
   const DRAG_LIFT_MIN_PX = 70;
   const DRAG_LIFT_MAX_PX = 92;
+  const TRAY_DIRECTOR_MAX_ATTEMPTS = 36;
+  const TRAY_RECENT_MEMORY = 2;
   const IS_MOBILE_DEVICE = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
   const MAX_EFFECT_PARTICLES = IS_MOBILE_DEVICE ? 22 : 30;
   const MAX_EFFECT_NODES = IS_MOBILE_DEVICE ? 34 : 48;
@@ -1469,6 +1471,21 @@
     [[0,1],[1,0],[1,1],[2,0]], [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]],
     [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]
   ];
+  const SHAPE_CATALOG = SHAPES.map((shape, index) => {
+    const rows = Math.max(...shape.map(cell => cell[0])) + 1;
+    const cols = Math.max(...shape.map(cell => cell[1])) + 1;
+    const size = shape.length;
+    const sizeClass = size <= 2 ? 'small' : size === 3 ? 'medium' : size === 4 ? 'large' : 'huge';
+    const orientation = rows === 1 ? 'horizontal' : cols === 1 ? 'vertical' : 'mixed';
+    const form = orientation !== 'mixed' ? 'straight' : (rows === 2 && cols === 2 && size === 4 ? 'square' : 'angled');
+    return Object.freeze({ index, shape, rows, cols, size, sizeClass, orientation, form });
+  });
+  const SHAPES_BY_CLASS = Object.freeze({
+    small: SHAPE_CATALOG.filter(entry => entry.sizeClass === 'small'),
+    medium: SHAPE_CATALOG.filter(entry => entry.sizeClass === 'medium'),
+    large: SHAPE_CATALOG.filter(entry => entry.sizeClass === 'large'),
+    huge: SHAPE_CATALOG.filter(entry => entry.sizeClass === 'huge')
+  });
   const COLORS = ['#378ADD','#1D9E75','#D85A30','#D4537E','#7F77DD','#639922','#BA7517'];
   const SPECIAL_TYPES = Object.freeze({
     EXPLOSION:'explosion',
@@ -1542,6 +1559,8 @@
   let trayRound = 0;
   let traysSinceSpecial = 0;
   let lastSpecialType = '';
+  let recentTraySignatures = [];
+  let recentShapeIds = [];
   let soundOn = true;
   let audioCtx = null;
   let rng = Math.random;
@@ -1839,16 +1858,263 @@
     return items[items.length - 1];
   }
 
-  function randNormalPiece() {
-    const weights = SHAPES.map(shape => {
-      const size = shape.length;
-      if (score < 1200) return size <= 3 ? 3 : 1;
-      if (score < 6000) return 2;
-      return size >= 4 ? 3 : 1;
+  function boardOccupancyRatio() {
+    let filled = 0;
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) if (board[row][col]) filled++;
+    }
+    return filled / (SIZE * SIZE);
+  }
+
+  function normalPieceFromEntry(entry) {
+    return {
+      shape:entry.shape,
+      color:COLORS[Math.floor(rng() * COLORS.length)],
+      specialType:null,
+      shapeId:entry.index,
+      sizeClass:entry.sizeClass,
+      orientation:entry.orientation,
+      form:entry.form
+    };
+  }
+
+  function chooseTrayArchetype(occupancy) {
+    let names;
+    let weights;
+    if (occupancy >= .78 || (isMeltdownMode() && coreTemperature >= 85)) {
+      names = ['recovery','balanced','tactical'];
+      weights = [62,31,7];
+    } else if (occupancy >= .58 || (isMeltdownMode() && coreTemperature >= 65)) {
+      names = ['balanced','recovery','tactical','challenge'];
+      weights = [53,27,16,4];
+    } else {
+      names = ['balanced','tactical','recovery','challenge'];
+      weights = [50,25,10,15];
+    }
+    return weightedPick(names, weights);
+  }
+
+  function traySpecsForArchetype(archetype) {
+    const pools = {
+      balanced: [
+        [{sizeClass:'small'}, {sizeClass:'medium'}, {sizeClass:'large'}],
+        [{sizeClass:'small'}, {sizeClass:'large'}, {sizeClass:'large'}],
+        [{sizeClass:'medium'}, {sizeClass:'medium'}, {sizeClass:'large'}]
+      ],
+      tactical: [
+        [{sizeClass:'medium', prefer:'straight'}, {sizeClass:'large'}, {sizeClass:'small'}],
+        [{sizeClass:'large', prefer:'straight'}, {sizeClass:'medium'}, {sizeClass:'large'}]
+      ],
+      recovery: [
+        [{sizeClass:'small'}, {sizeClass:'small'}, {sizeClass:'medium'}],
+        [{sizeClass:'small'}, {sizeClass:'medium'}, {sizeClass:'medium'}],
+        [{sizeClass:'small'}, {sizeClass:'small'}, {sizeClass:'large'}]
+      ],
+      challenge: [
+        [{sizeClass:'medium'}, {sizeClass:'large'}, {sizeClass:'huge'}],
+        [{sizeClass:'large'}, {sizeClass:'large'}, {sizeClass:'huge'}]
+      ]
+    };
+    const variants = pools[archetype] || pools.balanced;
+    return variants[Math.floor(rng() * variants.length)].map(spec => ({...spec}));
+  }
+
+  function chooseShapeEntry(spec, usedIds, occupancy) {
+    let candidates = SHAPES_BY_CLASS[spec.sizeClass] || SHAPE_CATALOG;
+    if (candidates.length === 0) candidates = SHAPE_CATALOG;
+    const weights = candidates.map(entry => {
+      let weight = 1;
+      const usedCount = usedIds.filter(id => id === entry.index).length;
+      if (usedCount === 1) weight *= .22;
+      if (usedCount >= 2) return 0;
+      if (recentShapeIds.includes(entry.index)) weight *= .52;
+      if (spec.prefer === 'straight') weight *= entry.form === 'straight' ? 3.2 : .7;
+      if (occupancy >= .7) {
+        if (entry.size <= 2) weight *= 1.35;
+        if (entry.form === 'straight' || entry.form === 'square') weight *= 1.18;
+        if (entry.size === 6) weight *= .35;
+      }
+      if (isMeltdownMode() && coreTemperature >= 80) {
+        if (entry.size <= 3) weight *= 1.25;
+        if (entry.size === 6) weight *= .25;
+      }
+      return Math.max(.001, weight);
     });
-    const shape = weightedPick(SHAPES, weights);
-    const color = COLORS[Math.floor(rng() * COLORS.length)];
-    return { shape, color, specialType:null };
+    return weightedPick(candidates, weights);
+  }
+
+  function traySignature(pieces) {
+    return pieces.map(piece => !piece ? 'X' : (isSpecialPiece(piece) ? `S:${piece.specialType}` : `N:${piece.shapeId ?? SHAPES.indexOf(piece.shape)}`)).sort().join('|');
+  }
+
+  function normalTrayQuality(pieces, occupancy, specialIndex = -1) {
+    const normals = pieces.filter((piece, index) => index !== specialIndex && piece && !isSpecialPiece(piece));
+    const ids = normals.map(piece => piece.shapeId);
+    const sizes = normals.map(piece => piece.shape.length);
+    const orientations = normals.map(piece => piece.orientation);
+    const placeable = normals.filter(canPlaceAnywhere).length;
+    let quality = placeable * 80;
+
+    if (new Set(ids).size === ids.length) quality += 22;
+    if (Math.max(0, ...ids.map(id => ids.filter(value => value === id).length)) > 2) quality -= 500;
+    if (sizes.filter(size => size === 6).length > 1) quality -= 500;
+    if (normals.length >= 3 && sizes.every(size => size >= 4)) quality -= 420;
+    if (normals.length >= 3 && sizes.every(size => size <= 2)) quality -= 90;
+    if (normals.length >= 3 && orientations.every(value => value === 'horizontal')) quality -= 900;
+    if (normals.length >= 3 && orientations.every(value => value === 'vertical')) quality -= 900;
+    if (occupancy >= .70 && !sizes.some(size => size <= 2)) quality -= 360;
+    if (occupancy >= .80 && placeable < Math.min(2, normals.length)) quality -= 1800;
+    else if (placeable < 1) quality -= 1200;
+    if (specialIndex >= 0 && !sizes.some(size => size <= 3)) quality -= 260;
+
+    const signature = traySignature(pieces);
+    if (recentTraySignatures.includes(signature)) quality -= 260;
+    quality += rng() * 8;
+    return quality;
+  }
+
+  function repairDirectedTray(pieces, occupancy, specialIndex = -1) {
+    const normalIndexes = [0,1,2].filter(index => index !== specialIndex && pieces[index]);
+    const pieceForEntry = entry => normalPieceFromEntry(entry);
+    const placeableEntries = SHAPE_CATALOG.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+    const smallEntries = SHAPES_BY_CLASS.small;
+
+    const replaceAt = (index, candidates, preferPlaceable = false) => {
+      if (index === undefined || candidates.length === 0) return false;
+      let pool = candidates;
+      if (preferPlaceable) {
+        const fitting = candidates.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+        if (fitting.length > 0) pool = fitting;
+      }
+      const currentIds = normalIndexes.map(i => pieces[i]?.shapeId).filter(id => id !== undefined);
+      const filtered = pool.filter(entry => currentIds.filter(id => id === entry.index).length < 2);
+      const picked = (filtered.length ? filtered : pool)[Math.floor(rng() * (filtered.length ? filtered.length : pool.length))];
+      pieces[index] = pieceForEntry(picked);
+      return true;
+    };
+
+    let normals = normalIndexes.map(index => pieces[index]);
+    let sizes = normals.map(piece => piece.shape.length);
+
+    if (occupancy >= .70 && !sizes.some(size => size <= 2)) {
+      replaceAt(normalIndexes[0], smallEntries, true);
+    }
+
+    normals = normalIndexes.map(index => pieces[index]);
+    if (occupancy >= .80 && placeableEntries.length >= 2 && normals.filter(canPlaceAnywhere).length < Math.min(2, normals.length)) {
+      const sorted = [...placeableEntries].sort((a,b) => a.size - b.size || (a.form === 'straight' ? -1 : 1));
+      const chosen = [];
+      for (const entry of sorted) {
+        if (!chosen.some(item => item.index === entry.index)) chosen.push(entry);
+        if (chosen.length >= Math.min(2, normals.length)) break;
+      }
+      chosen.forEach((entry, offset) => { pieces[normalIndexes[offset]] = pieceForEntry(entry); });
+    }
+
+    normals = normalIndexes.map(index => pieces[index]);
+    sizes = normals.map(piece => piece.shape.length);
+    if (normals.length >= 3 && sizes.every(size => size >= 4)) replaceAt(normalIndexes[0], smallEntries, true);
+    if (sizes.filter(size => size === 6).length > 1) {
+      const hugeIndexes = normalIndexes.filter(index => pieces[index].shape.length === 6);
+      replaceAt(hugeIndexes[1], SHAPES_BY_CLASS.large, true);
+    }
+
+    normals = normalIndexes.map(index => pieces[index]);
+    const orientations = normals.map(piece => piece.orientation);
+    if (normals.length >= 3 && (orientations.every(value => value === 'horizontal') || orientations.every(value => value === 'vertical'))) {
+      const blockedOrientation = orientations[0];
+      const alternatives = SHAPE_CATALOG.filter(entry => entry.orientation !== blockedOrientation && entry.size <= 4);
+      const replaceIndex = [...normalIndexes].sort((a,b) => pieces[b].shape.length - pieces[a].shape.length)[0];
+      replaceAt(replaceIndex, alternatives, occupancy >= .60);
+    }
+
+    normals = normalIndexes.map(index => pieces[index]);
+    const ids = normals.map(piece => piece.shapeId);
+    if (ids.length >= 3 && new Set(ids).size === 1) {
+      const alternatives = SHAPE_CATALOG.filter(entry => entry.index !== ids[0] && entry.size <= 4);
+      replaceAt(normalIndexes[normalIndexes.length - 1], alternatives, occupancy >= .60);
+    }
+
+    if (recentTraySignatures.includes(traySignature(pieces))) {
+      const lastIndex = normalIndexes[normalIndexes.length - 1];
+      const currentId = pieces[lastIndex]?.shapeId;
+      const alternatives = SHAPE_CATALOG.filter(entry => entry.index !== currentId && entry.size <= (occupancy >= .7 ? 4 : 6));
+      replaceAt(lastIndex, alternatives, occupancy >= .70);
+    }
+
+    // Final fairness pass: later diversity repairs must not remove high-occupancy recovery guarantees.
+    normals = normalIndexes.map(index => pieces[index]);
+    if (occupancy >= .70 && !normals.some(piece => piece.shape.length <= 2)) {
+      const target = [...normalIndexes].sort((a,b) => pieces[b].shape.length - pieces[a].shape.length)[0];
+      replaceAt(target, smallEntries, true);
+    }
+    normals = normalIndexes.map(index => pieces[index]);
+    if (occupancy >= .80 && placeableEntries.length >= 2 && normals.filter(canPlaceAnywhere).length < Math.min(2, normals.length)) {
+      const fittingSmall = placeableEntries.filter(entry => entry.size <= 2);
+      const ordered = [...fittingSmall, ...placeableEntries.filter(entry => entry.size > 2)];
+      const unique = [];
+      for (const entry of ordered) {
+        if (!unique.some(item => item.index === entry.index)) unique.push(entry);
+        if (unique.length >= Math.min(2, normals.length)) break;
+      }
+      unique.forEach((entry, offset) => { pieces[normalIndexes[offset]] = pieceForEntry(entry); });
+    }
+    normals = normalIndexes.map(index => pieces[index]);
+    const finalOrientations = normals.map(piece => piece.orientation);
+    if (normals.length >= 3 && (finalOrientations.every(value => value === 'horizontal') || finalOrientations.every(value => value === 'vertical'))) {
+      const blockedOrientation = finalOrientations[0];
+      const alternatives = SHAPE_CATALOG.filter(entry => entry.orientation !== blockedOrientation && entry.size <= 4);
+      replaceAt(normalIndexes[normalIndexes.length - 1], alternatives, false);
+    }
+    return pieces;
+  }
+
+  function createDirectedNormalTray(specialIndex = -1) {
+    const occupancy = boardOccupancyRatio();
+    let bestPieces = null;
+    let bestQuality = -Infinity;
+
+    for (let attempt = 0; attempt < TRAY_DIRECTOR_MAX_ATTEMPTS; attempt++) {
+      const archetype = chooseTrayArchetype(occupancy);
+      const specs = traySpecsForArchetype(archetype);
+      if (specialIndex >= 0) {
+        // A special core already supplies the high-impact slot; keep the two normal pieces fair.
+        const remainingIndexes = [0,1,2].filter(index => index !== specialIndex);
+        specs[remainingIndexes[0]] = occupancy >= .62 ? {sizeClass:'small'} : specs[remainingIndexes[0]];
+        if (specs[remainingIndexes[1]].sizeClass === 'huge') specs[remainingIndexes[1]] = {sizeClass:'medium'};
+      }
+
+      const usedIds = [];
+      const pieces = specs.map((spec, index) => {
+        if (index === specialIndex) return null;
+        const entry = chooseShapeEntry(spec, usedIds, occupancy);
+        usedIds.push(entry.index);
+        return normalPieceFromEntry(entry);
+      });
+      const quality = normalTrayQuality(pieces, occupancy, specialIndex);
+      if (quality > bestQuality) {
+        bestQuality = quality;
+        bestPieces = pieces;
+      }
+    }
+
+    if (!bestPieces) bestPieces = [normalPieceFromEntry(SHAPE_CATALOG[0]), normalPieceFromEntry(SHAPE_CATALOG[1]), normalPieceFromEntry(SHAPE_CATALOG[2])];
+    return repairDirectedTray(bestPieces, occupancy, specialIndex);
+  }
+
+  function rememberTray(pieces) {
+    const signature = traySignature(pieces);
+    recentTraySignatures.push(signature);
+    recentTraySignatures = recentTraySignatures.slice(-TRAY_RECENT_MEMORY);
+    const ids = pieces.filter(piece => piece && !isSpecialPiece(piece)).map(piece => piece.shapeId);
+    recentShapeIds = [...recentShapeIds, ...ids].slice(-6);
+  }
+
+  function randNormalPiece() {
+    // Kept for compatibility with older helpers; regular trays use createDirectedNormalTray().
+    const occupancy = boardOccupancyRatio();
+    const className = weightedPick(['small','medium','large','huge'], occupancy >= .7 ? [38,30,28,4] : [15,20,50,15]);
+    return normalPieceFromEntry(chooseShapeEntry({sizeClass:className}, [], occupancy));
   }
 
   function isSpecialPiece(piece) {
@@ -1872,7 +2138,7 @@
     const forceTray = Math.max(8, SPECIAL_FORCE_TRAY - beacon * 2);
     if (trayRound < 4 || traysSinceSpecial < minTray) return false;
     if (traysSinceSpecial >= forceTray) return true;
-    const chance = Math.min(.165, .062 + Math.min(score, 50000) / 900000 + beacon * .015);
+    const chance = Math.min(.16, .055 + Math.min(score, 50000) / 900000 + beacon * .015);
     return rng() < chance;
   }
 
@@ -1900,16 +2166,17 @@
     if (gameOver) return;
     trayRound++;
     const specialSpawned = shouldSpawnSpecial();
-    tray = [randNormalPiece(), randNormalPiece(), randNormalPiece()];
+    const specialIndex = specialSpawned ? Math.floor(rng() * 3) : -1;
+    tray = createDirectedNormalTray(specialIndex);
     let specialType = '';
     if (specialSpawned) {
-      const specialIndex = Math.floor(rng() * 3);
       specialType = pickSpecialType();
       tray[specialIndex] = makeSpecialPiece(specialType);
       traysSinceSpecial = 0;
     } else {
       traysSinceSpecial++;
     }
+    rememberTray(tray);
     selected = -1;
     renderTray();
     updateDraftUI();
@@ -2842,9 +3109,7 @@
     return Math.min(DRAG_LIFT_MAX_PX, Math.max(DRAG_LIFT_MIN_PX, window.innerHeight * .085));
   }
 
-  function buildDragGhost(piece) {
-    const geometry = boardGeometry();
-    const bounds = pieceBounds(piece);
+  function buildDragGhost(piece, geometry, bounds) {
     els.dragGhost.innerHTML = '';
     els.dragGhost.className = '';
     els.dragGhost.style.setProperty('--drag-cell', `${geometry.cell}px`);
@@ -2873,37 +3138,43 @@
     }
   }
 
-  function resolveDragDrop(piece, clientX, liftedClientY) {
-    const geometry = boardGeometry();
-    const bounds = pieceBounds(piece);
-    const pieceWidth = bounds.cols * geometry.cell + Math.max(0, bounds.cols - 1) * geometry.columnGap;
-    const pieceHeight = bounds.rows * geometry.cell + Math.max(0, bounds.rows - 1) * geometry.rowGap;
-    const pieceLeft = clientX - pieceWidth / 2;
-    const pieceTop = liftedClientY - pieceHeight / 2;
-    const col = Math.round((pieceLeft - geometry.left) / geometry.pitchX);
-    const row = Math.round((pieceTop - geometry.top) / geometry.pitchY);
+  function resolveDragDropCached(piece, clientX, liftedClientY, cache) {
+    const pieceLeft = clientX - cache.pieceWidth / 2;
+    const pieceTop = liftedClientY - cache.pieceHeight / 2;
+    const col = Math.round((pieceLeft - cache.geometry.left) / cache.geometry.pitchX);
+    const row = Math.round((pieceTop - cache.geometry.top) / cache.geometry.pitchY);
     const valid = fitsAt(piece, row, col);
     return { row, col, valid };
   }
 
-  function updateDragPosition(clientX, clientY) {
+  function applyDragFrame(force = false) {
     if (!dragState?.dragging) return;
+    dragState.rafId = null;
     const piece = tray[dragState.index];
     if (!piece) {
       cancelDragInteraction();
       return;
     }
 
-    const liftedY = clientY - dragLiftPixels();
-    els.dragGhost.style.left = `${clientX}px`;
-    els.dragGhost.style.top = `${liftedY}px`;
+    const clientX = dragState.lastX;
+    const liftedY = dragState.lastY - dragState.cache.lift;
+    els.dragGhost.style.transform = `translate3d(${clientX}px, ${liftedY}px, 0) translate(-50%, -50%) scale(1)`;
 
-    const drop = resolveDragDrop(piece, clientX, liftedY);
+    const drop = resolveDragDropCached(piece, clientX, liftedY, dragState.cache);
     dragState.drop = drop;
-    els.dragGhost.classList.toggle('invalid', !drop.valid);
-    els.board.classList.toggle('drag-over-valid', drop.valid);
-    els.board.classList.toggle('drag-over-invalid', !drop.valid);
-    previewPieceAt(piece, drop.row, drop.col);
+    const previewKey = `${drop.row}:${drop.col}:${drop.valid ? 1 : 0}`;
+    if (force || previewKey !== dragState.lastPreviewKey) {
+      dragState.lastPreviewKey = previewKey;
+      els.dragGhost.classList.toggle('invalid', !drop.valid);
+      els.board.classList.toggle('drag-over-valid', drop.valid);
+      els.board.classList.toggle('drag-over-invalid', !drop.valid);
+      previewPieceAt(piece, drop.row, drop.col);
+    }
+  }
+
+  function scheduleDragFrame() {
+    if (!dragState?.dragging || dragState.rafId !== null) return;
+    dragState.rafId = requestAnimationFrame(() => applyDragFrame(false));
   }
 
   function startPieceDrag() {
@@ -2914,13 +3185,24 @@
       return;
     }
 
+    const geometry = boardGeometry();
+    const bounds = pieceBounds(piece);
+    dragState.cache = {
+      geometry,
+      bounds,
+      lift:dragLiftPixels(),
+      pieceWidth:bounds.cols * geometry.cell + Math.max(0, bounds.cols - 1) * geometry.columnGap,
+      pieceHeight:bounds.rows * geometry.cell + Math.max(0, bounds.rows - 1) * geometry.rowGap
+    };
     dragState.dragging = true;
+    dragState.lastPreviewKey = '';
+    dragState.rafId = null;
     selected = dragState.index;
     document.body.classList.add('drag-lock');
     dragState.slot.classList.add('selected', 'dragging');
-    buildDragGhost(piece);
+    buildDragGhost(piece, geometry, bounds);
     els.dragGhost.classList.add('visible');
-    updateDragPosition(dragState.lastX, dragState.lastY);
+    applyDragFrame(true);
     beep(300, .035);
   }
 
@@ -2947,15 +3229,18 @@
     cancelDragInteraction();
     event.preventDefault();
     dragState = {
-      pointerId: event.pointerId,
+      pointerId:event.pointerId,
       index,
       slot,
-      startX: event.clientX,
-      startY: event.clientY,
-      lastX: event.clientX,
-      lastY: event.clientY,
-      dragging: false,
-      drop: null
+      startX:event.clientX,
+      startY:event.clientY,
+      lastX:event.clientX,
+      lastY:event.clientY,
+      dragging:false,
+      drop:null,
+      cache:null,
+      rafId:null,
+      lastPreviewKey:''
     };
 
     try { slot.setPointerCapture(event.pointerId); } catch (_) {}
@@ -2972,7 +3257,7 @@
 
     if (dragState.dragging) {
       event.preventDefault();
-      updateDragPosition(event.clientX, event.clientY);
+      scheduleDragFrame();
     }
   }
 
@@ -2982,6 +3267,11 @@
 
     const state = dragState;
     const wasDragging = state.dragging;
+    if (wasDragging) {
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      applyDragFrame(true);
+    }
     const drop = state.drop;
     const index = state.index;
     cancelDragInteraction(false);
@@ -3012,6 +3302,7 @@
 
   function cancelDragInteraction(resetSelection = false) {
     detachDragListeners();
+    if (dragState?.rafId !== null && dragState?.rafId !== undefined) cancelAnimationFrame(dragState.rafId);
     if (dragState?.slot) {
       dragState.slot.classList.remove('dragging');
       try {
@@ -3192,6 +3483,8 @@
     trayRound = 0;
     traysSinceSpecial = 0;
     lastSpecialType = '';
+    recentTraySignatures = [];
+    recentShapeIds = [];
     coreTemperature = 0;
     meltdownWarning = false;
     meltdownMovesLeft = 0;
@@ -3265,7 +3558,7 @@
   void loadNickname();
   restart();
 
-  // Build: CORE OVERDRIVE V5.5 · subtle special-core pacing tune
+  // Build: CORE OVERDRIVE V5.5 · smooth drag + TRAY DIRECTOR edition
 
   </script>
 </body>
