@@ -2361,6 +2361,97 @@
       .guide-item { padding: 6px; grid-template-columns: 26px minmax(0,1fr); }
     }
 
+
+
+    /* V6.8 · 선택형 사건 + 보스 웨이브 */
+    html.chaos-choice-open,
+    body.chaos-choice-open { overflow: hidden !important; }
+    #chaos-choice-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2400;
+      display: none;
+      place-items: center;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+      background: rgba(3,5,13,.86);
+      backdrop-filter: blur(12px);
+    }
+    #chaos-choice-overlay.visible { display: grid; }
+    .chaos-choice-card {
+      width: min(100%, 440px);
+      max-height: min(88dvh, 760px);
+      overflow: auto;
+      border: 1px solid rgba(119,222,255,.36);
+      border-radius: 22px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(20,25,49,.98), rgba(8,11,26,.98));
+      box-shadow: 0 24px 90px rgba(0,0,0,.62), 0 0 34px rgba(87,243,255,.13);
+    }
+    .chaos-choice-kicker {
+      color: #69f5d0;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .15em;
+    }
+    .chaos-choice-title {
+      margin-top: 5px;
+      color: #fff;
+      font-size: 25px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+    .chaos-choice-copy {
+      margin: 7px 0 14px;
+      color: #b9c1d7;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .chaos-choice-list { display: grid; gap: 10px; }
+    .chaos-choice-option {
+      width: 100%;
+      min-height: 118px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 17px;
+      padding: 13px 14px;
+      text-align: left;
+      color: #fff;
+      background: rgba(255,255,255,.055);
+      box-shadow: inset 0 1px rgba(255,255,255,.06);
+    }
+    .chaos-choice-option:active { transform: scale(.985); }
+    .chaos-choice-option.safe { border-color: rgba(101,245,201,.46); background: linear-gradient(135deg, rgba(101,245,201,.14), rgba(255,255,255,.04)); }
+    .chaos-choice-option.risk { border-color: rgba(255,79,112,.56); background: linear-gradient(135deg, rgba(255,79,112,.16), rgba(189,92,255,.09)); }
+    .chaos-choice-route { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; font-weight:950; }
+    .chaos-choice-route em { font-style:normal; font-size:10px; color:#fff4a8; }
+    .chaos-choice-event { margin-top:8px; font-size:17px; font-weight:950; }
+    .chaos-choice-desc { margin-top:5px; color:#c4cadd; font-size:10px; line-height:1.45; }
+    .chaos-choice-foot { margin-top:12px; color:#7f8aa8; font-size:9px; text-align:center; }
+
+    #game.chaos-boss { --chaos-color:#ff3f7d; }
+    #game.chaos-boss .chaos-panel {
+      border-color: rgba(255,63,125,.76);
+      background: linear-gradient(135deg, rgba(255,38,98,.16), rgba(189,92,255,.13), rgba(7,10,25,.92));
+      box-shadow: 0 0 0 1px rgba(255,63,125,.17), 0 0 28px rgba(255,63,125,.18), 0 10px 30px rgba(0,0,0,.3);
+    }
+    #game.chaos-boss #board {
+      border-color: rgba(255,63,125,.76);
+      box-shadow: 0 0 0 1px rgba(255,63,125,.18), 0 0 25px rgba(255,63,125,.13);
+    }
+    #game.chaos-boss .chaos-title,
+    #game.chaos-boss #chaos-status { color:#ff79a6; }
+    #game.chaos-boss-hit .chaos-panel { animation: bossPanelHit .65s ease-out 1; }
+    @keyframes bossPanelHit {
+      0% { transform:scale(1); filter:brightness(1); }
+      35% { transform:scale(1.025); filter:brightness(1.6); }
+      100% { transform:scale(1); filter:brightness(1); }
+    }
+    @media (max-width:520px) {
+      .chaos-choice-card { padding:15px; border-radius:19px; }
+      .chaos-choice-title { font-size:22px; }
+      .chaos-choice-option { min-height:105px; padding:11px 12px; }
+      .chaos-choice-event { font-size:15px; }
+    }
+
 </style>
 </head>
 <body>
@@ -2467,6 +2558,28 @@
         <button id="last-chance-swap" type="button">블록 교체<span>남은 블록을 새 조합으로 변경</span></button>
         <button id="last-chance-remove" type="button">한 칸 제거<span>보드의 막힌 칸 하나를 직접 제거</span></button>
       </div>
+    </div>
+  </section>
+
+
+  <section id="chaos-choice-overlay" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="chaos-choice-title">
+    <div class="chaos-choice-card">
+      <div class="chaos-choice-kicker">CHOOSE YOUR CHAOS</div>
+      <div id="chaos-choice-title" class="chaos-choice-title">이번 사건을 골라</div>
+      <p class="chaos-choice-copy">안전하게 점수를 챙길지, 더 어려운 사건에 도전해서 큰 보상을 노릴지 선택해.</p>
+      <div class="chaos-choice-list">
+        <button id="chaos-choice-safe" class="chaos-choice-option safe" type="button">
+          <span class="chaos-choice-route">안전하게 간다 <em>성공 보너스 ×1.5</em></span>
+          <span id="chaos-choice-safe-name" class="chaos-choice-event">작은 블록 러시</span>
+          <span id="chaos-choice-safe-desc" class="chaos-choice-desc">조금 더 여유 있게 목표를 해결해.</span>
+        </button>
+        <button id="chaos-choice-risk" class="chaos-choice-option risk" type="button">
+          <span class="chaos-choice-route">큰 점수를 노린다 <em>성공 보너스 ×3</em></span>
+          <span id="chaos-choice-risk-name" class="chaos-choice-event">잭팟 찬스</span>
+          <span id="chaos-choice-risk-desc" class="chaos-choice-desc">기회는 줄지만 성공하면 점수가 크게 터져.</span>
+        </button>
+      </div>
+      <div class="chaos-choice-foot">선택하는 동안 게임은 멈춰 있어.</div>
     </div>
   </section>
 
@@ -5566,7 +5679,7 @@
 
 
   // V6.7 · 카오스 러시 사람말 가이드
-  const CHAOS_GUIDE_SEEN_KEY = 'block-game-chaos-guide-v67-seen';
+  const CHAOS_GUIDE_SEEN_KEY = 'block-game-chaos-guide-v68-seen';
   const chaosGuideOverlay = document.getElementById('chaos-guide-overlay');
   const chaosGuideButton = document.getElementById('chaos-guide-btn');
   const chaosGuideCloseButton = document.getElementById('chaos-guide-close');
@@ -5608,7 +5721,7 @@
   }
 
   function guideLastScene() {
-    return `<div class="guide-scene"><div class="guide-scene-label">막혀도 딱 한 번은 기회가 있어</div><div class="guide-event-card" style="margin-bottom:9px"><strong>웨이브 2</strong><span>사건 3개를 끝내면 다음 웨이브로 올라가고 보상이 커져.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>블록 교체</strong><span>남은 블록을 놓기 쉬운 새 블록으로 바꿔.</span></div><div class="guide-choice"><strong>한 칸 제거</strong><span>막고 있는 보드 블록 한 칸을 직접 없애.</span></div></div></div>`;
+    return `<div class="guide-scene"><div class="guide-scene-label">후반에는 직접 고르고 보스와 싸워</div><div class="guide-event-card" style="margin-bottom:9px"><strong>선택형 사건</strong><span>안전한 목표와 어려운 고보상 목표 중 하나를 골라.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>보스 웨이브</strong><span>3·6·9웨이브에서 제한 횟수 안에 여러 줄을 지워.</span></div><div class="guide-choice"><strong>마지막 한 수</strong><span>완전히 막히면 블록 교체나 한 칸 제거를 한 번 사용해.</span></div></div></div>`;
   }
 
   const CHAOS_GUIDE_SLIDES = Object.freeze([
@@ -5637,9 +5750,9 @@
       scene:guideBonusScene()
     },
     {
-      title:'사건을 넘기고 웨이브를 올려',
-      copy:'사건 세 개를 끝낼 때마다 다음 웨이브로 올라가고 보상이 커져. 정말 놓을 곳이 없어지면 한 판에 한 번 “마지막 한 수”가 나와.',
-      tip:'정답을 전부 외울 필요 없어. 현재 사건 문장을 따라 하고, 빛나는 칸과 특수 블록을 눈여겨보면 충분해.',
+      title:'직접 고르고, 보스 웨이브를 돌파해',
+      copy:'두 사건마다 안전한 길과 고득점 도전 중 하나를 고를 수 있어. 3·6·9웨이브에는 보스가 나오고, 완전히 막히면 마지막 한 수를 한 번 사용할 수 있어.',
+      tip:'보스전에서는 보드 위에 표시된 남은 횟수와 지워야 할 줄 수만 확인하면 돼.',
       scene:guideLastScene()
     }
   ]);
@@ -5721,10 +5834,337 @@
   };
 
 
+  /* V6.8 · 선택형 사건 + 보스 웨이브 ------------------------------- */
+  let chaosChoicePending = null;
+  let chaosChoiceRoute = '';
+  let chaosChoiceRewardMultiplier = 1;
+  let chaosChoiceMoveDelta = 0;
+  let chaosBossPending = false;
+  let chaosBossActive = false;
+  let chaosBossDefeated = false;
+  let chaosBossLastWave = 0;
+  let chaosBossReward = 0;
+  let chaosBossStarting = false;
+  let chaosSuppressBannerMain = '';
+
+  const chaosChoiceOverlay = document.getElementById('chaos-choice-overlay');
+  const chaosChoiceSafe = document.getElementById('chaos-choice-safe');
+  const chaosChoiceRisk = document.getElementById('chaos-choice-risk');
+  const chaosChoiceSafeName = document.getElementById('chaos-choice-safe-name');
+  const chaosChoiceSafeDesc = document.getElementById('chaos-choice-safe-desc');
+  const chaosChoiceRiskName = document.getElementById('chaos-choice-risk-name');
+  const chaosChoiceRiskDesc = document.getElementById('chaos-choice-risk-desc');
+
+  function randomChoice(list) {
+    return list[Math.floor(rng() * list.length)];
+  }
+
+  function pickChoiceEvent(pool) {
+    const filtered = pool.filter(type => type !== chaosLastEvent);
+    return randomChoice(filtered.length ? filtered : pool);
+  }
+
+  function makeChaosChoice() {
+    const occupancy = boardOccupancyRatio();
+    const safePool = [CHAOS_TYPES.MINI_RUSH, CHAOS_TYPES.SPECIAL_STORM, CHAOS_TYPES.LASER_GRID];
+    let riskPool = [CHAOS_TYPES.GIANT_OVERLOAD, CHAOS_TYPES.REACTOR_SURGE, CHAOS_TYPES.CORE_JACKPOT, CHAOS_TYPES.DANGER_LINE];
+    if (occupancy < .25) riskPool = riskPool.filter(type => type !== CHAOS_TYPES.DANGER_LINE);
+    if (occupancy > .67) riskPool = riskPool.filter(type => type !== CHAOS_TYPES.GIANT_OVERLOAD);
+    return {
+      safe: pickChoiceEvent(safePool),
+      risk: pickChoiceEvent(riskPool.length ? riskPool : [CHAOS_TYPES.REACTOR_SURGE, CHAOS_TYPES.CORE_JACKPOT])
+    };
+  }
+
+  function shouldOfferChaosChoice() {
+    if (!isChaosMode() || gameOver || chaosBossPending || chaosBossActive) return false;
+    return (chaosEventNumber + 1) % 2 === 0;
+  }
+
+  function openChaosChoice() {
+    if (chaosChoiceOverlay.classList.contains('visible')) return;
+    chaosChoicePending = makeChaosChoice();
+    const safeMeta = CHAOS_META[chaosChoicePending.safe];
+    const riskMeta = CHAOS_META[chaosChoicePending.risk];
+    chaosChoiceSafeName.textContent = safeMeta.title;
+    chaosChoiceSafeDesc.textContent = `${safeMeta.instruction} 목표 기회가 조금 더 넉넉해.`;
+    chaosChoiceRiskName.textContent = riskMeta.title;
+    chaosChoiceRiskDesc.textContent = `${riskMeta.instruction} 대신 기회가 1번 줄어들 수 있어.`;
+    cancelDragInteraction(true);
+    selected = -1;
+    renderTray();
+    phase = PHASE.DRAFT;
+    chaosChoiceOverlay.classList.add('visible');
+    chaosChoiceOverlay.setAttribute('aria-hidden', 'false');
+    document.documentElement.classList.add('chaos-choice-open');
+    document.body.classList.add('chaos-choice-open');
+    window.setTimeout(() => chaosChoiceSafe.focus({ preventScroll:true }), 35);
+  }
+
+  function closeChaosChoice() {
+    chaosChoiceOverlay.classList.remove('visible');
+    chaosChoiceOverlay.setAttribute('aria-hidden', 'true');
+    document.documentElement.classList.remove('chaos-choice-open');
+    document.body.classList.remove('chaos-choice-open');
+  }
+
+  function choiceCompletionBonus() {
+    const base = 420 + chaosWave * 180;
+    return Math.round(base * chaosChoiceRewardMultiplier);
+  }
+
+  const v68CoreStartChaosMission = startChaosMission;
+  startChaosMission = function() {
+    if (chaosBossActive) {
+      const target = Math.min(5, 2 + Math.floor(Math.max(0, chaosWave - 3) / 3));
+      chaosBossReward = 2200 + chaosWave * 550;
+      chaosMission = {
+        type:'line',
+        label:`보스 체력 ${target}줄`,
+        target,
+        progress:0,
+        movesLeft:5,
+        startScore:score,
+        reward:chaosBossReward,
+        done:false,
+        boss:true
+      };
+      updateChaosWaveUI();
+      return;
+    }
+    v68CoreStartChaosMission();
+    if (!chaosMission || !chaosChoiceRoute) return;
+    chaosMission.movesLeft = Math.max(2, chaosMission.movesLeft + chaosChoiceMoveDelta);
+    chaosMission.reward = Math.round(chaosMission.reward * chaosChoiceRewardMultiplier);
+    updateChaosWaveUI();
+  };
+
+  const v68CoreFinishChaosMission = finishChaosMission;
+  finishChaosMission = function(success, reason = '') {
+    if (!chaosBossActive) return v68CoreFinishChaosMission(success, reason);
+    if (!chaosMission || chaosMission.done) return;
+    chaosMission.done = true;
+    if (success) {
+      chaosBossDefeated = true;
+      addScorePoints(chaosBossReward, 'release');
+      addFever(28);
+      announceEvent('보스 격파!', `${chaosMission.target}줄 제거 · 최종 보상 +${formatNumber(chaosBossReward)}`, 'fever');
+      els.game.classList.remove('chaos-boss-hit');
+      void els.game.offsetWidth;
+      els.game.classList.add('chaos-boss-hit');
+      createShockwave('#ff3f7d', .9);
+      burstParticles(30, ['#ff3f7d','#bd5cff','#ffcf4a','#ffffff'], 225);
+      beepSequence([360,520,740,980,1240], .07);
+      scheduleForCurrentGame(() => {
+        if (chaosBossActive && chaosEvent) {
+          chaosSuppressBannerMain = '보스 격파!';
+          finishChaosEvent(true, '보스 격파!');
+        }
+      }, RESOLVE_DELAY_MS + 170);
+    } else {
+      announceEvent('보스전 실패', reason || '제한 횟수를 모두 사용했어', 'danger');
+      scheduleForCurrentGame(() => {
+        if (chaosBossActive && chaosEvent) {
+          chaosSuppressBannerMain = '보스 웨이브 실패';
+          finishChaosEvent(false, '보스 웨이브 실패');
+        }
+      }, 80);
+    }
+    updateChaosWaveUI();
+  };
+
+  const v68CoreStartChaosEvent = startChaosEvent;
+
+  function startBossWave() {
+    chaosBossPending = false;
+    chaosBossActive = true;
+    chaosBossDefeated = false;
+    chaosBossLastWave = chaosWave;
+    chaosChoiceRoute = '';
+    chaosChoiceRewardMultiplier = 1;
+    chaosChoiceMoveDelta = 0;
+    chaosBossStarting = true;
+    v68CoreStartChaosEvent(CHAOS_TYPES.LASER_GRID);
+    chaosBossStarting = false;
+    if (!chaosEvent) {
+      chaosBossActive = false;
+      return;
+    }
+    chaosTraysLeft = Math.max(2, chaosTraysLeft);
+    updateChaosUI();
+    announceEvent(`보스 웨이브 ${chaosWave}!`, `${chaosMission?.movesLeft || 5}번 안에 ${chaosMission?.target || 2}줄을 지워`, 'danger');
+    flashScreen('danger');
+    screenShake('large');
+    createShockwave('#ff3f7d', .92);
+    if (navigator.vibrate) navigator.vibrate([45,22,75,22,95]);
+  }
+
+  startChaosEvent = function(forcedType = '') {
+    if (forcedType) {
+      v68CoreStartChaosEvent(forcedType);
+      return;
+    }
+    if (chaosBossPending || (chaosWave > 0 && chaosWave % 3 === 0 && chaosBossLastWave !== chaosWave)) {
+      startBossWave();
+      return;
+    }
+    if (shouldOfferChaosChoice()) {
+      openChaosChoice();
+      return;
+    }
+    chaosChoiceRoute = '';
+    chaosChoiceRewardMultiplier = 1;
+    chaosChoiceMoveDelta = 0;
+    v68CoreStartChaosEvent();
+  };
+
+  function chooseChaosRoute(route) {
+    if (!chaosChoicePending) return;
+    const selectedType = route === 'safe' ? chaosChoicePending.safe : chaosChoicePending.risk;
+    chaosChoiceRoute = route;
+    chaosChoiceRewardMultiplier = route === 'safe' ? 1.5 : 3;
+    chaosChoiceMoveDelta = route === 'safe' ? 1 : -1;
+    chaosChoicePending = null;
+    closeChaosChoice();
+    phase = PHASE.PLAYING;
+    v68CoreStartChaosEvent(selectedType);
+    if (chaosEvent && chaosMovesLeft > 0) {
+      chaosMovesLeft = Math.max(1, chaosMovesLeft + chaosChoiceMoveDelta);
+    }
+    updateChaosUI();
+    pulseChaosPanel();
+  }
+
+  chaosChoiceSafe.addEventListener('click', () => chooseChaosRoute('safe'));
+  chaosChoiceRisk.addEventListener('click', () => chooseChaosRoute('risk'));
+
+  const v68CoreFinishChaosEvent = finishChaosEvent;
+  finishChaosEvent = function(success = false, message = '') {
+    const beforeWave = chaosWave;
+    const wasBoss = chaosBossActive;
+    const route = chaosChoiceRoute;
+    if (success && route && !wasBoss) {
+      const bonus = choiceCompletionBonus();
+      addScorePoints(bonus, 'release');
+      message = `${message || '사건 성공!'} · 선택 보너스 +${formatNumber(bonus)}`;
+    }
+    v68CoreFinishChaosEvent(success, message);
+    if (wasBoss) {
+      chaosBossActive = false;
+      chaosBossDefeated = false;
+      els.game.classList.remove('chaos-boss', 'chaos-boss-hit');
+    }
+    chaosChoiceRoute = '';
+    chaosChoiceRewardMultiplier = 1;
+    chaosChoiceMoveDelta = 0;
+    if (chaosWave !== beforeWave && chaosWave % 3 === 0 && chaosBossLastWave !== chaosWave) {
+      chaosBossPending = true;
+      chaosNextAtTray = Math.min(chaosNextAtTray, trayRound);
+    }
+    updateChaosUI();
+  };
+
+  const v68CoreUpdateChaosWaveUI = updateChaosWaveUI;
+  updateChaosWaveUI = function() {
+    v68CoreUpdateChaosWaveUI();
+    if (!isChaosMode()) return;
+    if (chaosBossActive) {
+      chaosTitleNode.textContent = `보스 웨이브 ${chaosWave}`;
+      const progress = chaosMission ? `${Math.min(chaosMission.progress, chaosMission.target)}/${chaosMission.target}` : '0/2';
+      els.chaosStatus.textContent = `보스 체력 ${progress} · 남은 기회 ${chaosMission?.movesLeft ?? 5}`;
+      els.chaosRule.textContent = `제한 횟수 안에 줄을 지워서 보스를 쓰러뜨려.`;
+    } else if (chaosChoiceRoute) {
+      const label = chaosChoiceRoute === 'safe' ? '안전 선택 ×1.5' : '도전 선택 ×3';
+      if (!els.chaosRule.textContent.includes(label)) els.chaosRule.textContent += ` · ${label}`;
+    }
+  };
+
+  const v68CoreUpdateChaosUI = updateChaosUI;
+  updateChaosUI = function() {
+    v68CoreUpdateChaosUI();
+    els.game.classList.toggle('chaos-boss', isChaosMode() && chaosBossActive);
+    if (isChaosMode()) updateChaosWaveUI();
+  };
+
+  // 카오스 알림은 작은 배치 점수를 숨기고, 비슷한 안내는 최신 한 개만 남긴다.
+  const v68CoreShowFloatingScore = showFloatingScore;
+  showFloatingScore = function(points, tone = '') {
+    const amount = Math.max(0, Number(points) || 0);
+    if (isChaosMode() && amount < 90 && !tone) return;
+    v68CoreShowFloatingScore(amount, tone);
+  };
+
+  const v68CoreEnqueueOverlay = enqueueOverlay;
+  enqueueOverlay = function(item) {
+    if (isChaosMode() && item?.type === 'banner') {
+      const main = String(item.main || '');
+      const important = item.tone === 'danger' || /보스|웨이브|선택|잭팟|위험|마지막|폭주|사건 시작/.test(main);
+      item.v68Priority = important ? 'high' : 'normal';
+      item.duration = important ? Math.min(900, item.duration || 820) : Math.min(650, item.duration || 650);
+      if (!important) {
+        for (let index = overlayQueue.length - 1; index >= 0; index--) {
+          if (overlayQueue[index]?.type === 'banner' && overlayQueue[index]?.v68Priority !== 'high') {
+            overlayQueue.splice(index, 1);
+            break;
+          }
+        }
+      }
+    }
+    while (overlayQueue.length >= 3) {
+      const normalIndex = overlayQueue.findIndex(entry => entry?.v68Priority !== 'high');
+      overlayQueue.splice(normalIndex >= 0 ? normalIndex : 0, 1);
+    }
+    v68CoreEnqueueOverlay(item);
+  };
+
+  const v68CoreAnnounceEvent = announceEvent;
+  announceEvent = function(main, sub = '', tone = '') {
+    if (chaosSuppressBannerMain && main === chaosSuppressBannerMain) {
+      chaosSuppressBannerMain = '';
+      return;
+    }
+    if (chaosBossStarting && main === CHAOS_META[CHAOS_TYPES.LASER_GRID].title) return;
+    v68CoreAnnounceEvent(main, sub, tone);
+  };
+
+  const v68CoreRestart = restart;
+  restart = function() {
+    chaosChoicePending = null;
+    chaosChoiceRoute = '';
+    chaosChoiceRewardMultiplier = 1;
+    chaosChoiceMoveDelta = 0;
+    chaosBossPending = false;
+    chaosBossActive = false;
+    chaosBossDefeated = false;
+    chaosBossLastWave = 0;
+    chaosBossReward = 0;
+    chaosBossStarting = false;
+    chaosSuppressBannerMain = '';
+    closeChaosChoice();
+    els.game.classList.remove('chaos-boss', 'chaos-boss-hit');
+    v68CoreRestart();
+  };
+
+  const v68CoreSetMode = setMode;
+  setMode = function(nextMode) {
+    if (nextMode !== 'chaos') {
+      closeChaosChoice();
+      chaosChoicePending = null;
+    }
+    v68CoreSetMode(nextMode);
+  };
+
+  const v68CoreTriggerGameOver = triggerGameOver;
+  triggerGameOver = function(reason = 'NO_MOVES') {
+    closeChaosChoice();
+    v68CoreTriggerGameOver(reason);
+  };
+
+
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.7 · human-language beginner guide
+  // Build: 카오스 러시 V6.8 · choice events + boss waves + quieter feedback
 
   </script>
 </body>
