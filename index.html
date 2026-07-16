@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.4: overlay compositor · chaos pressure · danger line -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.4</title>
+  <!-- V6.5: mobile viewport fill · unified full-width play area -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.5</title>
   <style>
     :root {
       color-scheme: dark;
@@ -1778,7 +1778,183 @@
       #event-banner .event-sub { margin-top:6px; font-size:10px; }
     }
 
-  </style>
+  
+
+    /* V6.5 MOBILE VIEWPORT FILL -----------------------------------------
+       Tall phones had a hard 356px board cap, leaving a large dead area below
+       the three playable pieces. On normal/tall mobile viewports, the board
+       and piece area now use the full safe content width. Short screens retain
+       the compact layout so controls never become unreachable. */
+    @media (max-width: 520px) and (min-height: 760px) {
+      #game,
+      #game.chaos-mode {
+        width: 100%;
+        max-width: none;
+      }
+
+      #board,
+      #game.chaos-mode #board,
+      #tray,
+      #game.chaos-mode #tray {
+        width: 100%;
+        max-width: none;
+      }
+
+      #board,
+      #game.chaos-mode #board {
+        --board-padding: 5px;
+      }
+
+      #tray,
+      #game.chaos-mode #tray {
+        margin-top: 9px;
+        gap: 8px;
+      }
+
+      .tray-slot,
+      #game.chaos-mode .tray-slot {
+        min-height: clamp(84px, 23vw, 102px);
+        padding: 6px;
+      }
+
+      .piece-square,
+      #game.chaos-mode .piece-square {
+        width: clamp(14px, 4.25vw, 18px);
+        height: clamp(14px, 4.25vw, 18px);
+      }
+
+      #game.chaos-mode .special-icon {
+        font-size: clamp(27px, 7.5vw, 34px);
+      }
+    }
+
+    /* Very tall iPhones: use a little more vertical presence without adding
+       fake blank panels or moving the tray away from the board. */
+    @media (max-width: 520px) and (min-height: 880px) {
+      .mode-bar,
+      #game.chaos-mode .mode-bar { margin-bottom: 9px; }
+
+      .stats,
+      #game.chaos-mode .stats { margin-bottom: 9px; }
+
+      .fever-panel,
+      #game.chaos-mode .fever-panel { margin-bottom: 9px; }
+
+      #game.chaos-mode .chaos-panel { margin-bottom: 9px; }
+
+      #tray,
+      #game.chaos-mode #tray { margin-top: 10px; }
+
+      .tray-slot,
+      #game.chaos-mode .tray-slot {
+        min-height: 0;
+        aspect-ratio: 1 / 1;
+      }
+    }
+
+    /* Compact fallback for smaller-height devices. */
+    @media (max-width: 520px) and (max-height: 759px) {
+      #board,
+      #game.chaos-mode #board,
+      #tray,
+      #game.chaos-mode #tray {
+        width: min(100%, 344px);
+      }
+      .tray-slot,
+      #game.chaos-mode .tray-slot { min-height: 62px; }
+    }
+
+
+    /* Tall-phone density pass: use the extra vertical room for actual controls
+       instead of leaving a large empty footer. Shorter phones keep compact sizes. */
+    @media (max-width: 520px) and (min-height: 850px) {
+      body {
+        padding-top: max(18px, calc(env(safe-area-inset-top) + 10px));
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+      }
+
+      .mode-btn,
+      #game.chaos-mode .mode-btn,
+      #sound-btn,
+      #game.chaos-mode #sound-btn {
+        min-height: 46px;
+      }
+
+      .mode-btn,
+      #game.chaos-mode .mode-btn {
+        font-size: 13px;
+      }
+
+      .stat-card,
+      #game.chaos-mode .stat-card {
+        min-height: 60px;
+        padding: 8px 10px;
+      }
+
+      .stat-label,
+      #game.chaos-mode .stat-label { font-size: 10px; }
+
+      .stat-value,
+      #game.chaos-mode .stat-value {
+        font-size: clamp(22px, 6vw, 27px);
+      }
+
+      .fever-panel,
+      #game.chaos-mode .fever-panel {
+        padding: 10px 11px;
+      }
+
+      .fever-head,
+      #game.chaos-mode .fever-head {
+        margin-bottom: 6px;
+        font-size: 11px;
+      }
+
+      .fever-track,
+      #game.chaos-mode .fever-track { height: 10px; }
+
+      .core-bank-line,
+      #game.chaos-mode .core-bank-line {
+        margin-top: 6px;
+        padding: 5px 9px;
+        font-size: 9px;
+      }
+
+      #core-bank,
+      #game.chaos-mode #core-bank { font-size: 14px; }
+
+      #game.chaos-mode .chaos-panel {
+        min-height: 54px;
+        padding: 9px 11px;
+      }
+
+      #game.chaos-mode .chaos-title,
+      #game.chaos-mode #chaos-status { font-size: 10px; }
+
+      #game.chaos-mode .chaos-rule {
+        margin-top: 5px;
+        font-size: 10px;
+        -webkit-line-clamp: 2;
+      }
+    }
+
+    @media (max-width: 520px) and (min-height: 920px) {
+      .mode-bar,
+      #game.chaos-mode .mode-bar,
+      .stats,
+      #game.chaos-mode .stats,
+      .fever-panel,
+      #game.chaos-mode .fever-panel,
+      #game.chaos-mode .chaos-panel {
+        margin-bottom: 11px;
+      }
+
+      .tray-slot,
+      #game.chaos-mode .tray-slot {
+        min-height: 112px;
+      }
+    }
+</style>
 </head>
 <body>
   <main id="game">
@@ -4541,7 +4717,7 @@
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.4 · pressure and overlay compositor
+  // Build: 카오스 러시 V6.5 · fullscreen mobile layout
 
   </script>
 </body>
