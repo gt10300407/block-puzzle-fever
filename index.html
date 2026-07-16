@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.9: V6.7 rollback base + escalating pressure system -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.9</title>
+  <!-- V6.10: V6.9 pressure base + block mutation and gravity shift -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.10</title>
   <style>
     :root {
       color-scheme: dark;
@@ -1397,6 +1397,8 @@
     #game[data-chaos="laser-grid"] { --chaos-color:#50e7ff; }
     #game[data-chaos="reactor-surge"] { --chaos-color:#bd5cff; }
     #game[data-chaos="core-jackpot"] { --chaos-color:#ff69cf; }
+    #game[data-chaos="block-mutation"] { --chaos-color:#9d7cff; }
+    #game[data-chaos="gravity-shift"] { --chaos-color:#55d9ff; }
     #game.chaos-active #board { border-color:color-mix(in srgb, var(--chaos-color, #ff70d3) 62%, rgba(255,255,255,.12)); }
     #game.chaos-active .chaos-title, #game.chaos-active #chaos-status { color:var(--chaos-color, #ff7bd5); }
     @keyframes chaosPanelHit {
@@ -2413,6 +2415,68 @@
       .board-cell.pressure-warning { animation: none; }
     }
 
+    /* V6.10 · block mutation and gravity shift */
+    .tray-slot.mutated-slot {
+      border-color: rgba(157,124,255,.92) !important;
+      box-shadow: 0 0 0 2px rgba(157,124,255,.18), 0 0 22px rgba(157,124,255,.30) !important;
+      position: relative;
+    }
+    .mutation-tag {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      z-index: 5;
+      min-width: 34px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(19,14,42,.92);
+      color: #d9ccff;
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .04em;
+      text-align: center;
+      pointer-events: none;
+    }
+    #game.gravity-armed #board {
+      border-color: rgba(85,217,255,.78);
+      box-shadow: 0 0 0 2px rgba(85,217,255,.14), 0 0 26px rgba(85,217,255,.22), 0 18px 48px rgba(0,0,0,.36);
+    }
+    #game.gravity-armed #board::before {
+      content: attr(data-gravity-arrow);
+      position: absolute;
+      z-index: 12;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%,-50%);
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.30);
+      background: rgba(8,14,31,.78);
+      color: #8be8ff;
+      box-shadow: 0 0 22px rgba(85,217,255,.28);
+      font-size: 31px;
+      font-weight: 1000;
+      line-height: 1;
+      pointer-events: none;
+    }
+    #board.gravity-hit-left { animation: gravityHitLeft .38s ease-out 1; }
+    #board.gravity-hit-right { animation: gravityHitRight .38s ease-out 1; }
+    #board.gravity-hit-up { animation: gravityHitUp .38s ease-out 1; }
+    #board.gravity-hit-down { animation: gravityHitDown .38s ease-out 1; }
+    @keyframes gravityHitLeft { 35% { transform: translate3d(-8px,0,0); } 70% { transform: translate3d(3px,0,0); } }
+    @keyframes gravityHitRight { 35% { transform: translate3d(8px,0,0); } 70% { transform: translate3d(-3px,0,0); } }
+    @keyframes gravityHitUp { 35% { transform: translate3d(0,-8px,0); } 70% { transform: translate3d(0,3px,0); } }
+    @keyframes gravityHitDown { 35% { transform: translate3d(0,8px,0); } 70% { transform: translate3d(0,-3px,0); } }
+    @media (prefers-reduced-motion: reduce) {
+      #board.gravity-hit-left,
+      #board.gravity-hit-right,
+      #board.gravity-hit-up,
+      #board.gravity-hit-down { animation: none; }
+    }
+
 </style>
 </head>
 <body>
@@ -2625,7 +2689,9 @@
     LASER_GRID:'laser-grid',
     REACTOR_SURGE:'reactor-surge',
     CORE_JACKPOT:'core-jackpot',
-    DANGER_LINE:'danger-line'
+    DANGER_LINE:'danger-line',
+    BLOCK_MUTATION:'block-mutation',
+    GRAVITY_SHIFT:'gravity-shift'
   });
   const CHAOS_META = Object.freeze({
     [CHAOS_TYPES.SPECIAL_STORM]: { icon:'⚠️', name:'SPECIAL STORM', title:'특수 블록 2개!', instruction:'폭탄과 레이저로 보드를 한꺼번에 정리해.', trays:1, color:'#ffcf4a', weight:20 },
@@ -2634,7 +2700,9 @@
     [CHAOS_TYPES.LASER_GRID]: { icon:'✚', name:'LASER GRID', title:'연쇄 레이저!', instruction:'한 줄을 지우면 옆줄도 함께 폭발해.', trays:2, color:'#50e7ff', weight:18 },
     [CHAOS_TYPES.REACTOR_SURGE]: { icon:'☢', name:'REACTOR SURGE', title:'점수 3배!', instruction:'이번에 줄을 지우면 점수가 3배. 실패하면 효과가 끝나.', trays:2, color:'#bd5cff', weight:16 },
     [CHAOS_TYPES.CORE_JACKPOT]: { icon:'◆', name:'CORE JACKPOT', title:'잭팟 찬스!', instruction:'3번 안에 한 줄을 지우면 점수가 5배야.', trays:99, moves:3, color:'#ff69cf', weight:12 },
-    [CHAOS_TYPES.DANGER_LINE]: { icon:'‼', name:'DANGER LINE', title:'위험 줄 경보!', instruction:'빨간 줄을 3번 안에 완성해서 지워. 실패하면 방해 블록이 떨어져.', trays:99, moves:3, color:'#ff4f70', weight:18 }
+    [CHAOS_TYPES.DANGER_LINE]: { icon:'‼', name:'DANGER LINE', title:'위험 줄 경보!', instruction:'빨간 줄을 3번 안에 완성해서 지워. 실패하면 방해 블록이 떨어져.', trays:99, moves:3, color:'#ff4f70', weight:18 },
+    [CHAOS_TYPES.BLOCK_MUTATION]: { icon:'🧬', name:'BLOCK MUTATION', title:'블록 변이!', instruction:'블록 하나를 놓으면 남은 블록 하나가 다른 모습으로 변해.', trays:1, color:'#9d7cff', weight:14 },
+    [CHAOS_TYPES.GRAVITY_SHIFT]: { icon:'⇣', name:'GRAVITY SHIFT', title:'중력 변화!', instruction:'이번 블록 세트를 다 쓰면 보드가 예고된 방향으로 한 번 쏠려.', trays:1, color:'#55d9ff', weight:10 }
   });
 
   const DRAFT_CARDS = Object.freeze([
@@ -2727,6 +2795,10 @@
   let chaosTargetAxis = '';
   let chaosTargetIndex = -1;
   let chaosUrgencyKey = '';
+  let chaosMutationTriggered = false;
+  let chaosMutationLabel = '';
+  let chaosGravityDirection = '';
+  let chaosGravityApplied = false;
 
   let overlayQueue = [];
   let overlayBusy = false;
@@ -2911,6 +2983,147 @@
     }
   }
 
+  const GRAVITY_DIRECTIONS = Object.freeze({
+    left:{ key:'left', arrow:'←', label:'왼쪽' },
+    right:{ key:'right', arrow:'→', label:'오른쪽' },
+    up:{ key:'up', arrow:'↑', label:'위쪽' },
+    down:{ key:'down', arrow:'↓', label:'아래쪽' }
+  });
+
+  function chooseGravityDirection() {
+    const keys = Object.keys(GRAVITY_DIRECTIONS);
+    chaosGravityDirection = keys[Math.floor(rng() * keys.length)];
+    chaosGravityApplied = false;
+    return chaosGravityDirection;
+  }
+
+  function gravityDirectionInfo() {
+    return GRAVITY_DIRECTIONS[chaosGravityDirection] || GRAVITY_DIRECTIONS.down;
+  }
+
+  function chaosInstruction(meta) {
+    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT) {
+      const direction = gravityDirectionInfo();
+      return `${direction.arrow} 이번 블록 3개를 다 쓰면 보드가 ${direction.label}으로 한 번 쏠려.`;
+    }
+    if (chaosEvent === CHAOS_TYPES.BLOCK_MUTATION) {
+      return chaosMutationTriggered
+        ? `변이 완료 · ${chaosMutationLabel || '남은 블록 하나가 바뀌었어.'}`
+        : '블록 하나를 놓으면 남은 블록 중 하나가 갑자기 변해.';
+    }
+    return meta.instruction;
+  }
+
+  function pickFittingEntry(pools) {
+    for (const pool of pools) {
+      const fitting = pool.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+      if (fitting.length) return fitting[Math.floor(rng() * fitting.length)];
+    }
+    const fittingAny = SHAPE_CATALOG.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+    return fittingAny.length ? fittingAny[Math.floor(rng() * fittingAny.length)] : SHAPE_CATALOG[0];
+  }
+
+  function triggerBlockMutation() {
+    if (!isChaosEvent(CHAOS_TYPES.BLOCK_MUTATION) || chaosMutationTriggered || gameOver) return false;
+    const remaining = tray.map((piece,index) => ({piece,index})).filter(item => item.piece);
+    if (!remaining.length) return false;
+    const target = remaining[Math.floor(rng() * remaining.length)];
+    const previousSize = target.piece.shape?.length || 1;
+    const occupancy = boardOccupancyRatio();
+    const modes = occupancy >= .68 ? ['shrink','special','grow'] : ['grow','special','shrink'];
+    const weights = occupancy >= .68 ? [52,30,18] : [38,28,34];
+    const mode = weightedPick(modes, weights);
+    let nextPiece;
+    let label;
+
+    if (mode === 'special') {
+      const type = pickSpecialType();
+      nextPiece = makeSpecialPiece(type);
+      label = `${SPECIAL_META[type].name}으로 변했어`;
+    } else if (mode === 'grow') {
+      const entry = pickFittingEntry([SHAPES_BY_CLASS.huge, SHAPES_BY_CLASS.large, SHAPES_BY_CLASS.medium]);
+      nextPiece = normalPieceFromEntry(entry);
+      label = `과성장 ${previousSize}칸 → ${entry.size}칸`;
+    } else {
+      const entry = pickFittingEntry([SHAPES_BY_CLASS.small, SHAPES_BY_CLASS.medium]);
+      nextPiece = normalPieceFromEntry(entry);
+      label = `수축 ${previousSize}칸 → ${entry.size}칸`;
+    }
+
+    nextPiece.mutated = true;
+    nextPiece.mutationLabel = label;
+    tray[target.index] = nextPiece;
+    chaosMutationTriggered = true;
+    chaosMutationLabel = label;
+    chaosEventSucceeded = true;
+    selected = -1;
+    renderTray();
+    updateChaosUI();
+    pulseChaosPanel();
+    createShockwave('#9d7cff', .58);
+    screenShake(mode === 'grow' ? 'medium' : 'small');
+    beepSequence(mode === 'grow' ? [420,320,230] : [360,540,760], .06);
+    return true;
+  }
+
+  function compactValues(values, direction) {
+    const filled = values.filter(Boolean);
+    const empty = Array(Math.max(0, values.length - filled.length)).fill(null);
+    return direction === 'start' ? [...filled, ...empty] : [...empty, ...filled];
+  }
+
+  function applyGravityShift() {
+    if (!isChaosEvent(CHAOS_TYPES.GRAVITY_SHIFT) || chaosGravityApplied || gameOver) return 0;
+    const direction = gravityDirectionInfo();
+    const before = board.map(row => [...row]);
+
+    if (direction.key === 'left' || direction.key === 'right') {
+      for (let row = 0; row < SIZE; row++) {
+        board[row] = compactValues(board[row], direction.key === 'left' ? 'start' : 'end');
+      }
+    } else {
+      for (let col = 0; col < SIZE; col++) {
+        const values = [];
+        for (let row = 0; row < SIZE; row++) values.push(board[row][col]);
+        const compacted = compactValues(values, direction.key === 'up' ? 'start' : 'end');
+        for (let row = 0; row < SIZE; row++) board[row][col] = compacted[row];
+      }
+    }
+
+    let moved = 0;
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) if (before[row][col] !== board[row][col]) moved++;
+    }
+
+    chaosGravityApplied = true;
+    chaosEventSucceeded = true;
+    els.game.classList.remove('gravity-armed');
+    els.board.removeAttribute('data-gravity-arrow');
+    renderBoard();
+    const hitClass = `gravity-hit-${direction.key}`;
+    els.board.classList.remove('gravity-hit-left','gravity-hit-right','gravity-hit-up','gravity-hit-down');
+    void els.board.offsetWidth;
+    els.board.classList.add(hitClass);
+    window.setTimeout(() => els.board.classList.remove(hitClass), 430);
+
+    const {rows, cols} = getFullLines();
+    const lineCount = rows.length + cols.length;
+    let bonusText = `${moved}칸 이동`;
+    if (lineCount > 0) {
+      const result = scorePlacement(0, lineCount);
+      for (const row of rows) board[row].fill(null);
+      for (const col of cols) for (let row = 0; row < SIZE; row++) board[row][col] = null;
+      renderBoard();
+      bonusText += ` · ${lineCount}줄 정리 · +${formatNumber(result.awarded)}`;
+    }
+    announceEvent(`${direction.arrow} 중력 이동!`, bonusText, lineCount > 0 ? 'fever' : 'danger');
+    flashScreen(lineCount > 0 ? 'fever' : 'normal');
+    screenShake('large');
+    createShockwave('#55d9ff', .72);
+    beepSequence([280,390,540,720], .065);
+    return moved;
+  }
+
   function updateChaosUI() {
     const active = isChaosMode();
     els.chaosPanel.hidden = !active;
@@ -2936,7 +3149,7 @@
         els.chaosStatus.textContent = `${meta.title} · 블록 ${remainingBlocks}개`;
         urgent = remainingBlocks <= 1;
       }
-      els.chaosRule.textContent = `${meta.instruction}${chaosStreak > 0 ? ` · 연속 성공 ×${chaosStreak}` : ''}`;
+      els.chaosRule.textContent = `${chaosInstruction(meta)}${chaosStreak > 0 ? ` · 연속 성공 ×${chaosStreak}` : ''}`;
     } else {
       els.game.removeAttribute('data-chaos');
       const setsUntil = Math.max(0, chaosNextAtTray - trayRound);
@@ -2954,6 +3167,10 @@
     } else if (!urgent) {
       chaosUrgencyKey = '';
     }
+    const gravityArmed = chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT && !chaosGravityApplied;
+    els.game.classList.toggle('gravity-armed', gravityArmed);
+    if (gravityArmed) els.board.dataset.gravityArrow = gravityDirectionInfo().arrow;
+    else els.board.removeAttribute('data-gravity-arrow');
     applyChaosTargetHighlight();
   }
 
@@ -2978,6 +3195,9 @@
       if (type === CHAOS_TYPES.CORE_JACKPOT && combo >= 3) weight *= 1.25;
       if (type === CHAOS_TYPES.DANGER_LINE && occupancy < .25) weight *= .04;
       if (type === CHAOS_TYPES.DANGER_LINE && occupancy >= .55) weight *= 1.55;
+      if (type === CHAOS_TYPES.GRAVITY_SHIFT && occupancy < .22) weight *= .05;
+      if (type === CHAOS_TYPES.GRAVITY_SHIFT && occupancy >= .35 && occupancy <= .72) weight *= 1.35;
+      if (type === CHAOS_TYPES.BLOCK_MUTATION && occupancy >= .72) weight *= 1.25;
       return weight;
     });
     return weightedPick(candidates, weights);
@@ -2993,11 +3213,16 @@
     chaosMovesLeft = meta.moves || 0;
     chaosEventSucceeded = false;
     chaosLastEvent = type;
+    chaosMutationTriggered = false;
+    chaosMutationLabel = '';
+    chaosGravityApplied = false;
+    if (type === CHAOS_TYPES.GRAVITY_SHIFT) chooseGravityDirection();
+    else chaosGravityDirection = '';
     if (type === CHAOS_TYPES.DANGER_LINE) chooseDangerLineTarget();
     else clearChaosTarget();
     updateChaosUI();
     pulseChaosPanel();
-    announceEvent(meta.title, meta.instruction, type === CHAOS_TYPES.GIANT_OVERLOAD || type === CHAOS_TYPES.DANGER_LINE ? 'danger' : 'fever');
+    announceEvent(meta.title, chaosInstruction(meta), type === CHAOS_TYPES.GIANT_OVERLOAD || type === CHAOS_TYPES.DANGER_LINE || type === CHAOS_TYPES.GRAVITY_SHIFT ? 'danger' : 'fever');
     flashScreen(type === CHAOS_TYPES.GIANT_OVERLOAD || type === CHAOS_TYPES.DANGER_LINE ? 'danger' : 'fever');
     screenShake(type === CHAOS_TYPES.CORE_JACKPOT || type === CHAOS_TYPES.SPECIAL_STORM ? 'large' : 'medium');
     createShockwave(meta.color, .68);
@@ -3031,6 +3256,12 @@
     chaosEvent = '';
     chaosTraysLeft = 0;
     chaosMovesLeft = 0;
+    chaosMutationTriggered = false;
+    chaosMutationLabel = '';
+    chaosGravityDirection = '';
+    chaosGravityApplied = false;
+    els.game.classList.remove('gravity-armed');
+    els.board.removeAttribute('data-gravity-arrow');
     clearChaosTarget();
     chaosNextAtTray = trayRound + chaosGap();
     updateChaosUI();
@@ -3038,6 +3269,7 @@
 
   function prepareChaosForNextTray() {
     if (!isChaosMode() || gameOver) return;
+    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT && !chaosGravityApplied) applyGravityShift();
     if (chaosEvent && chaosEvent !== CHAOS_TYPES.CORE_JACKPOT && chaosEvent !== CHAOS_TYPES.DANGER_LINE) {
       chaosTraysLeft = Math.max(0, chaosTraysLeft - 1);
       if (chaosTraysLeft <= 0) finishChaosEvent(chaosEventSucceeded, chaosEventSucceeded ? 'CHAOS CLEARED' : 'CHAOS SHIFT');
@@ -4484,6 +4716,7 @@
     if (gameOver) return;
     finishFeverMove(startedInFever, lineCount);
     phase = PHASE.PLAYING;
+    if (isChaosEvent(CHAOS_TYPES.BLOCK_MUTATION) && !chaosMutationTriggered && tray.some(Boolean)) triggerBlockMutation();
     if (tray.every(piece => piece === null)) {
       prepareChaosForNextTray();
       initTray();
@@ -5618,7 +5851,7 @@
 
 
   // V6.7 · 카오스 러시 사람말 가이드
-  const CHAOS_GUIDE_SEEN_KEY = 'block-game-chaos-guide-v69-seen';
+  const CHAOS_GUIDE_SEEN_KEY = 'block-game-chaos-guide-v610-seen';
   const chaosGuideOverlay = document.getElementById('chaos-guide-overlay');
   const chaosGuideButton = document.getElementById('chaos-guide-btn');
   const chaosGuideCloseButton = document.getElementById('chaos-guide-close');
@@ -5663,6 +5896,10 @@
     return `<div class="guide-scene"><div class="guide-scene-label">점수가 오르면 게임도 반격해</div><div class="guide-event-card" style="margin-bottom:9px"><strong>5만점부터 압박 시작</strong><span>실패하면 화살표가 뜬 칸에 방해 블록이 떨어져.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>5만 · 경고</strong><span>실패 시 1칸</span></div><div class="guide-choice"><strong>25만 · 위험</strong><span>실패 시 2칸</span></div><div class="guide-choice"><strong>50만 · 붕괴</strong><span>실패 시 3칸 + 큰 블록</span></div></div></div>`;
   }
 
+  function guideMutationGravityScene() {
+    return `<div class="guide-scene"><div class="guide-scene-label">예고를 보고 다음 수를 준비해</div><div class="guide-last-card"><div class="guide-choice"><strong>🧬 블록 변이</strong><span>첫 블록을 놓으면 남은 블록 하나가 작아지거나 커지거나 특수 블록으로 변해.</span></div><div class="guide-choice"><strong>← 중력 변화</strong><span>블록 세 개를 다 쓰면 보드가 미리 알려준 방향으로 한 번 쏠려.</span></div></div></div>`;
+  }
+
   function guideLastScene() {
     return `<div class="guide-scene"><div class="guide-scene-label">막혀도 딱 한 번은 기회가 있어</div><div class="guide-event-card" style="margin-bottom:9px"><strong>웨이브 2</strong><span>사건 3개를 끝내면 다음 웨이브로 올라가고 보상이 커져.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>블록 교체</strong><span>남은 블록을 놓기 쉬운 새 블록으로 바꿔.</span></div><div class="guide-choice"><strong>한 칸 제거</strong><span>막고 있는 보드 블록 한 칸을 직접 없애.</span></div></div></div>`;
   }
@@ -5697,6 +5934,12 @@
       copy:'점수가 5만을 넘으면 미션이나 사건 실패 때 방해 블록이 생겨. 떨어질 칸은 먼저 화살표로 알려주고, 다음 블록을 놓은 뒤 실제로 막혀.',
       tip:'5만점은 1칸, 25만점은 2칸, 50만점은 3칸이야. 방해 블록도 줄 삭제·폭탄·레이저로 없앨 수 있어.',
       scene:guidePressureScene()
+    },
+    {
+      title:'블록이 변하고 보드가 움직일 수도 있어',
+      copy:'블록 변이 사건에서는 첫 블록을 놓은 뒤 남은 블록 하나가 바뀌어. 중력 변화 사건에서는 블록 세 개를 다 쓴 뒤 보드가 화살표 방향으로 한 번 움직여.',
+      tip:'중력 방향은 사건 창과 보드 중앙 화살표로 먼저 알려줘. 움직인 뒤 줄이 완성되면 바로 점수로 연결돼.',
+      scene:guideMutationGravityScene()
     },
     {
       title:'사건을 넘기고 웨이브를 올려',
@@ -6087,6 +6330,33 @@
     return result;
   };
 
+  const v610OriginalRenderTray = renderTray;
+  renderTray = function() {
+    const result = v610OriginalRenderTray();
+    tray.forEach((piece,index) => {
+      if (!piece?.mutated) return;
+      const slot = els.tray.querySelector(`.tray-slot[data-index="${index}"]`);
+      if (!slot) return;
+      slot.classList.add('mutated-slot');
+      const tag = document.createElement('span');
+      tag.className = 'mutation-tag';
+      tag.textContent = '변이';
+      slot.appendChild(tag);
+    });
+    return result;
+  };
+
+  const v610OriginalRestartState = restart;
+  restart = function() {
+    chaosMutationTriggered = false;
+    chaosMutationLabel = '';
+    chaosGravityDirection = '';
+    chaosGravityApplied = false;
+    els.game.classList.remove('gravity-armed');
+    els.board.removeAttribute('data-gravity-arrow');
+    return v610OriginalRestartState();
+  };
+
   const v69OriginalRestart = restart;
   restart = function() {
     pressurePending = null;
@@ -6103,7 +6373,7 @@
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.9 · escalating pressure system
+  // Build: 카오스 러시 V6.10 · pressure + mutation + gravity
 
   </script>
 </body>
