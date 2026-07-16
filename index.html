@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.7: human-language beginner guide for Chaos Rush -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.7</title>
+  <!-- V6.9: V6.7 rollback base + escalating pressure system -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.9</title>
   <style>
     :root {
       color-scheme: dark;
@@ -2363,93 +2363,54 @@
 
 
 
-    /* V6.8 · 선택형 사건 + 보스 웨이브 */
-    html.chaos-choice-open,
-    body.chaos-choice-open { overflow: hidden !important; }
-    #chaos-choice-overlay {
-      position: fixed;
+    /* V6.9 · score-based pressure system */
+    .board-cell.pressure-warning {
+      position: relative;
+      border-color: rgba(255,198,72,.95) !important;
+      box-shadow: inset 0 0 0 2px rgba(255,93,116,.34), 0 0 12px rgba(255,93,116,.36);
+      animation: pressureWarningPulse .78s ease-in-out infinite alternate;
+    }
+    .board-cell.pressure-warning::after {
+      content: '↓';
+      position: absolute;
       inset: 0;
-      z-index: 2400;
-      display: none;
+      display: grid;
       place-items: center;
-      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
-      background: rgba(3,5,13,.86);
-      backdrop-filter: blur(12px);
+      color: #fff1a4;
+      font-size: clamp(12px, 4vw, 20px);
+      font-weight: 1000;
+      text-shadow: 0 0 8px #ff4f70, 0 0 16px rgba(255,79,112,.85);
+      pointer-events: none;
     }
-    #chaos-choice-overlay.visible { display: grid; }
-    .chaos-choice-card {
-      width: min(100%, 440px);
-      max-height: min(88dvh, 760px);
-      overflow: auto;
-      border: 1px solid rgba(119,222,255,.36);
-      border-radius: 22px;
-      padding: 18px;
-      background: linear-gradient(180deg, rgba(20,25,49,.98), rgba(8,11,26,.98));
-      box-shadow: 0 24px 90px rgba(0,0,0,.62), 0 0 34px rgba(87,243,255,.13);
+    .board-cell.pressure-blocker {
+      position: relative;
+      background:
+        repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 5px, transparent 5px 10px),
+        linear-gradient(145deg, #6d2945, #321422) !important;
+      border-color: rgba(255,91,119,.88) !important;
+      box-shadow: inset 0 0 10px rgba(0,0,0,.48), 0 0 8px rgba(255,68,102,.28);
     }
-    .chaos-choice-kicker {
-      color: #69f5d0;
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .15em;
+    .board-cell.pressure-blocker::after {
+      content: '×';
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: rgba(255,222,226,.72);
+      font-size: clamp(9px, 2.8vw, 15px);
+      font-weight: 1000;
+      pointer-events: none;
     }
-    .chaos-choice-title {
-      margin-top: 5px;
-      color: #fff;
-      font-size: 25px;
-      font-weight: 950;
-      letter-spacing: -.04em;
+    #game.pressure-stage-warning .chaos-panel { border-color: rgba(255,201,74,.76); }
+    #game.pressure-stage-danger .chaos-panel { border-color: rgba(255,126,77,.88); box-shadow: 0 0 18px rgba(255,102,70,.14); }
+    #game.pressure-stage-collapse .chaos-panel { border-color: rgba(255,79,112,.98); box-shadow: 0 0 24px rgba(255,55,92,.22); }
+    #game.pressure-stage-collapse #board { border-color: rgba(255,79,112,.52); }
+    @keyframes pressureWarningPulse {
+      from { filter: brightness(.92); transform: scale(.97); }
+      to { filter: brightness(1.25); transform: scale(1); }
     }
-    .chaos-choice-copy {
-      margin: 7px 0 14px;
-      color: #b9c1d7;
-      font-size: 12px;
-      line-height: 1.55;
-    }
-    .chaos-choice-list { display: grid; gap: 10px; }
-    .chaos-choice-option {
-      width: 100%;
-      min-height: 118px;
-      border: 1px solid rgba(255,255,255,.13);
-      border-radius: 17px;
-      padding: 13px 14px;
-      text-align: left;
-      color: #fff;
-      background: rgba(255,255,255,.055);
-      box-shadow: inset 0 1px rgba(255,255,255,.06);
-    }
-    .chaos-choice-option:active { transform: scale(.985); }
-    .chaos-choice-option.safe { border-color: rgba(101,245,201,.46); background: linear-gradient(135deg, rgba(101,245,201,.14), rgba(255,255,255,.04)); }
-    .chaos-choice-option.risk { border-color: rgba(255,79,112,.56); background: linear-gradient(135deg, rgba(255,79,112,.16), rgba(189,92,255,.09)); }
-    .chaos-choice-route { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; font-weight:950; }
-    .chaos-choice-route em { font-style:normal; font-size:10px; color:#fff4a8; }
-    .chaos-choice-event { margin-top:8px; font-size:17px; font-weight:950; }
-    .chaos-choice-desc { margin-top:5px; color:#c4cadd; font-size:10px; line-height:1.45; }
-    .chaos-choice-foot { margin-top:12px; color:#7f8aa8; font-size:9px; text-align:center; }
-
-    #game.chaos-boss { --chaos-color:#ff3f7d; }
-    #game.chaos-boss .chaos-panel {
-      border-color: rgba(255,63,125,.76);
-      background: linear-gradient(135deg, rgba(255,38,98,.16), rgba(189,92,255,.13), rgba(7,10,25,.92));
-      box-shadow: 0 0 0 1px rgba(255,63,125,.17), 0 0 28px rgba(255,63,125,.18), 0 10px 30px rgba(0,0,0,.3);
-    }
-    #game.chaos-boss #board {
-      border-color: rgba(255,63,125,.76);
-      box-shadow: 0 0 0 1px rgba(255,63,125,.18), 0 0 25px rgba(255,63,125,.13);
-    }
-    #game.chaos-boss .chaos-title,
-    #game.chaos-boss #chaos-status { color:#ff79a6; }
-    #game.chaos-boss-hit .chaos-panel { animation: bossPanelHit .65s ease-out 1; }
-    @keyframes bossPanelHit {
-      0% { transform:scale(1); filter:brightness(1); }
-      35% { transform:scale(1.025); filter:brightness(1.6); }
-      100% { transform:scale(1); filter:brightness(1); }
-    }
-    @media (max-width:520px) {
-      .chaos-choice-card { padding:15px; border-radius:19px; }
-      .chaos-choice-title { font-size:22px; }
-      .chaos-choice-option { min-height:105px; padding:11px 12px; }
-      .chaos-choice-event { font-size:15px; }
+    @media (prefers-reduced-motion: reduce) {
+      .board-cell.pressure-warning { animation: none; }
     }
 
 </style>
@@ -2558,28 +2519,6 @@
         <button id="last-chance-swap" type="button">블록 교체<span>남은 블록을 새 조합으로 변경</span></button>
         <button id="last-chance-remove" type="button">한 칸 제거<span>보드의 막힌 칸 하나를 직접 제거</span></button>
       </div>
-    </div>
-  </section>
-
-
-  <section id="chaos-choice-overlay" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="chaos-choice-title">
-    <div class="chaos-choice-card">
-      <div class="chaos-choice-kicker">CHOOSE YOUR CHAOS</div>
-      <div id="chaos-choice-title" class="chaos-choice-title">이번 사건을 골라</div>
-      <p class="chaos-choice-copy">안전하게 점수를 챙길지, 더 어려운 사건에 도전해서 큰 보상을 노릴지 선택해.</p>
-      <div class="chaos-choice-list">
-        <button id="chaos-choice-safe" class="chaos-choice-option safe" type="button">
-          <span class="chaos-choice-route">안전하게 간다 <em>성공 보너스 ×1.5</em></span>
-          <span id="chaos-choice-safe-name" class="chaos-choice-event">작은 블록 러시</span>
-          <span id="chaos-choice-safe-desc" class="chaos-choice-desc">조금 더 여유 있게 목표를 해결해.</span>
-        </button>
-        <button id="chaos-choice-risk" class="chaos-choice-option risk" type="button">
-          <span class="chaos-choice-route">큰 점수를 노린다 <em>성공 보너스 ×3</em></span>
-          <span id="chaos-choice-risk-name" class="chaos-choice-event">잭팟 찬스</span>
-          <span id="chaos-choice-risk-desc" class="chaos-choice-desc">기회는 줄지만 성공하면 점수가 크게 터져.</span>
-        </button>
-      </div>
-      <div class="chaos-choice-foot">선택하는 동안 게임은 멈춰 있어.</div>
     </div>
   </section>
 
@@ -5679,7 +5618,7 @@
 
 
   // V6.7 · 카오스 러시 사람말 가이드
-  const CHAOS_GUIDE_SEEN_KEY = 'block-game-chaos-guide-v68-seen';
+  const CHAOS_GUIDE_SEEN_KEY = 'block-game-chaos-guide-v69-seen';
   const chaosGuideOverlay = document.getElementById('chaos-guide-overlay');
   const chaosGuideButton = document.getElementById('chaos-guide-btn');
   const chaosGuideCloseButton = document.getElementById('chaos-guide-close');
@@ -5720,8 +5659,12 @@
     return `<div class="guide-scene"><div class="guide-scene-label">빛나는 칸과 특수 블록</div><div class="guide-mini-layout">${guideBoard({filled:[0,1,6,7,20,26],gold:[14,27],blue:[9,32]})}<div class="guide-side-card"><div class="guide-side-title">금색 = 점수</div><div class="guide-side-copy">파란색 = 폭주 충전<br>줄로 함께 지우면 보상이 더 커.</div></div></div><div class="guide-item-grid" style="margin-top:9px"><div class="guide-item"><div class="guide-item-icon">💥</div><div><strong>폭탄</strong><span>주변 블록 폭발</span></div></div><div class="guide-item"><div class="guide-item-icon">↔️</div><div><strong>레이저</strong><span>한 줄 정리</span></div></div><div class="guide-item"><div class="guide-item-icon">🧲</div><div><strong>자석</strong><span>흩어진 블록 모으기</span></div></div><div class="guide-item"><div class="guide-item-icon">◈</div><div><strong>폭주 충전</strong><span>게이지와 보너스 채우기</span></div></div></div></div>`;
   }
 
+  function guidePressureScene() {
+    return `<div class="guide-scene"><div class="guide-scene-label">점수가 오르면 게임도 반격해</div><div class="guide-event-card" style="margin-bottom:9px"><strong>5만점부터 압박 시작</strong><span>실패하면 화살표가 뜬 칸에 방해 블록이 떨어져.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>5만 · 경고</strong><span>실패 시 1칸</span></div><div class="guide-choice"><strong>25만 · 위험</strong><span>실패 시 2칸</span></div><div class="guide-choice"><strong>50만 · 붕괴</strong><span>실패 시 3칸 + 큰 블록</span></div></div></div>`;
+  }
+
   function guideLastScene() {
-    return `<div class="guide-scene"><div class="guide-scene-label">후반에는 직접 고르고 보스와 싸워</div><div class="guide-event-card" style="margin-bottom:9px"><strong>선택형 사건</strong><span>안전한 목표와 어려운 고보상 목표 중 하나를 골라.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>보스 웨이브</strong><span>3·6·9웨이브에서 제한 횟수 안에 여러 줄을 지워.</span></div><div class="guide-choice"><strong>마지막 한 수</strong><span>완전히 막히면 블록 교체나 한 칸 제거를 한 번 사용해.</span></div></div></div>`;
+    return `<div class="guide-scene"><div class="guide-scene-label">막혀도 딱 한 번은 기회가 있어</div><div class="guide-event-card" style="margin-bottom:9px"><strong>웨이브 2</strong><span>사건 3개를 끝내면 다음 웨이브로 올라가고 보상이 커져.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>블록 교체</strong><span>남은 블록을 놓기 쉬운 새 블록으로 바꿔.</span></div><div class="guide-choice"><strong>한 칸 제거</strong><span>막고 있는 보드 블록 한 칸을 직접 없애.</span></div></div></div>`;
   }
 
   const CHAOS_GUIDE_SLIDES = Object.freeze([
@@ -5750,9 +5693,15 @@
       scene:guideBonusScene()
     },
     {
-      title:'직접 고르고, 보스 웨이브를 돌파해',
-      copy:'두 사건마다 안전한 길과 고득점 도전 중 하나를 고를 수 있어. 3·6·9웨이브에는 보스가 나오고, 완전히 막히면 마지막 한 수를 한 번 사용할 수 있어.',
-      tip:'보스전에서는 보드 위에 표시된 남은 횟수와 지워야 할 줄 수만 확인하면 돼.',
+      title:'5만점부터 게임이 반격해',
+      copy:'점수가 5만을 넘으면 미션이나 사건 실패 때 방해 블록이 생겨. 떨어질 칸은 먼저 화살표로 알려주고, 다음 블록을 놓은 뒤 실제로 막혀.',
+      tip:'5만점은 1칸, 25만점은 2칸, 50만점은 3칸이야. 방해 블록도 줄 삭제·폭탄·레이저로 없앨 수 있어.',
+      scene:guidePressureScene()
+    },
+    {
+      title:'사건을 넘기고 웨이브를 올려',
+      copy:'사건 세 개를 끝낼 때마다 다음 웨이브로 올라가고 보상이 커져. 정말 놓을 곳이 없어지면 한 판에 한 번 “마지막 한 수”가 나와.',
+      tip:'정답을 전부 외울 필요 없어. 현재 사건 문장을 따라 하고, 빛나는 칸과 특수 블록을 눈여겨보면 충분해.',
       scene:guideLastScene()
     }
   ]);
@@ -5834,337 +5783,327 @@
   };
 
 
-  /* V6.8 · 선택형 사건 + 보스 웨이브 ------------------------------- */
-  let chaosChoicePending = null;
-  let chaosChoiceRoute = '';
-  let chaosChoiceRewardMultiplier = 1;
-  let chaosChoiceMoveDelta = 0;
-  let chaosBossPending = false;
-  let chaosBossActive = false;
-  let chaosBossDefeated = false;
-  let chaosBossLastWave = 0;
-  let chaosBossReward = 0;
-  let chaosBossStarting = false;
-  let chaosSuppressBannerMain = '';
+  /* V6.9 PRESSURE PATCH -------------------------------------------------
+     Rollback base: V6.7. Choice events and boss waves are intentionally absent.
+     Pressure begins at 50k / 250k / 500k and always warns before blockers land. */
+  const PRESSURE_BLOCK_VALUE = '#59243b';
+  const PRESSURE_STAGES = Object.freeze([
+    { key:'calm', level:0, min:0, label:'안정', failBlocks:0, droughtMoves:0 },
+    { key:'warning', level:1, min:50000, label:'경고', failBlocks:1, droughtMoves:0 },
+    { key:'danger', level:2, min:250000, label:'위험', failBlocks:2, droughtMoves:3 },
+    { key:'collapse', level:3, min:500000, label:'붕괴', failBlocks:3, droughtMoves:2 }
+  ]);
 
-  const chaosChoiceOverlay = document.getElementById('chaos-choice-overlay');
-  const chaosChoiceSafe = document.getElementById('chaos-choice-safe');
-  const chaosChoiceRisk = document.getElementById('chaos-choice-risk');
-  const chaosChoiceSafeName = document.getElementById('chaos-choice-safe-name');
-  const chaosChoiceSafeDesc = document.getElementById('chaos-choice-safe-desc');
-  const chaosChoiceRiskName = document.getElementById('chaos-choice-risk-name');
-  const chaosChoiceRiskDesc = document.getElementById('chaos-choice-risk-desc');
+  let pressurePending = null;
+  let pressureNoClearMoves = 0;
+  let pressureForcedGiantCounter = 0;
+  let pressureLastAnnouncedStage = 'calm';
+  let pressureLastChanceCostArmed = false;
 
-  function randomChoice(list) {
-    return list[Math.floor(rng() * list.length)];
+  function pressureStageInfo(value = score) {
+    for (let index = PRESSURE_STAGES.length - 1; index >= 0; index--) {
+      if (value >= PRESSURE_STAGES[index].min) return PRESSURE_STAGES[index];
+    }
+    return PRESSURE_STAGES[0];
   }
 
-  function pickChoiceEvent(pool) {
-    const filtered = pool.filter(type => type !== chaosLastEvent);
-    return randomChoice(filtered.length ? filtered : pool);
+  function pressureBlockerCount() {
+    let total = 0;
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) if (board[row][col] === PRESSURE_BLOCK_VALUE) total++;
+    }
+    return total;
   }
 
-  function makeChaosChoice() {
-    const occupancy = boardOccupancyRatio();
-    const safePool = [CHAOS_TYPES.MINI_RUSH, CHAOS_TYPES.SPECIAL_STORM, CHAOS_TYPES.LASER_GRID];
-    let riskPool = [CHAOS_TYPES.GIANT_OVERLOAD, CHAOS_TYPES.REACTOR_SURGE, CHAOS_TYPES.CORE_JACKPOT, CHAOS_TYPES.DANGER_LINE];
-    if (occupancy < .25) riskPool = riskPool.filter(type => type !== CHAOS_TYPES.DANGER_LINE);
-    if (occupancy > .67) riskPool = riskPool.filter(type => type !== CHAOS_TYPES.GIANT_OVERLOAD);
-    return {
-      safe: pickChoiceEvent(safePool),
-      risk: pickChoiceEvent(riskPool.length ? riskPool : [CHAOS_TYPES.REACTOR_SURGE, CHAOS_TYPES.CORE_JACKPOT])
-    };
+  function pressureCandidateWouldCompleteLine(row, col) {
+    let rowCount = 0;
+    let colCount = 0;
+    for (let index = 0; index < SIZE; index++) {
+      if (board[row][index]) rowCount++;
+      if (board[index][col]) colCount++;
+    }
+    return rowCount >= SIZE - 1 || colCount >= SIZE - 1;
   }
 
-  function shouldOfferChaosChoice() {
-    if (!isChaosMode() || gameOver || chaosBossPending || chaosBossActive) return false;
-    return (chaosEventNumber + 1) % 2 === 0;
+  function pressureHasMoveAfterTemporaryDrop() {
+    const remainingPieces = tray.filter(Boolean);
+    if (!remainingPieces.length) {
+      let empty = 0;
+      for (let row = 0; row < SIZE; row++) for (let col = 0; col < SIZE; col++) if (!board[row][col]) empty++;
+      return empty >= 3;
+    }
+    return remainingPieces.some(piece => canPlaceAnywhere(piece));
   }
 
-  function openChaosChoice() {
-    if (chaosChoiceOverlay.classList.contains('visible')) return;
-    chaosChoicePending = makeChaosChoice();
-    const safeMeta = CHAOS_META[chaosChoicePending.safe];
-    const riskMeta = CHAOS_META[chaosChoicePending.risk];
-    chaosChoiceSafeName.textContent = safeMeta.title;
-    chaosChoiceSafeDesc.textContent = `${safeMeta.instruction} 목표 기회가 조금 더 넉넉해.`;
-    chaosChoiceRiskName.textContent = riskMeta.title;
-    chaosChoiceRiskDesc.textContent = `${riskMeta.instruction} 대신 기회가 1번 줄어들 수 있어.`;
-    cancelDragInteraction(true);
-    selected = -1;
-    renderTray();
-    phase = PHASE.DRAFT;
-    chaosChoiceOverlay.classList.add('visible');
-    chaosChoiceOverlay.setAttribute('aria-hidden', 'false');
-    document.documentElement.classList.add('chaos-choice-open');
-    document.body.classList.add('chaos-choice-open');
-    window.setTimeout(() => chaosChoiceSafe.focus({ preventScroll:true }), 35);
-  }
-
-  function closeChaosChoice() {
-    chaosChoiceOverlay.classList.remove('visible');
-    chaosChoiceOverlay.setAttribute('aria-hidden', 'true');
-    document.documentElement.classList.remove('chaos-choice-open');
-    document.body.classList.remove('chaos-choice-open');
-  }
-
-  function choiceCompletionBonus() {
-    const base = 420 + chaosWave * 180;
-    return Math.round(base * chaosChoiceRewardMultiplier);
-  }
-
-  const v68CoreStartChaosMission = startChaosMission;
-  startChaosMission = function() {
-    if (chaosBossActive) {
-      const target = Math.min(5, 2 + Math.floor(Math.max(0, chaosWave - 3) / 3));
-      chaosBossReward = 2200 + chaosWave * 550;
-      chaosMission = {
-        type:'line',
-        label:`보스 체력 ${target}줄`,
-        target,
-        progress:0,
-        movesLeft:5,
-        startScore:score,
-        reward:chaosBossReward,
-        done:false,
-        boss:true
-      };
-      updateChaosWaveUI();
-      return;
-    }
-    v68CoreStartChaosMission();
-    if (!chaosMission || !chaosChoiceRoute) return;
-    chaosMission.movesLeft = Math.max(2, chaosMission.movesLeft + chaosChoiceMoveDelta);
-    chaosMission.reward = Math.round(chaosMission.reward * chaosChoiceRewardMultiplier);
-    updateChaosWaveUI();
-  };
-
-  const v68CoreFinishChaosMission = finishChaosMission;
-  finishChaosMission = function(success, reason = '') {
-    if (!chaosBossActive) return v68CoreFinishChaosMission(success, reason);
-    if (!chaosMission || chaosMission.done) return;
-    chaosMission.done = true;
-    if (success) {
-      chaosBossDefeated = true;
-      addScorePoints(chaosBossReward, 'release');
-      addFever(28);
-      announceEvent('보스 격파!', `${chaosMission.target}줄 제거 · 최종 보상 +${formatNumber(chaosBossReward)}`, 'fever');
-      els.game.classList.remove('chaos-boss-hit');
-      void els.game.offsetWidth;
-      els.game.classList.add('chaos-boss-hit');
-      createShockwave('#ff3f7d', .9);
-      burstParticles(30, ['#ff3f7d','#bd5cff','#ffcf4a','#ffffff'], 225);
-      beepSequence([360,520,740,980,1240], .07);
-      scheduleForCurrentGame(() => {
-        if (chaosBossActive && chaosEvent) {
-          chaosSuppressBannerMain = '보스 격파!';
-          finishChaosEvent(true, '보스 격파!');
-        }
-      }, RESOLVE_DELAY_MS + 170);
-    } else {
-      announceEvent('보스전 실패', reason || '제한 횟수를 모두 사용했어', 'danger');
-      scheduleForCurrentGame(() => {
-        if (chaosBossActive && chaosEvent) {
-          chaosSuppressBannerMain = '보스 웨이브 실패';
-          finishChaosEvent(false, '보스 웨이브 실패');
-        }
-      }, 80);
-    }
-    updateChaosWaveUI();
-  };
-
-  const v68CoreStartChaosEvent = startChaosEvent;
-
-  function startBossWave() {
-    chaosBossPending = false;
-    chaosBossActive = true;
-    chaosBossDefeated = false;
-    chaosBossLastWave = chaosWave;
-    chaosChoiceRoute = '';
-    chaosChoiceRewardMultiplier = 1;
-    chaosChoiceMoveDelta = 0;
-    chaosBossStarting = true;
-    v68CoreStartChaosEvent(CHAOS_TYPES.LASER_GRID);
-    chaosBossStarting = false;
-    if (!chaosEvent) {
-      chaosBossActive = false;
-      return;
-    }
-    chaosTraysLeft = Math.max(2, chaosTraysLeft);
-    updateChaosUI();
-    announceEvent(`보스 웨이브 ${chaosWave}!`, `${chaosMission?.movesLeft || 5}번 안에 ${chaosMission?.target || 2}줄을 지워`, 'danger');
-    flashScreen('danger');
-    screenShake('large');
-    createShockwave('#ff3f7d', .92);
-    if (navigator.vibrate) navigator.vibrate([45,22,75,22,95]);
-  }
-
-  startChaosEvent = function(forcedType = '') {
-    if (forcedType) {
-      v68CoreStartChaosEvent(forcedType);
-      return;
-    }
-    if (chaosBossPending || (chaosWave > 0 && chaosWave % 3 === 0 && chaosBossLastWave !== chaosWave)) {
-      startBossWave();
-      return;
-    }
-    if (shouldOfferChaosChoice()) {
-      openChaosChoice();
-      return;
-    }
-    chaosChoiceRoute = '';
-    chaosChoiceRewardMultiplier = 1;
-    chaosChoiceMoveDelta = 0;
-    v68CoreStartChaosEvent();
-  };
-
-  function chooseChaosRoute(route) {
-    if (!chaosChoicePending) return;
-    const selectedType = route === 'safe' ? chaosChoicePending.safe : chaosChoicePending.risk;
-    chaosChoiceRoute = route;
-    chaosChoiceRewardMultiplier = route === 'safe' ? 1.5 : 3;
-    chaosChoiceMoveDelta = route === 'safe' ? 1 : -1;
-    chaosChoicePending = null;
-    closeChaosChoice();
-    phase = PHASE.PLAYING;
-    v68CoreStartChaosEvent(selectedType);
-    if (chaosEvent && chaosMovesLeft > 0) {
-      chaosMovesLeft = Math.max(1, chaosMovesLeft + chaosChoiceMoveDelta);
-    }
-    updateChaosUI();
-    pulseChaosPanel();
-  }
-
-  chaosChoiceSafe.addEventListener('click', () => chooseChaosRoute('safe'));
-  chaosChoiceRisk.addEventListener('click', () => chooseChaosRoute('risk'));
-
-  const v68CoreFinishChaosEvent = finishChaosEvent;
-  finishChaosEvent = function(success = false, message = '') {
-    const beforeWave = chaosWave;
-    const wasBoss = chaosBossActive;
-    const route = chaosChoiceRoute;
-    if (success && route && !wasBoss) {
-      const bonus = choiceCompletionBonus();
-      addScorePoints(bonus, 'release');
-      message = `${message || '사건 성공!'} · 선택 보너스 +${formatNumber(bonus)}`;
-    }
-    v68CoreFinishChaosEvent(success, message);
-    if (wasBoss) {
-      chaosBossActive = false;
-      chaosBossDefeated = false;
-      els.game.classList.remove('chaos-boss', 'chaos-boss-hit');
-    }
-    chaosChoiceRoute = '';
-    chaosChoiceRewardMultiplier = 1;
-    chaosChoiceMoveDelta = 0;
-    if (chaosWave !== beforeWave && chaosWave % 3 === 0 && chaosBossLastWave !== chaosWave) {
-      chaosBossPending = true;
-      chaosNextAtTray = Math.min(chaosNextAtTray, trayRound);
-    }
-    updateChaosUI();
-  };
-
-  const v68CoreUpdateChaosWaveUI = updateChaosWaveUI;
-  updateChaosWaveUI = function() {
-    v68CoreUpdateChaosWaveUI();
-    if (!isChaosMode()) return;
-    if (chaosBossActive) {
-      chaosTitleNode.textContent = `보스 웨이브 ${chaosWave}`;
-      const progress = chaosMission ? `${Math.min(chaosMission.progress, chaosMission.target)}/${chaosMission.target}` : '0/2';
-      els.chaosStatus.textContent = `보스 체력 ${progress} · 남은 기회 ${chaosMission?.movesLeft ?? 5}`;
-      els.chaosRule.textContent = `제한 횟수 안에 줄을 지워서 보스를 쓰러뜨려.`;
-    } else if (chaosChoiceRoute) {
-      const label = chaosChoiceRoute === 'safe' ? '안전 선택 ×1.5' : '도전 선택 ×3';
-      if (!els.chaosRule.textContent.includes(label)) els.chaosRule.textContent += ` · ${label}`;
-    }
-  };
-
-  const v68CoreUpdateChaosUI = updateChaosUI;
-  updateChaosUI = function() {
-    v68CoreUpdateChaosUI();
-    els.game.classList.toggle('chaos-boss', isChaosMode() && chaosBossActive);
-    if (isChaosMode()) updateChaosWaveUI();
-  };
-
-  // 카오스 알림은 작은 배치 점수를 숨기고, 비슷한 안내는 최신 한 개만 남긴다.
-  const v68CoreShowFloatingScore = showFloatingScore;
-  showFloatingScore = function(points, tone = '') {
-    const amount = Math.max(0, Number(points) || 0);
-    if (isChaosMode() && amount < 90 && !tone) return;
-    v68CoreShowFloatingScore(amount, tone);
-  };
-
-  const v68CoreEnqueueOverlay = enqueueOverlay;
-  enqueueOverlay = function(item) {
-    if (isChaosMode() && item?.type === 'banner') {
-      const main = String(item.main || '');
-      const important = item.tone === 'danger' || /보스|웨이브|선택|잭팟|위험|마지막|폭주|사건 시작/.test(main);
-      item.v68Priority = important ? 'high' : 'normal';
-      item.duration = important ? Math.min(900, item.duration || 820) : Math.min(650, item.duration || 650);
-      if (!important) {
-        for (let index = overlayQueue.length - 1; index >= 0; index--) {
-          if (overlayQueue[index]?.type === 'banner' && overlayQueue[index]?.v68Priority !== 'high') {
-            overlayQueue.splice(index, 1);
-            break;
-          }
-        }
+  function choosePressureWarningCells(count) {
+    const candidates = [];
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        const key = `${row},${col}`;
+        if (board[row][col]) continue;
+        if (chaosBonusCells?.has(key)) continue;
+        if (pressureCandidateWouldCompleteLine(row, col)) continue;
+        candidates.push([row,col]);
       }
     }
-    while (overlayQueue.length >= 3) {
-      const normalIndex = overlayQueue.findIndex(entry => entry?.v68Priority !== 'high');
-      overlayQueue.splice(normalIndex >= 0 ? normalIndex : 0, 1);
+    candidates.sort(() => rng() - .5);
+    const selectedCells = [];
+    for (const [row,col] of candidates) {
+      if (selectedCells.length >= count) break;
+      board[row][col] = PRESSURE_BLOCK_VALUE;
+      const safe = pressureHasMoveAfterTemporaryDrop();
+      if (safe) selectedCells.push([row,col]);
+      else board[row][col] = null;
     }
-    v68CoreEnqueueOverlay(item);
+    for (const [row,col] of selectedCells) board[row][col] = null;
+    return selectedCells;
+  }
+
+  function queuePressurePenalty(count, reason = '압박 실패', force = false) {
+    const stage = pressureStageInfo();
+    if (!isChaosMode() || (!force && stage.level === 0) || gameOver) return 0;
+    const normalized = Math.max(1, Math.min(4, Math.round(count || stage.failBlocks)));
+    if (pressurePending) {
+      pressurePending.count = Math.max(pressurePending.count, normalized);
+      if (reason && !pressurePending.reasons.includes(reason)) pressurePending.reasons.push(reason);
+      pressurePending.cells = choosePressureWarningCells(pressurePending.count);
+    } else {
+      pressurePending = {
+        count:normalized,
+        reasons:reason ? [reason] : [],
+        cells:choosePressureWarningCells(normalized),
+        movesLeft:1
+      };
+    }
+    renderBoard();
+    updateChaosUI();
+    pulseChaosPanel();
+    beepSequence([330,260], .045);
+    if (navigator.vibrate) navigator.vibrate([22,18,30]);
+    return pressurePending.cells.length;
+  }
+
+  function materializePressurePenalty() {
+    if (!pressurePending || gameOver || !isChaosMode()) return 0;
+    const pending = pressurePending;
+    pressurePending = null;
+    const preferred = pending.cells.filter(([row,col]) => !board[row][col]);
+    const replacements = choosePressureWarningCells(pending.count + 4);
+    const merged = [...preferred, ...replacements].filter(([row,col], index, all) => all.findIndex(([r,c]) => r === row && c === col) === index);
+    let dropped = 0;
+    for (const [row,col] of merged) {
+      if (dropped >= pending.count || board[row][col]) continue;
+      board[row][col] = PRESSURE_BLOCK_VALUE;
+      if (!pressureHasMoveAfterTemporaryDrop()) {
+        board[row][col] = null;
+        continue;
+      }
+      chaosBonusCells?.delete(`${row},${col}`);
+      recentCells.add(`${row},${col}`);
+      dropped++;
+    }
+    renderBoard();
+    updateChaosUI();
+    if (dropped > 0) {
+      const detail = pending.reasons.length ? pending.reasons.join(' · ') : '압박 실패';
+      announceEvent(`방해 블록 ${dropped}개 낙하!`, detail, 'danger');
+      flashScreen('danger');
+      screenShake(dropped >= 3 ? 'large' : 'medium');
+      createShockwave('#ff4f70', .58 + dropped * .04);
+      burstParticles(8 + dropped * 3, ['#ff4f70','#ffcf4a','#ffffff'], 110 + dropped * 10);
+      beepSequence([300,230,170], .065);
+      if (navigator.vibrate) navigator.vibrate(dropped >= 3 ? [30,20,55] : [26,18,36]);
+    }
+    return dropped;
+  }
+
+  function applyPressureUI() {
+    const stage = pressureStageInfo();
+    els.game.classList.toggle('pressure-stage-warning', stage.key === 'warning');
+    els.game.classList.toggle('pressure-stage-danger', stage.key === 'danger');
+    els.game.classList.toggle('pressure-stage-collapse', stage.key === 'collapse');
+    if (!isChaosMode()) return;
+    chaosTitleNode.textContent = `웨이브 ${chaosWave} · ${chaosWaveProgress}/3 · ${stage.label}`;
+    const extras = [];
+    const blockers = pressureBlockerCount();
+    if (pressurePending) extras.push(`화살표 ${pressurePending.cells.length}칸 · 다음 배치 뒤 낙하`);
+    if (blockers > 0) extras.push(`방해 블록 ${blockers}`);
+    const clean = els.chaosRule.textContent
+      .replace(/ · 화살표 \d+칸 · 다음 배치 뒤 낙하/g, '')
+      .replace(/ · 방해 블록 \d+/g, '');
+    els.chaosRule.textContent = extras.length ? `${clean} · ${extras.join(' · ')}` : clean;
+  }
+
+  function announcePressureStageChange(previousKey, nextStage) {
+    if (!isChaosMode() || previousKey === nextStage.key || nextStage.level === 0) return;
+    pressureLastAnnouncedStage = nextStage.key;
+    const descriptions = {
+      warning:'실패하면 방해 블록 1개가 떨어져.',
+      danger:'실패하면 2개 · 3번 연속 줄을 못 지워도 1개가 떨어져.',
+      collapse:'실패하면 3개 · 큰 블록 세트와 마지막 한 수 대가가 생겨.'
+    };
+    announceEvent(`${nextStage.label} 단계 진입!`, descriptions[nextStage.key], 'danger');
+    flashScreen('danger');
+    screenShake(nextStage.level >= 3 ? 'large' : 'medium');
+    createShockwave(nextStage.level >= 3 ? '#ff3458' : '#ff9b4b', .68);
+  }
+
+  // 위험 줄 사건의 기존 즉시 낙하도 같은 예고 규칙으로 통일한다.
+  const v69OriginalDropDangerPenalty = dropDangerPenalty;
+  dropDangerPenalty = function() {
+    const stage = pressureStageInfo();
+    const count = stage.level > 0 ? stage.failBlocks : 1;
+    return queuePressurePenalty(count, '위험 줄 실패', true);
   };
 
-  const v68CoreAnnounceEvent = announceEvent;
-  announceEvent = function(main, sub = '', tone = '') {
-    if (chaosSuppressBannerMain && main === chaosSuppressBannerMain) {
-      chaosSuppressBannerMain = '';
-      return;
+  const v69OriginalRenderBoard = renderBoard;
+  renderBoard = function() {
+    v69OriginalRenderBoard();
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        const cell = cellEls[row]?.[col];
+        if (!cell) continue;
+        cell.classList.remove('pressure-warning', 'pressure-blocker');
+        if (board[row][col] === PRESSURE_BLOCK_VALUE) cell.classList.add('pressure-blocker');
+      }
     }
-    if (chaosBossStarting && main === CHAOS_META[CHAOS_TYPES.LASER_GRID].title) return;
-    v68CoreAnnounceEvent(main, sub, tone);
+    if (pressurePending) {
+      for (const [row,col] of pressurePending.cells) {
+        if (!board[row]?.[col]) cellEls[row]?.[col]?.classList.add('pressure-warning');
+      }
+    }
   };
 
-  const v68CoreRestart = restart;
+  const v69OriginalUpdateChaosWaveUI = updateChaosWaveUI;
+  updateChaosWaveUI = function() {
+    v69OriginalUpdateChaosWaveUI();
+    applyPressureUI();
+  };
+
+  const v69OriginalUpdateStats = updateStats;
+  updateStats = function() {
+    v69OriginalUpdateStats();
+    applyPressureUI();
+  };
+
+  const v69OriginalAddScorePoints = addScorePoints;
+  addScorePoints = function(points, tone = '') {
+    const previous = pressureStageInfo();
+    const result = v69OriginalAddScorePoints(points, tone);
+    const next = pressureStageInfo();
+    if (previous.key !== next.key) announcePressureStageChange(previous.key, next);
+    applyPressureUI();
+    return result;
+  };
+
+  const v69OriginalFinishChaosMission = finishChaosMission;
+  finishChaosMission = function(success, reason = '') {
+    const eventAtFailure = chaosEvent;
+    const result = v69OriginalFinishChaosMission(success, reason);
+    if (!success && !(eventAtFailure === CHAOS_TYPES.DANGER_LINE && reason === '사건이 먼저 끝났어')) {
+      const stage = pressureStageInfo();
+      if (stage.level > 0) queuePressurePenalty(stage.failBlocks, '미션 실패');
+    }
+    return result;
+  };
+
+  const v69OriginalFinishChaosEvent = finishChaosEvent;
+  finishChaosEvent = function(success = false, message = '') {
+    const finishedType = chaosEvent;
+    const result = v69OriginalFinishChaosEvent(success, message);
+    if (!success && finishedType && finishedType !== CHAOS_TYPES.DANGER_LINE) {
+      const stage = pressureStageInfo();
+      if (stage.level > 0) queuePressurePenalty(stage.failBlocks, '사건 실패');
+    }
+    return result;
+  };
+
+  const v69OriginalAfterPlacementFlow = afterPlacementFlow;
+  afterPlacementFlow = function(startedInFever = false, lineCount = 0) {
+    const pendingBeforeMove = pressurePending;
+    if (pendingBeforeMove) {
+      pendingBeforeMove.movesLeft = Math.max(0, pendingBeforeMove.movesLeft - 1);
+      if (pendingBeforeMove.movesLeft <= 0) materializePressurePenalty();
+    }
+    const result = v69OriginalAfterPlacementFlow(startedInFever, lineCount);
+    if (isChaosMode()) {
+      const stage = pressureStageInfo();
+      if (lineCount > 0) pressureNoClearMoves = 0;
+      else if (stage.droughtMoves > 0) {
+        pressureNoClearMoves++;
+        if (pressureNoClearMoves >= stage.droughtMoves) {
+          pressureNoClearMoves = 0;
+          queuePressurePenalty(1, `${stage.droughtMoves}번 연속 줄 삭제 실패`);
+        }
+      } else pressureNoClearMoves = 0;
+      applyPressureUI();
+    }
+    return result;
+  };
+
+  const v69OriginalInitTray = initTray;
+  initTray = function() {
+    v69OriginalInitTray();
+    if (!isChaosMode() || gameOver) return;
+    const stage = pressureStageInfo();
+    const giantCount = tray.filter(piece => piece && !isSpecialPiece(piece) && piece.shape.length >= 4).length;
+    const giantEventNeedsRepair = isChaosEvent(CHAOS_TYPES.GIANT_OVERLOAD) && giantCount < 2;
+    if (stage.key === 'collapse') pressureForcedGiantCounter++;
+    else pressureForcedGiantCounter = 0;
+    const periodicGiantDue = stage.key === 'collapse'
+      && pressureForcedGiantCounter >= 4
+      && !isChaosEvent(CHAOS_TYPES.SPECIAL_STORM)
+      && !isChaosEvent(CHAOS_TYPES.MINI_RUSH);
+    if (giantEventNeedsRepair || periodicGiantDue) {
+      tray = createChaosGiantTray();
+      pressureForcedGiantCounter = 0;
+      rememberTray(tray);
+      selected = -1;
+      renderTray();
+      if (periodicGiantDue && !isChaosEvent(CHAOS_TYPES.GIANT_OVERLOAD)) {
+        announceEvent('붕괴 압박!', '이번 세트는 큰 블록 3개야.', 'danger');
+        pulseChaosPanel();
+        screenShake('medium');
+      }
+    }
+    applyPressureUI();
+  };
+
+  lastChanceSwapButton.addEventListener('click', () => {
+    if (isChaosMode() && pressureStageInfo().key === 'collapse' && chaosLastChanceUsed) {
+      pressureLastChanceCostArmed = false;
+      queuePressurePenalty(2, '마지막 한 수 대가');
+    }
+  });
+
+  const v69OriginalOnCellClick = onCellClick;
+  onCellClick = function(row, col) {
+    const wasLastChanceSelecting = chaosLastChanceSelecting;
+    const wasFilled = Boolean(board[row]?.[col]);
+    const result = v69OriginalOnCellClick(row, col);
+    if (wasLastChanceSelecting && wasFilled && !chaosLastChanceSelecting && isChaosMode() && pressureStageInfo().key === 'collapse') {
+      queuePressurePenalty(2, '마지막 한 수 대가');
+    }
+    return result;
+  };
+
+  const v69OriginalRestart = restart;
   restart = function() {
-    chaosChoicePending = null;
-    chaosChoiceRoute = '';
-    chaosChoiceRewardMultiplier = 1;
-    chaosChoiceMoveDelta = 0;
-    chaosBossPending = false;
-    chaosBossActive = false;
-    chaosBossDefeated = false;
-    chaosBossLastWave = 0;
-    chaosBossReward = 0;
-    chaosBossStarting = false;
-    chaosSuppressBannerMain = '';
-    closeChaosChoice();
-    els.game.classList.remove('chaos-boss', 'chaos-boss-hit');
-    v68CoreRestart();
-  };
-
-  const v68CoreSetMode = setMode;
-  setMode = function(nextMode) {
-    if (nextMode !== 'chaos') {
-      closeChaosChoice();
-      chaosChoicePending = null;
-    }
-    v68CoreSetMode(nextMode);
-  };
-
-  const v68CoreTriggerGameOver = triggerGameOver;
-  triggerGameOver = function(reason = 'NO_MOVES') {
-    closeChaosChoice();
-    v68CoreTriggerGameOver(reason);
+    pressurePending = null;
+    pressureNoClearMoves = 0;
+    pressureForcedGiantCounter = 0;
+    pressureLastAnnouncedStage = 'calm';
+    pressureLastChanceCostArmed = false;
+    const result = v69OriginalRestart();
+    applyPressureUI();
+    return result;
   };
 
 
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.8 · choice events + boss waves + quieter feedback
+  // Build: 카오스 러시 V6.9 · escalating pressure system
 
   </script>
 </body>
