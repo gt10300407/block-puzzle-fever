@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V5.5: smooth rAF drag · board-aware TRAY DIRECTOR -->
-  <title>10×10 블록 퍼즐 · Core Overdrive V5.5</title>
+  <!-- V6.0: Classic + CORE CHAOS · six rotating chaos events -->
+  <title>10×10 블록 퍼즐 · Core Chaos V6</title>
   <style>
     :root {
       color-scheme: dark;
@@ -1338,6 +1338,80 @@
       35% { transform: translateZ(0) scale(1.012); }
     }
 
+
+    /* V6 CORE CHAOS ------------------------------------------------------ */
+    .legacy-mode-panel, #draft-overlay[hidden] { display: none !important; }
+    .chaos-panel {
+      display: none;
+      margin: 10px 0 9px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,112,211,.28);
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(255,74,185,.10), rgba(79,220,255,.07)),
+        rgba(10,15,31,.88);
+      box-shadow: 0 8px 24px rgba(0,0,0,.22);
+      contain: layout paint style;
+    }
+    #game.chaos-mode .chaos-panel { display: block; }
+    .chaos-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .chaos-title {
+      color:#ff7bd5;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.14em;
+    }
+    #chaos-status { color:#fff; font-size:11px; letter-spacing:.04em; text-align:right; }
+    .chaos-track {
+      height:7px;
+      margin-top:7px;
+      overflow:hidden;
+      border-radius:999px;
+      background:rgba(255,255,255,.075);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    #chaos-fill {
+      width:0%; height:100%; border-radius:inherit;
+      background:linear-gradient(90deg,#ff4fba,#ffca55,#50e7ff,#9a71ff);
+      transition:width .22s ease-out;
+    }
+    .chaos-rule { margin-top:6px; color:#9ca7c4; font-size:10px; line-height:1.35; }
+    #game.chaos-active .chaos-panel {
+      border-color:var(--chaos-color, rgba(255,112,211,.60));
+      box-shadow:0 0 0 1px color-mix(in srgb, var(--chaos-color, #ff70d3) 18%, transparent), 0 8px 26px rgba(0,0,0,.24);
+    }
+    #game.chaos-hit .chaos-panel { animation:chaosPanelHit .46s ease-out 1; }
+    #game[data-chaos="special-storm"] { --chaos-color:#ffcf4a; }
+    #game[data-chaos="mini-rush"] { --chaos-color:#65f5c9; }
+    #game[data-chaos="giant-overload"] { --chaos-color:#ff704f; }
+    #game[data-chaos="laser-grid"] { --chaos-color:#50e7ff; }
+    #game[data-chaos="reactor-surge"] { --chaos-color:#bd5cff; }
+    #game[data-chaos="core-jackpot"] { --chaos-color:#ff69cf; }
+    #game.chaos-active #board { border-color:color-mix(in srgb, var(--chaos-color, #ff70d3) 62%, rgba(255,255,255,.12)); }
+    #game.chaos-active .chaos-title, #game.chaos-active #chaos-status { color:var(--chaos-color, #ff7bd5); }
+    @keyframes chaosPanelHit {
+      0%,100% { transform:scale(1); }
+      36% { transform:scale(1.018); }
+      62% { transform:scale(.997); }
+    }
+
+    @media (max-width: 520px) {
+      #game.chaos-mode .mode-bar { gap:6px; margin-bottom:7px; }
+      #game.chaos-mode .mode-btn { min-height:39px; padding:7px 8px; font-size:11px; }
+      #game.chaos-mode .stats { margin-bottom:7px; gap:6px; }
+      #game.chaos-mode .stat-card { min-height:48px; padding:6px 8px; }
+      #game.chaos-mode .stat-label { font-size:9px; }
+      #game.chaos-mode .stat-value { font-size:18px; }
+      #game.chaos-mode .fever-panel { margin:7px 0 6px; padding:8px 10px; }
+      #game.chaos-mode .fever-rule { display:none; }
+      #game.chaos-mode .chaos-panel { margin:6px 0; padding:8px 10px; }
+      #game.chaos-mode .chaos-rule { font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      #game.chaos-mode .nickname-row { margin:5px 0 6px; }
+      #game.chaos-mode #board { width:min(100%, 374px); }
+      #game.chaos-mode #tray { margin-top:8px; }
+      #game.chaos-mode .hint { margin-top:6px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: .01ms !important;
@@ -1353,8 +1427,7 @@
 
     <div class="mode-bar" aria-label="게임 모드">
       <button class="mode-btn active" data-mode="classic" type="button">클래식</button>
-      <button class="mode-btn" data-mode="draft" type="button">CORE DRAFT</button>
-      <button class="mode-btn" data-mode="meltdown" type="button">CORE MELTDOWN</button>
+      <button class="mode-btn" data-mode="chaos" type="button">CORE CHAOS</button>
       <button id="sound-btn" type="button" aria-label="소리 끄기" title="소리 끄기">🔊</button>
     </div>
 
@@ -1382,7 +1455,16 @@
       <div class="fever-rule">블록으로 에너지 축적 · 라인 삭제 순간 점수로 방출</div>
     </section>
 
-    <section id="meltdown-panel" class="meltdown-panel" aria-label="코어 온도 상태">
+    <section id="chaos-panel" class="chaos-panel" aria-label="카오스 이벤트 상태" hidden>
+      <div class="chaos-head">
+        <span class="chaos-title">CHAOS SIGNAL</span>
+        <strong id="chaos-status">STANDBY</strong>
+      </div>
+      <div class="chaos-track"><div id="chaos-fill"></div></div>
+      <div id="chaos-rule" class="chaos-rule">3번째 트레이부터 변칙 이벤트가 시작돼.</div>
+    </section>
+
+    <section id="meltdown-panel" class="meltdown-panel legacy-mode-panel" aria-label="코어 온도 상태" hidden>
       <div class="meltdown-head">
         <span class="meltdown-title">CORE TEMPERATURE</span>
         <strong id="meltdown-status">0%</strong>
@@ -1391,7 +1473,7 @@
       <div id="meltdown-rule" class="meltdown-rule">블록을 놓으면 가열 · 라인을 지우면 냉각</div>
     </section>
 
-    <section id="draft-panel" class="draft-panel" aria-label="코어 드래프트 빌드">
+    <section id="draft-panel" class="draft-panel legacy-mode-panel" aria-label="코어 드래프트 빌드" hidden>
       <div class="draft-head">
         <span class="draft-title">CORE DRAFT BUILD</span>
         <strong id="draft-status">첫 선택 준비</strong>
@@ -1422,7 +1504,7 @@
         <button id="restart-btn" class="full-btn" type="button">같은 모드 다시 시작</button>
       </div>
     </section>
-  <section id="draft-overlay" aria-modal="true" role="dialog" aria-labelledby="draft-modal-title">
+  <section id="draft-overlay" aria-modal="true" role="dialog" aria-labelledby="draft-modal-title" hidden>
     <div class="draft-modal">
       <header class="draft-modal-head">
         <div class="draft-modal-kicker">RUN UPGRADE</div>
@@ -1502,6 +1584,26 @@
     [SPECIAL_TYPES.TIME]: { icon:'◈', name:'에너지 균열', short:'RIFT', color:'#ffd75a', glow:'rgba(255,215,90,.84)' }
   });
 
+  const CHAOS_FIRST_EVENT_TRAY = 3;
+  const CHAOS_GAP_MIN = 2;
+  const CHAOS_GAP_MAX = 3;
+  const CHAOS_TYPES = Object.freeze({
+    SPECIAL_STORM:'special-storm',
+    MINI_RUSH:'mini-rush',
+    GIANT_OVERLOAD:'giant-overload',
+    LASER_GRID:'laser-grid',
+    REACTOR_SURGE:'reactor-surge',
+    CORE_JACKPOT:'core-jackpot'
+  });
+  const CHAOS_META = Object.freeze({
+    [CHAOS_TYPES.SPECIAL_STORM]: { icon:'⚠️', name:'SPECIAL STORM', short:'특수 코어 2개', description:'다음 트레이에 서로 다른 특수 코어 2개 · 특수 점수 ×2', trays:1, color:'#ffcf4a', weight:20 },
+    [CHAOS_TYPES.MINI_RUSH]: { icon:'⚡', name:'MINI RUSH', short:'소형 블록 러시', description:'2개 트레이 동안 1~3칸 블록 중심 · 라인 점수 ×1.5', trays:2, color:'#65f5c9', weight:19 },
+    [CHAOS_TYPES.GIANT_OVERLOAD]: { icon:'⬢', name:'GIANT OVERLOAD', short:'대형 블록 과부하', description:'다음 트레이가 대형 블록 · 배치와 BANK ×3 · 라인 성공 보너스', trays:1, color:'#ff704f', weight:15 },
+    [CHAOS_TYPES.LASER_GRID]: { icon:'✚', name:'LASER GRID', short:'연쇄 레이저', description:'2개 트레이 동안 라인 삭제 시 인접 행·열도 자동 소거', trays:2, color:'#50e7ff', weight:18 },
+    [CHAOS_TYPES.REACTOR_SURGE]: { icon:'☢', name:'REACTOR SURGE', short:'라인 출력 ×3', description:'2개 트레이 동안 라인 점수 ×3 · 라인을 놓치면 즉시 종료', trays:2, color:'#bd5cff', weight:16 },
+    [CHAOS_TYPES.CORE_JACKPOT]: { icon:'◆', name:'CORE JACKPOT', short:'3회 안에 잭팟', description:'3번 배치 안에 라인을 지우면 해당 획득 점수 ×5', trays:99, moves:3, color:'#ff69cf', weight:12 }
+  });
+
   const DRAFT_CARDS = Object.freeze([
     { id:'placementPower', icon:'⚡', name:'셀 출력 증폭', short:'CELL', rarity:'common', max:3,
       description: level => `일반 블록의 칸당 직접 점수 +1. 다음 단계: ${2 + level} → ${3 + level}` },
@@ -1579,6 +1681,13 @@
   let draftChoices = [];
   let draftStacks = Object.create(null);
   let draftEffects = createDraftEffects();
+  let chaosEvent = '';
+  let chaosTraysLeft = 0;
+  let chaosMovesLeft = 0;
+  let chaosNextAtTray = CHAOS_FIRST_EVENT_TRAY;
+  let chaosEventsCompleted = 0;
+  let chaosLastEvent = '';
+  let chaosEventSucceeded = false;
 
   const pendingTimeouts = new Set();
   const memoryStore = new Map();
@@ -1620,8 +1729,198 @@
     draftBuild: document.getElementById('draft-build'),
     draftOverlay: document.getElementById('draft-overlay'),
     draftChoices: document.getElementById('draft-choices'),
-    draftModalSub: document.getElementById('draft-modal-sub')
+    draftModalSub: document.getElementById('draft-modal-sub'),
+    chaosPanel: document.getElementById('chaos-panel'),
+    chaosFill: document.getElementById('chaos-fill'),
+    chaosStatus: document.getElementById('chaos-status'),
+    chaosRule: document.getElementById('chaos-rule')
   };
+
+
+  function isChaosMode() { return mode === 'chaos'; }
+  function isChaosEvent(type) { return isChaosMode() && chaosEvent === type; }
+
+  function chaosGap() {
+    return CHAOS_GAP_MIN + Math.floor(rng() * (CHAOS_GAP_MAX - CHAOS_GAP_MIN + 1));
+  }
+
+  function chaosProgressPercent() {
+    if (!isChaosMode()) return 0;
+    if (chaosEvent) {
+      const meta = CHAOS_META[chaosEvent];
+      if (chaosEvent === CHAOS_TYPES.CORE_JACKPOT) return Math.max(0, Math.round(chaosMovesLeft / Math.max(1, meta.moves) * 100));
+      return Math.max(0, Math.round(chaosTraysLeft / Math.max(1, meta.trays) * 100));
+    }
+    const remaining = Math.max(0, chaosNextAtTray - (trayRound + 1));
+    const span = Math.max(1, chaosNextAtTray - Math.max(0, chaosNextAtTray - CHAOS_GAP_MAX));
+    return Math.max(0, Math.min(100, Math.round((1 - remaining / span) * 100)));
+  }
+
+  function updateChaosUI() {
+    const active = isChaosMode();
+    els.chaosPanel.hidden = !active;
+    els.game.classList.toggle('chaos-mode', active);
+    els.game.classList.toggle('chaos-active', active && Boolean(chaosEvent));
+    if (!active) {
+      els.game.removeAttribute('data-chaos');
+      return;
+    }
+    els.chaosFill.style.width = `${chaosProgressPercent()}%`;
+    if (chaosEvent) {
+      const meta = CHAOS_META[chaosEvent];
+      els.game.dataset.chaos = chaosEvent;
+      const counter = chaosEvent === CHAOS_TYPES.CORE_JACKPOT ? `${chaosMovesLeft}회` : `${chaosTraysLeft} 트레이`;
+      els.chaosStatus.textContent = `${meta.name} · ${counter}`;
+      els.chaosRule.textContent = meta.description;
+    } else {
+      els.game.removeAttribute('data-chaos');
+      const next = Math.max(1, chaosNextAtTray - trayRound);
+      els.chaosStatus.textContent = `NEXT · ${next} 트레이`;
+      els.chaosRule.textContent = '2~3개 트레이마다 게임 규칙이 갑자기 바뀌어.';
+    }
+  }
+
+  function pulseChaosPanel() {
+    if (!isChaosMode()) return;
+    els.game.classList.remove('chaos-hit');
+    void els.game.offsetWidth;
+    els.game.classList.add('chaos-hit');
+    window.setTimeout(() => els.game.classList.remove('chaos-hit'), 520);
+  }
+
+  function chooseChaosEvent() {
+    const occupancy = boardOccupancyRatio();
+    const candidates = Object.values(CHAOS_TYPES).filter(type => type !== chaosLastEvent);
+    const weights = candidates.map(type => {
+      let weight = CHAOS_META[type].weight;
+      if (type === CHAOS_TYPES.MINI_RUSH && occupancy >= .62) weight *= 1.55;
+      if (type === CHAOS_TYPES.GIANT_OVERLOAD && occupancy >= .62) weight *= .18;
+      if (type === CHAOS_TYPES.GIANT_OVERLOAD && occupancy <= .35) weight *= 1.55;
+      if (type === CHAOS_TYPES.LASER_GRID && occupancy >= .55) weight *= 1.35;
+      if (type === CHAOS_TYPES.CORE_JACKPOT && combo >= 3) weight *= 1.25;
+      return weight;
+    });
+    return weightedPick(candidates, weights);
+  }
+
+  function startChaosEvent(forcedType = '') {
+    if (!isChaosMode() || chaosEvent || gameOver) return;
+    const type = forcedType || chooseChaosEvent();
+    const meta = CHAOS_META[type];
+    chaosEvent = type;
+    chaosTraysLeft = meta.trays || 1;
+    chaosMovesLeft = meta.moves || 0;
+    chaosEventSucceeded = false;
+    chaosLastEvent = type;
+    updateChaosUI();
+    pulseChaosPanel();
+    announceEvent(meta.name, meta.short, type === CHAOS_TYPES.GIANT_OVERLOAD ? 'danger' : 'fever');
+    flashScreen(type === CHAOS_TYPES.GIANT_OVERLOAD ? 'danger' : 'fever');
+    screenShake(type === CHAOS_TYPES.CORE_JACKPOT || type === CHAOS_TYPES.SPECIAL_STORM ? 'large' : 'medium');
+    createShockwave(meta.color, .68);
+    burstParticles(type === CHAOS_TYPES.CORE_JACKPOT ? 30 : 22, [meta.color,'#ffffff','#57f3ff'], 175);
+    beepSequence(type === CHAOS_TYPES.CORE_JACKPOT ? [360,520,760,1080] : [320,480,680], .075);
+    if (navigator.vibrate) navigator.vibrate(type === CHAOS_TYPES.CORE_JACKPOT ? [35,18,65] : 28);
+  }
+
+  function finishChaosEvent(success = false, message = '') {
+    if (!chaosEvent) return;
+    const meta = CHAOS_META[chaosEvent];
+    if (success) {
+      chaosEventsCompleted++;
+      chaosEventSucceeded = true;
+      announceEvent(message || 'CHAOS CLEARED', meta.name, 'fever');
+      createShockwave(meta.color, .56);
+      burstParticles(16, [meta.color,'#ffffff'], 130);
+    } else if (message) {
+      announceEvent(message, meta.name, '');
+    }
+    chaosEvent = '';
+    chaosTraysLeft = 0;
+    chaosMovesLeft = 0;
+    chaosNextAtTray = trayRound + chaosGap();
+    updateChaosUI();
+  }
+
+  function prepareChaosForNextTray() {
+    if (!isChaosMode() || gameOver) return;
+    if (chaosEvent && chaosEvent !== CHAOS_TYPES.CORE_JACKPOT) {
+      chaosTraysLeft = Math.max(0, chaosTraysLeft - 1);
+      if (chaosTraysLeft <= 0) finishChaosEvent(chaosEventSucceeded, chaosEventSucceeded ? 'CHAOS CLEARED' : 'CHAOS SHIFT');
+    }
+    const nextTrayNumber = trayRound + 1;
+    if (!chaosEvent && nextTrayNumber >= chaosNextAtTray) startChaosEvent();
+    updateChaosUI();
+  }
+
+  function createChaosMiniTray() {
+    const specs = [
+      SHAPES_BY_CLASS.small,
+      rng() < .55 ? SHAPES_BY_CLASS.small : SHAPES_BY_CLASS.medium,
+      SHAPES_BY_CLASS.medium
+    ];
+    const used = [];
+    return specs.map(pool => {
+      let options = pool.filter(entry => !used.includes(entry.index));
+      if (!options.length) options = pool;
+      const fitting = options.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+      const entry = (fitting.length ? fitting : options)[Math.floor(rng() * (fitting.length ? fitting.length : options.length))];
+      used.push(entry.index);
+      return normalPieceFromEntry(entry);
+    });
+  }
+
+  function createChaosGiantTray() {
+    const pools = [SHAPES_BY_CLASS.large, SHAPES_BY_CLASS.large, SHAPES_BY_CLASS.huge];
+    const used = [];
+    const pieces = pools.map((pool, index) => {
+      let options = pool.filter(entry => !used.includes(entry.index));
+      if (!options.length) options = pool;
+      if (index === 2) {
+        const fittingHuge = options.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+        if (!fittingHuge.length) options = SHAPES_BY_CLASS.large.filter(entry => !used.includes(entry.index));
+      }
+      const entry = options[Math.floor(rng() * options.length)];
+      used.push(entry.index);
+      return normalPieceFromEntry(entry);
+    });
+    if (!pieces.some(canPlaceAnywhere)) {
+      const fallback = SHAPES_BY_CLASS.medium.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+      if (fallback.length) pieces[0] = normalPieceFromEntry(fallback[Math.floor(rng() * fallback.length)]);
+    }
+    return pieces;
+  }
+
+  function createChaosStormTray() {
+    const pieces = createDirectedNormalTray(-1);
+    const indexes = [0,1,2].sort(() => rng() - .5).slice(0,2);
+    const types = Object.values(SPECIAL_TYPES);
+    let first = pickSpecialType();
+    let second = types[Math.floor(rng() * types.length)];
+    let guard = 0;
+    while ((second === first || (second.startsWith('laser') && first.startsWith('laser'))) && guard++ < 8) second = types[Math.floor(rng() * types.length)];
+    pieces[indexes[0]] = makeSpecialPiece(first);
+    pieces[indexes[1]] = makeSpecialPiece(second);
+    return pieces;
+  }
+
+  function chaosLaserGridCells(rows, cols) {
+    if (!isChaosEvent(CHAOS_TYPES.LASER_GRID)) return [];
+    const keys = new Set();
+    const add = (r,c) => { if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) keys.add(`${r},${c}`); };
+    for (const row of rows) {
+      const target = row < SIZE - 1 ? row + 1 : row - 1;
+      for (let c = 0; c < SIZE; c++) add(target,c);
+    }
+    for (const col of cols) {
+      const target = col < SIZE - 1 ? col + 1 : col - 1;
+      for (let r = 0; r < SIZE; r++) add(r,target);
+    }
+    const cleared = new Set();
+    rows.forEach(r => { for (let c=0;c<SIZE;c++) cleared.add(`${r},${c}`); });
+    cols.forEach(c => { for (let r=0;r<SIZE;r++) cleared.add(`${r},${c}`); });
+    return [...keys].filter(key => !cleared.has(key)).map(key => key.split(',').map(Number));
+  }
 
   function createDraftEffects() {
     return {
@@ -2165,26 +2464,49 @@
   function initTray() {
     if (gameOver) return;
     trayRound++;
-    const specialSpawned = shouldSpawnSpecial();
-    const specialIndex = specialSpawned ? Math.floor(rng() * 3) : -1;
-    tray = createDirectedNormalTray(specialIndex);
+
+    let specialSpawned = false;
     let specialType = '';
-    if (specialSpawned) {
-      specialType = pickSpecialType();
-      tray[specialIndex] = makeSpecialPiece(specialType);
+    if (isChaosEvent(CHAOS_TYPES.SPECIAL_STORM)) {
+      tray = createChaosStormTray();
+      specialSpawned = true;
       traysSinceSpecial = 0;
-    } else {
+    } else if (isChaosEvent(CHAOS_TYPES.MINI_RUSH)) {
+      tray = createChaosMiniTray();
       traysSinceSpecial++;
+    } else if (isChaosEvent(CHAOS_TYPES.GIANT_OVERLOAD)) {
+      tray = createChaosGiantTray();
+      traysSinceSpecial++;
+    } else {
+      specialSpawned = shouldSpawnSpecial();
+      const specialIndex = specialSpawned ? Math.floor(rng() * 3) : -1;
+      tray = createDirectedNormalTray(specialIndex);
+      if (specialSpawned) {
+        specialType = pickSpecialType();
+        tray[specialIndex] = makeSpecialPiece(specialType);
+        traysSinceSpecial = 0;
+      } else {
+        traysSinceSpecial++;
+      }
     }
+
     rememberTray(tray);
     selected = -1;
     renderTray();
     updateDraftUI();
-    if (specialSpawned) {
+    updateChaosUI();
+
+    if (isChaosEvent(CHAOS_TYPES.SPECIAL_STORM)) {
+      announceEvent('SPECIAL STORM', '특수 코어 2개 투하', 'fever');
+      createShockwave(CHAOS_META[CHAOS_TYPES.SPECIAL_STORM].color, .62);
+      burstParticles(24, ['#ffcf4a','#ff604d','#50e7ff','#ffffff'], 160);
+      screenShake('medium');
+      beepSequence([330,520,760,920], .06);
+    } else if (specialSpawned && specialType) {
       const meta = SPECIAL_META[specialType];
       announceEvent('SPECIAL CORE', meta.name, specialType === SPECIAL_TYPES.EXPLOSION ? 'danger' : 'fever');
       createShockwave(meta.color, .5);
-      burstParticles(24, [meta.color, '#ffffff'], 145);
+      burstParticles(20, [meta.color, '#ffffff'], 135);
       screenShake('small');
       beepSequence([300, 420, 620], .055);
     }
@@ -2634,9 +2956,14 @@
 
     const activationBonus = pendingOverdriveBonus;
     pendingOverdriveBonus = 0;
+    const giantActive = isChaosEvent(CHAOS_TYPES.GIANT_OVERLOAD);
+    const miniActive = isChaosEvent(CHAOS_TYPES.MINI_RUSH);
+    const surgeActive = isChaosEvent(CHAOS_TYPES.REACTOR_SURGE);
+    const jackpotActive = isChaosEvent(CHAOS_TYPES.CORE_JACKPOT);
     const perCell = 2 + (isDraftMode() ? draftEffects.placementPower : 0);
-    const directPoints = placedCount * perCell + activationBonus;
-    const bankGained = addCoreBank(placedCount * 10);
+    const placementMultiplier = giantActive ? 3 : 1;
+    const directPoints = placedCount * perCell * placementMultiplier + activationBonus;
+    const bankGained = addCoreBank(placedCount * 10 * placementMultiplier);
     let release = 0;
     let lineBonus = 0;
 
@@ -2647,9 +2974,12 @@
       totalLines += lineCount;
       release = releaseCoreBank(lineCount);
       const lineDraftMultiplier = isDraftMode() ? 1 + draftEffects.linePower * .20 : 1;
-      lineBonus = Math.round(lineBaseBonus(lineCount) * comboMultiplier(combo) * lineDraftMultiplier);
+      const chaosLineMultiplier = miniActive ? 1.5 : 1;
+      lineBonus = Math.round(lineBaseBonus(lineCount) * comboMultiplier(combo) * lineDraftMultiplier * chaosLineMultiplier);
+      if (giantActive) lineBonus += 800;
       addFever(Math.min(100, (lineCount === 1 ? 18 : lineCount === 2 ? 42 : lineCount === 3 ? 75 : 100) + (combo >= 4 ? 8 : 0)));
       retriggerClass(els.combo, 'combo-pop');
+      if (isChaosMode() && chaosEvent) chaosEventSucceeded = true;
     } else if (!feverActive) {
       if (combo > 0 && comboGrace > 0) comboGrace--;
       else {
@@ -2658,7 +2988,29 @@
       }
     }
 
-    const awarded = addScorePoints(directPoints + lineBonus + release, release > 0 ? (feverActive ? 'overdrive' : 'release') : '');
+    let chaosTotalMultiplier = 1;
+    if (surgeActive && lineCount > 0) chaosTotalMultiplier = 3;
+    if (jackpotActive && lineCount > 0) chaosTotalMultiplier = 5;
+    const awarded = addScorePoints(Math.round((directPoints + lineBonus + release) * chaosTotalMultiplier), release > 0 ? (feverActive ? 'overdrive' : 'release') : '');
+
+    if (jackpotActive) {
+      if (lineCount > 0) {
+        const bonus = 1200 + lineCount * 500;
+        addScorePoints(bonus, 'release');
+        announceEvent('JACKPOT RELEASE', `×5 성공 · 추가 +${formatNumber(bonus)}`, 'fever');
+        flashScreen('fever');
+        screenShake('large');
+        createShockwave('#ff69cf', .90);
+        createShockwave('#ffcf4a', .72);
+        burstParticles(30, ['#ff69cf','#ffcf4a','#ffffff'], 220);
+        finishChaosEvent(true, 'JACKPOT CLEARED');
+      } else {
+        chaosMovesLeft = Math.max(0, chaosMovesLeft - 1);
+        if (chaosMovesLeft <= 0) finishChaosEvent(false, 'JACKPOT LOST');
+        else updateChaosUI();
+      }
+    }
+    if (surgeActive && lineCount === 0) finishChaosEvent(false, 'SURGE BROKEN');
     return { awarded, release, lineBonus, bankGained };
   }
 
@@ -2680,7 +3032,9 @@
       bank = (isMeltdownMode() ? 100 : 120) * (1 + (isDraftMode() ? draftEffects.riftPower * .35 : 0));
     }
     addCoreBank(bank);
-    return addScorePoints(base, type === SPECIAL_TYPES.EXPLOSION ? 'bomb' : feverActive ? 'overdrive' : 'release');
+    const chaosMultiplier = isChaosEvent(CHAOS_TYPES.SPECIAL_STORM) ? 2 : 1;
+    if (chaosMultiplier > 1) chaosEventSucceeded = true;
+    return addScorePoints(base * chaosMultiplier, type === SPECIAL_TYPES.EXPLOSION ? 'bomb' : feverActive ? 'overdrive' : 'release');
   }
 
   function isBoardEmpty() {
@@ -2736,13 +3090,12 @@
   }
 
   function updateModeUI() {
-    els.gameHint.textContent = isMeltdownMode()
-      ? '드래그 또는 터치 배치 · 과열되기 전에 라인을 지워 코어를 냉각해.'
-      : isDraftMode()
-        ? '드래그 또는 터치 배치 · 트레이를 돌파하고 강화 모듈을 누적해.'
-        : '드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.';
+    els.gameHint.textContent = isChaosMode()
+      ? '드래그 또는 터치 배치 · 2~3개 트레이마다 규칙이 갑자기 바뀌어.'
+      : '드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.';
     updateMeltdownUI();
     updateDraftUI();
+    updateChaosUI();
   }
 
   function renderBoard() {
@@ -2873,8 +3226,8 @@
     finishFeverMove(startedInFever, lineCount);
     phase = PHASE.PLAYING;
     if (tray.every(piece => piece === null)) {
-      if (isDraftMode() && trayRound >= nextDraftAtTray) openDraft();
-      else initTray();
+      prepareChaosForNextTray();
+      initTray();
     } else {
       renderTray();
       checkGameOver();
@@ -2935,14 +3288,29 @@
     for (const fullRow of rows) for (let c = 0; c < SIZE; c++) clearCells.push([fullRow, c]);
     for (const fullCol of cols) for (let r = 0; r < SIZE; r++) clearCells.push([r, fullCol]);
 
+    const laserCells = chaosLaserGridCells(rows, cols);
+    const laserOccupied = laserCells.filter(([r,c]) => Boolean(board[r][c])).length;
+    if (laserOccupied > 0) {
+      addCoreBank(laserOccupied * 5);
+      addScorePoints(laserOccupied * 12, 'release');
+      chaosEventSucceeded = true;
+    }
+
     const tier = comboTier();
-    const mainText = tier === 'critical' ? 'CRITICAL CHAIN' : tier === 'breaker' ? 'CORE BREAKER' : tier === 'surge' ? 'ENERGY SURGE' : lineCount === 1 ? 'LINE RELEASE' : lineCount === 2 ? 'DOUBLE RELEASE' : `${lineCount} LINE BURST`;
+    const chaosLabel = isChaosEvent(CHAOS_TYPES.LASER_GRID) && laserOccupied > 0 ? 'LASER GRID' : '';
+    const mainText = chaosLabel || (tier === 'critical' ? 'CRITICAL CHAIN' : tier === 'breaker' ? 'CORE BREAKER' : tier === 'surge' ? 'ENERGY SURGE' : lineCount === 1 ? 'LINE RELEASE' : lineCount === 2 ? 'DOUBLE RELEASE' : `${lineCount} LINE BURST`);
     const releaseText = scoreResult.release > 0 ? ` · CORE +${formatNumber(scoreResult.release * (feverActive ? FEVER_MULTIPLIER : 1))}` : '';
-    announceEvent(mainText, `${sourceLabel ? `${sourceLabel} · ` : ''}COMBO ×${combo}${releaseText}`, combo >= 5 || feverActive ? 'fever' : '');
+    const laserText = laserOccupied > 0 ? ` · LASER ${laserOccupied}` : '';
+    announceEvent(mainText, `${sourceLabel ? `${sourceLabel} · ` : ''}COMBO ×${combo}${releaseText}${laserText}`, combo >= 5 || feverActive || laserOccupied > 0 ? 'fever' : '');
     flashCells(clearCells, feverActive ? '#fff3a8' : '#ffffff');
-    flashScreen(combo >= 5 || lineCount >= 3 || feverActive ? 'fever' : 'normal');
-    screenShake(combo >= 7 || lineCount >= 3 ? 'large' : combo >= 4 || lineCount === 2 ? 'medium' : 'small');
+    if (laserCells.length) flashCells(laserCells, '#50e7ff');
+    flashScreen(combo >= 5 || lineCount >= 3 || feverActive || laserOccupied > 0 ? 'fever' : 'normal');
+    screenShake(combo >= 7 || lineCount >= 3 || laserOccupied > 6 ? 'large' : combo >= 4 || lineCount === 2 || laserOccupied > 0 ? 'medium' : 'small');
     applyComboImpact(lineCount, scoreResult.release);
+    if (laserOccupied > 0) {
+      createShockwave('#50e7ff', .72);
+      beepSequence([540,760,980], .07);
+    }
     const baseTone = 680 + Math.min(combo, 8) * 55;
     const notes = combo >= 7 ? [baseTone, baseTone+180, baseTone+360, baseTone+520] : combo >= 5 ? [baseTone, baseTone+180, baseTone+340] : lineCount >= 2 ? [baseTone, baseTone+180] : [baseTone];
     beepSequence(notes, combo >= 5 ? .095 : .08);
@@ -2952,6 +3320,7 @@
     scheduleForCurrentGame(() => {
       for (const fullRow of rows) board[fullRow].fill(null);
       for (const fullCol of cols) for (let r = 0; r < SIZE; r++) board[r][fullCol] = null;
+      for (const [r,c] of laserCells) board[r][c] = null;
       renderBoard();
       if (isBoardEmpty()) awardAllClear();
       afterPlacementFlow(startedInFever, lineCount);
@@ -3388,7 +3757,7 @@
   }
 
   function setMode(nextMode) {
-    if (!['classic', 'draft', 'meltdown'].includes(nextMode)) return;
+    if (!['classic', 'chaos'].includes(nextMode)) return;
     mode = nextMode;
     document.querySelectorAll('.mode-btn').forEach(button => {
       button.classList.toggle('active', button.dataset.mode === mode);
@@ -3411,8 +3780,8 @@
     els.finalScore.textContent = formatNumber(score);
     els.finalLines.textContent = formatNumber(totalLines);
     els.finalCombo.textContent = `×${maxCombo}`;
-    els.finalModeLabel.textContent = isMeltdownMode() ? '위기 탈출' : isDraftMode() ? '강화 선택' : '오버드라이브';
-    els.finalFever.textContent = String(isMeltdownMode() ? meltdownEscapes : isDraftMode() ? draftLevel : feverCount);
+    els.finalModeLabel.textContent = isChaosMode() ? '카오스 클리어' : '오버드라이브';
+    els.finalFever.textContent = String(isChaosMode() ? chaosEventsCompleted : feverCount);
     els.draftOverlay.classList.remove('visible');
     document.body.classList.remove('draft-open');
     const meltdownEnded = reason === 'MELTDOWN';
@@ -3496,6 +3865,13 @@
     draftChoices = [];
     draftStacks = Object.create(null);
     draftEffects = createDraftEffects();
+    chaosEvent = '';
+    chaosTraysLeft = 0;
+    chaosMovesLeft = 0;
+    chaosNextAtTray = CHAOS_FIRST_EVENT_TRAY;
+    chaosEventsCompleted = 0;
+    chaosLastEvent = '';
+    chaosEventSucceeded = false;
     selected = -1;
     gameOver = false;
     phase = PHASE.PLAYING;
@@ -3513,11 +3889,13 @@
     els.draftOverlay.classList.remove('visible');
     document.body.classList.remove('draft-open');
     els.effectsLayer.innerHTML = '';
-    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning', 'meltdown-warning-hit', 'draft-mode');
+    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning', 'meltdown-warning-hit', 'draft-mode', 'chaos-mode', 'chaos-active', 'chaos-hit');
+    els.game.removeAttribute('data-chaos');
     document.body.classList.remove('overdrive-active');
     els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid', 'combo-surge', 'combo-breaker', 'combo-critical', 'overdrive-sweep', 'overdrive-hit');
     updateFeverUI();
     updateMeltdownUI();
+    updateChaosUI();
 
     renderBoard();
     updateStats();
