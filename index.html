@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.6: chaos waves · instant missions · bonus cells · last chance -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.6</title>
+  <!-- V6.7: human-language beginner guide for Chaos Rush -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.7</title>
   <style>
     :root {
       color-scheme: dark;
@@ -2025,6 +2025,342 @@
       .last-chance-card { padding:18px 15px; }
     }
 
+
+    /* V6.7 · 카오스 러시 초보자 가이드 — 정적 미니 장면, 무한 애니메이션 없음 */
+    .chaos-head-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      min-width: 0;
+    }
+    #chaos-guide-btn {
+      min-height: 28px;
+      padding: 4px 8px;
+      border-color: rgba(87,243,255,.36);
+      border-radius: 999px;
+      background: rgba(87,243,255,.08);
+      color: #c9faff;
+      font-size: 10px;
+      font-weight: 850;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    #chaos-guide-btn:active { transform: scale(.96); }
+
+    html.chaos-guide-open,
+    body.chaos-guide-open { overflow: hidden !important; }
+    #chaos-guide-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1700;
+      display: none;
+      place-items: center;
+      padding:
+        max(12px, env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
+      background: rgba(3,6,16,.91);
+      touch-action: none;
+    }
+    #chaos-guide-overlay.visible { display: grid; }
+    .chaos-guide-card {
+      width: min(100%, 420px);
+      max-height: min(94dvh, 760px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(87,243,255,.28);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 90% 0%, rgba(189,92,255,.14), transparent 36%),
+        linear-gradient(180deg, #121a31 0%, #0b1020 100%);
+      box-shadow: 0 18px 54px rgba(0,0,0,.54);
+    }
+    .chaos-guide-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .chaos-guide-kicker {
+      color: #65f5c9;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+    .chaos-guide-heading {
+      margin-top: 3px;
+      font-size: 20px;
+      font-weight: 950;
+      letter-spacing: -.025em;
+    }
+    #chaos-guide-close {
+      flex: 0 0 34px;
+      width: 34px;
+      min-height: 34px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .chaos-guide-progress {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      padding: 10px 16px 0;
+    }
+    .chaos-guide-dot {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.11);
+    }
+    .chaos-guide-dot.done { background: rgba(101,245,201,.38); }
+    .chaos-guide-dot.active { background: linear-gradient(90deg, #57f3ff, #bd5cff); }
+    .chaos-guide-stage {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 12px 16px 10px;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+    }
+    .chaos-guide-count {
+      color: #8da0c6;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .chaos-guide-title {
+      margin: 4px 0 5px;
+      font-size: clamp(21px, 6vw, 27px);
+      line-height: 1.14;
+      font-weight: 950;
+      letter-spacing: -.035em;
+    }
+    .chaos-guide-copy {
+      margin: 0;
+      color: #c5cde0;
+      font-size: 13px;
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+    .chaos-guide-tip {
+      margin-top: 9px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,207,74,.2);
+      border-radius: 10px;
+      background: rgba(255,207,74,.055);
+      color: #ffe39a;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .guide-scene {
+      margin-top: 12px;
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 15px;
+      background: rgba(5,9,22,.76);
+      overflow: hidden;
+    }
+    .guide-scene-label {
+      margin-bottom: 8px;
+      color: #8f9bb7;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+    .guide-mini-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px;
+      gap: 10px;
+      align-items: center;
+    }
+    .guide-mini-board {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 3px;
+      width: 100%;
+      aspect-ratio: 1;
+      padding: 5px;
+      border: 1px solid rgba(87,243,255,.18);
+      border-radius: 10px;
+      background: #10172a;
+    }
+    .guide-mini-cell {
+      position: relative;
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 3px;
+      background: #1a233b;
+    }
+    .guide-mini-cell.filled { background: #378add; border-color: rgba(87,243,255,.42); }
+    .guide-mini-cell.target { background: rgba(101,245,201,.28); border-color: #65f5c9; }
+    .guide-mini-cell.danger { background: rgba(255,79,112,.3); border-color: #ff4f70; }
+    .guide-mini-cell.gold { background: rgba(255,207,74,.22); border-color: #ffcf4a; }
+    .guide-mini-cell.blue { background: rgba(87,243,255,.22); border-color: #57f3ff; }
+    .guide-mini-cell.gold::after,
+    .guide-mini-cell.blue::after {
+      content: '';
+      position: absolute;
+      inset: 28%;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .guide-mini-cell.gold { color: #ffcf4a; }
+    .guide-mini-cell.blue { color: #57f3ff; }
+    .guide-side-card {
+      padding: 9px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 11px;
+      background: rgba(17,23,42,.88);
+    }
+    .guide-side-title {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 950;
+      line-height: 1.25;
+    }
+    .guide-side-copy {
+      margin-top: 5px;
+      color: #9ea9c2;
+      font-size: 9px;
+      line-height: 1.4;
+    }
+    .guide-chance {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      margin-top: 8px;
+      border: 1px solid rgba(255,79,112,.5);
+      border-radius: 50%;
+      background: rgba(255,79,112,.13);
+      color: #ff9aaa;
+      font-weight: 950;
+    }
+    .guide-mini-tray {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+    .guide-mini-slot {
+      min-height: 61px;
+      display: grid;
+      place-items: center;
+      padding: 6px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px;
+      background: rgba(255,255,255,.035);
+    }
+    .guide-piece {
+      display: grid;
+      grid-template-columns: repeat(2, 13px);
+      gap: 2px;
+    }
+    .guide-piece i {
+      display: block;
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      background: #7f77dd;
+    }
+    .guide-piece.line { grid-template-columns: repeat(3, 13px); }
+    .guide-piece.line i { background: #1d9e75; }
+    .guide-piece.single { grid-template-columns: 15px; }
+    .guide-piece.single i { width: 15px; height: 15px; background: #d85a30; }
+    .guide-arrow {
+      margin: 7px 0;
+      color: #65f5c9;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 950;
+    }
+    .guide-event-card {
+      padding: 9px 10px;
+      border: 1px solid rgba(255,105,207,.32);
+      border-radius: 11px;
+      background: rgba(255,105,207,.07);
+      text-align: left;
+    }
+    .guide-event-card strong { display: block; font-size: 12px; }
+    .guide-event-card span { display: block; margin-top: 3px; color: #b7bfd1; font-size: 9px; line-height: 1.4; }
+    .guide-item-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 7px;
+    }
+    .guide-item {
+      display: grid;
+      grid-template-columns: 30px minmax(0,1fr);
+      gap: 7px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 10px;
+      background: rgba(255,255,255,.035);
+    }
+    .guide-item-icon { font-size: 22px; text-align: center; }
+    .guide-item strong { display: block; font-size: 10px; }
+    .guide-item span { display: block; margin-top: 2px; color: #8f9bb7; font-size: 8px; }
+    .guide-last-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .guide-choice {
+      padding: 11px 8px;
+      border: 1px solid rgba(87,243,255,.2);
+      border-radius: 11px;
+      background: rgba(87,243,255,.05);
+      text-align: center;
+    }
+    .guide-choice strong { display:block; font-size: 11px; }
+    .guide-choice span { display:block; margin-top:4px; color:#9ba7bf; font-size:8px; line-height:1.35; }
+    .chaos-guide-foot {
+      padding: 9px 16px max(12px, env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(8,12,25,.96);
+    }
+    .chaos-guide-remember {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 8px;
+      color: #9da8bf;
+      font-size: 10px;
+    }
+    .chaos-guide-remember input {
+      min-height: 0;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      accent-color: #65f5c9;
+    }
+    .chaos-guide-actions {
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: 8px;
+    }
+    .chaos-guide-actions button { min-height: 43px; font-weight: 900; }
+    #chaos-guide-next {
+      border-color: rgba(101,245,201,.42);
+      background: linear-gradient(135deg, rgba(87,243,255,.13), rgba(189,92,255,.15));
+    }
+
+    @media (max-width: 360px) {
+      .chaos-guide-card { max-height: 96dvh; border-radius: 16px; }
+      .chaos-guide-head { padding: 12px 12px 8px; }
+      .chaos-guide-stage { padding: 10px 12px 8px; }
+      .chaos-guide-foot { padding-left: 12px; padding-right: 12px; }
+      .guide-mini-layout { grid-template-columns: minmax(0,1fr) 96px; gap: 7px; }
+      .guide-item-grid { gap: 5px; }
+      .guide-item { padding: 6px; grid-template-columns: 26px minmax(0,1fr); }
+    }
+
 </style>
 </head>
 <body>
@@ -2065,7 +2401,10 @@
     <section id="chaos-panel" class="chaos-panel" aria-label="카오스 이벤트 상태" hidden>
       <div class="chaos-head">
         <span class="chaos-title">현재 사건</span>
-        <strong id="chaos-status">준비 중</strong>
+        <div class="chaos-head-actions">
+          <button id="chaos-guide-btn" type="button" aria-haspopup="dialog">게임 가이드</button>
+          <strong id="chaos-status">준비 중</strong>
+        </div>
       </div>
       <div class="chaos-track"><div id="chaos-fill"></div></div>
       <div id="chaos-rule" class="chaos-rule">아래 블록 3개를 모두 쓰면 첫 사건이 시작돼.</div>
@@ -2130,6 +2469,29 @@
       </div>
     </div>
   </section>
+
+
+  <section id="chaos-guide-overlay" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="chaos-guide-heading">
+    <div class="chaos-guide-card">
+      <header class="chaos-guide-head">
+        <div>
+          <div class="chaos-guide-kicker">처음 하는 사람용</div>
+          <div id="chaos-guide-heading" class="chaos-guide-heading">카오스 러시 게임 가이드</div>
+        </div>
+        <button id="chaos-guide-close" type="button" aria-label="게임 가이드 닫기">×</button>
+      </header>
+      <div id="chaos-guide-progress" class="chaos-guide-progress" aria-hidden="true"></div>
+      <div id="chaos-guide-stage" class="chaos-guide-stage"></div>
+      <footer class="chaos-guide-foot">
+        <label class="chaos-guide-remember"><input id="chaos-guide-remember" type="checkbox" checked> 다음부터는 자동으로 열지 않기</label>
+        <div class="chaos-guide-actions">
+          <button id="chaos-guide-prev" type="button">이전</button>
+          <button id="chaos-guide-next" type="button">다음</button>
+        </div>
+      </footer>
+    </div>
+  </section>
+
   <div id="item-tip" aria-live="polite"><strong></strong><span></span></div>
   <div id="screen-flash" aria-hidden="true"></div>
   <div id="effects-layer" aria-hidden="true"></div>
@@ -5203,10 +5565,166 @@
   };
 
 
+  // V6.7 · 카오스 러시 사람말 가이드
+  const CHAOS_GUIDE_SEEN_KEY = 'block-game-chaos-guide-v67-seen';
+  const chaosGuideOverlay = document.getElementById('chaos-guide-overlay');
+  const chaosGuideButton = document.getElementById('chaos-guide-btn');
+  const chaosGuideCloseButton = document.getElementById('chaos-guide-close');
+  const chaosGuideStage = document.getElementById('chaos-guide-stage');
+  const chaosGuideProgress = document.getElementById('chaos-guide-progress');
+  const chaosGuidePrev = document.getElementById('chaos-guide-prev');
+  const chaosGuideNext = document.getElementById('chaos-guide-next');
+  const chaosGuideRemember = document.getElementById('chaos-guide-remember');
+  let chaosGuideIndex = 0;
+  let chaosGuidePreviousPhase = PHASE.PLAYING;
+  let chaosGuideAutoOpen = false;
+
+  function guideBoard(cells = {}) {
+    const classes = [];
+    for (let index = 0; index < 36; index++) {
+      const names = ['guide-mini-cell'];
+      for (const [className, indexes] of Object.entries(cells)) {
+        if (indexes.includes(index)) names.push(className);
+      }
+      classes.push(`<i class="${names.join(' ')}"></i>`);
+    }
+    return `<div class="guide-mini-board">${classes.join('')}</div>`;
+  }
+
+  function guideBasicScene() {
+    return `<div class="guide-scene"><div class="guide-scene-label">실제 플레이 예시</div><div class="guide-mini-layout">${guideBoard({filled:[0,1,6,12,18,24,30,31,32,33,34],target:[35]})}<div class="guide-side-card"><div class="guide-side-title">마지막 한 칸!</div><div class="guide-side-copy">초록 칸을 채우면 가로 한 줄이 사라져.</div></div></div></div>`;
+  }
+
+  function guideEventScene() {
+    return `<div class="guide-scene"><div class="guide-scene-label">블록 3개 → 사건 시작</div><div class="guide-mini-tray"><div class="guide-mini-slot"><div class="guide-piece"><i></i><i></i><i></i></div></div><div class="guide-mini-slot"><div class="guide-piece line"><i></i><i></i><i></i></div></div><div class="guide-mini-slot"><div class="guide-piece single"><i></i></div></div></div><div class="guide-arrow">↓</div><div class="guide-event-card"><strong>잭팟 찬스!</strong><span>3번 안에 한 줄을 지우면 점수가 크게 올라.</span></div></div>`;
+  }
+
+  function guideDangerScene() {
+    return `<div class="guide-scene"><div class="guide-scene-label">사건 창과 보드가 같은 목표를 알려줘</div><div class="guide-mini-layout">${guideBoard({filled:[1,2,7,8,12,13,14,15,16],danger:[18,19,20,21,22,23]})}<div class="guide-side-card"><div class="guide-side-title">빨간 줄을 지워!</div><div class="guide-side-copy">이 줄을 채워 없애면 성공.</div><div class="guide-chance">3</div></div></div></div>`;
+  }
+
+  function guideBonusScene() {
+    return `<div class="guide-scene"><div class="guide-scene-label">빛나는 칸과 특수 블록</div><div class="guide-mini-layout">${guideBoard({filled:[0,1,6,7,20,26],gold:[14,27],blue:[9,32]})}<div class="guide-side-card"><div class="guide-side-title">금색 = 점수</div><div class="guide-side-copy">파란색 = 폭주 충전<br>줄로 함께 지우면 보상이 더 커.</div></div></div><div class="guide-item-grid" style="margin-top:9px"><div class="guide-item"><div class="guide-item-icon">💥</div><div><strong>폭탄</strong><span>주변 블록 폭발</span></div></div><div class="guide-item"><div class="guide-item-icon">↔️</div><div><strong>레이저</strong><span>한 줄 정리</span></div></div><div class="guide-item"><div class="guide-item-icon">🧲</div><div><strong>자석</strong><span>흩어진 블록 모으기</span></div></div><div class="guide-item"><div class="guide-item-icon">◈</div><div><strong>폭주 충전</strong><span>게이지와 보너스 채우기</span></div></div></div></div>`;
+  }
+
+  function guideLastScene() {
+    return `<div class="guide-scene"><div class="guide-scene-label">막혀도 딱 한 번은 기회가 있어</div><div class="guide-event-card" style="margin-bottom:9px"><strong>웨이브 2</strong><span>사건 3개를 끝내면 다음 웨이브로 올라가고 보상이 커져.</span></div><div class="guide-last-card"><div class="guide-choice"><strong>블록 교체</strong><span>남은 블록을 놓기 쉬운 새 블록으로 바꿔.</span></div><div class="guide-choice"><strong>한 칸 제거</strong><span>막고 있는 보드 블록 한 칸을 직접 없애.</span></div></div></div>`;
+  }
+
+  const CHAOS_GUIDE_SLIDES = Object.freeze([
+    {
+      title:'기본은 클래식과 같아',
+      copy:'아래 블록을 빈칸에 놓고, 가로나 세로 한 줄을 꽉 채우면 그 줄이 사라져. 더 놓을 곳이 없으면 게임이 끝나.',
+      tip:'블록은 끌어 놓아도 되고, 블록을 한 번 누른 뒤 원하는 칸을 눌러도 돼.',
+      scene:guideBasicScene()
+    },
+    {
+      title:'블록 3개를 다 쓰면 사건이 시작돼',
+      copy:'아래에 나온 블록 세 개를 모두 사용하면 새 블록이 나오면서 사건이 시작돼. 복잡하게 외울 필요 없이 사건 창에 적힌 한 문장만 보면 돼.',
+      tip:'처음에는 사건 하나씩 나오고, 웨이브가 오르면 사건과 미션이 함께 나올 수 있어.',
+      scene:guideEventScene()
+    },
+    {
+      title:'빨간 표시와 남은 기회를 봐',
+      copy:'예를 들어 “위험 줄 경보”가 뜨면 보드의 빨간 줄을 남은 기회 안에 지우면 돼. 실패해도 바로 끝나진 않지만 방해 블록이 생길 수 있어.',
+      tip:'무엇을 해야 할지 헷갈리면 보드 위의 “현재 사건” 문장을 먼저 확인해.',
+      scene:guideDangerScene()
+    },
+    {
+      title:'빛나는 칸과 특수 블록은 좋은 기회야',
+      copy:'금색 칸은 점수를 주고, 파란 칸은 폭주 게이지를 채워. 폭탄·레이저·자석·폭주 충전을 상황에 맞게 쓰면 막힌 판을 풀기 쉬워져.',
+      tip:'빛나는 칸을 그냥 밟아도 보상을 받지만, 그 칸이 들어간 줄을 지우면 보상이 더 커.',
+      scene:guideBonusScene()
+    },
+    {
+      title:'사건을 넘기고 웨이브를 올려',
+      copy:'사건 세 개를 끝낼 때마다 다음 웨이브로 올라가고 보상이 커져. 정말 놓을 곳이 없어지면 한 판에 한 번 “마지막 한 수”가 나와.',
+      tip:'정답을 전부 외울 필요 없어. 현재 사건 문장을 따라 하고, 빛나는 칸과 특수 블록을 눈여겨보면 충분해.',
+      scene:guideLastScene()
+    }
+  ]);
+
+  function renderChaosGuide() {
+    const slide = CHAOS_GUIDE_SLIDES[chaosGuideIndex];
+    chaosGuideProgress.innerHTML = CHAOS_GUIDE_SLIDES.map((_, index) => `<i class="chaos-guide-dot${index < chaosGuideIndex ? ' done' : ''}${index === chaosGuideIndex ? ' active' : ''}"></i>`).join('');
+    chaosGuideStage.innerHTML = `<div class="chaos-guide-count">${chaosGuideIndex + 1} / ${CHAOS_GUIDE_SLIDES.length}</div><h2 class="chaos-guide-title">${slide.title}</h2><p class="chaos-guide-copy">${slide.copy}</p>${slide.scene}<div class="chaos-guide-tip">${slide.tip}</div>`;
+    chaosGuidePrev.disabled = chaosGuideIndex === 0;
+    chaosGuideNext.textContent = chaosGuideIndex === CHAOS_GUIDE_SLIDES.length - 1 ? '게임 시작' : '다음';
+    chaosGuideStage.scrollTop = 0;
+  }
+
+  function openChaosGuide({ automatic = false } = {}) {
+    if (!isChaosMode() || gameOver || phase !== PHASE.PLAYING) return;
+    cancelDragInteraction(true);
+    selected = -1;
+    renderTray();
+    chaosGuidePreviousPhase = phase;
+    phase = PHASE.DRAFT;
+    chaosGuideAutoOpen = automatic;
+    chaosGuideIndex = 0;
+    chaosGuideRemember.checked = true;
+    renderChaosGuide();
+    chaosGuideOverlay.classList.add('visible');
+    chaosGuideOverlay.setAttribute('aria-hidden', 'false');
+    document.documentElement.classList.add('chaos-guide-open');
+    document.body.classList.add('chaos-guide-open');
+    window.setTimeout(() => chaosGuideCloseButton.focus({ preventScroll:true }), 40);
+  }
+
+  function closeChaosGuide(savePreference = true) {
+    if (!chaosGuideOverlay.classList.contains('visible')) return;
+    if (savePreference) safeLocalSet(CHAOS_GUIDE_SEEN_KEY, chaosGuideRemember.checked ? '1' : '0');
+    chaosGuideOverlay.classList.remove('visible');
+    chaosGuideOverlay.setAttribute('aria-hidden', 'true');
+    document.documentElement.classList.remove('chaos-guide-open');
+    document.body.classList.remove('chaos-guide-open');
+    if (!gameOver) phase = chaosGuidePreviousPhase === PHASE.PLAYING ? PHASE.PLAYING : chaosGuidePreviousPhase;
+    chaosGuideAutoOpen = false;
+  }
+
+  chaosGuideButton.addEventListener('click', () => openChaosGuide({ automatic:false }));
+  chaosGuideCloseButton.addEventListener('click', () => closeChaosGuide(true));
+  chaosGuidePrev.addEventListener('click', () => {
+    if (chaosGuideIndex <= 0) return;
+    chaosGuideIndex--;
+    renderChaosGuide();
+  });
+  chaosGuideNext.addEventListener('click', () => {
+    if (chaosGuideIndex < CHAOS_GUIDE_SLIDES.length - 1) {
+      chaosGuideIndex++;
+      renderChaosGuide();
+      return;
+    }
+    closeChaosGuide(true);
+  });
+  chaosGuideOverlay.addEventListener('pointerdown', event => {
+    if (event.target === chaosGuideOverlay) closeChaosGuide(true);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && chaosGuideOverlay.classList.contains('visible')) closeChaosGuide(true);
+  });
+
+  const v67OriginalSetMode = setMode;
+  setMode = function(nextMode) {
+    if (nextMode === 'chaos') safeLocalSet('block-game-chaos-intro-v1', '1');
+    if (nextMode !== 'chaos') closeChaosGuide(false);
+    v67OriginalSetMode(nextMode);
+    if (nextMode === 'chaos' && safeLocalGet(CHAOS_GUIDE_SEEN_KEY) !== '1') {
+      window.setTimeout(() => openChaosGuide({ automatic:true }), 140);
+    }
+  };
+
+  const v67OriginalTriggerGameOver = triggerGameOver;
+  triggerGameOver = function(reason = 'NO_MOVES') {
+    closeChaosGuide(false);
+    v67OriginalTriggerGameOver(reason);
+  };
+
+
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.6 · waves, missions, bonus cells, last chance
+  // Build: 카오스 러시 V6.7 · human-language beginner guide
 
   </script>
 </body>
