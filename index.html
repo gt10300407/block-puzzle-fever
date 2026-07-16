@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.0: Classic + CORE CHAOS · six rotating chaos events -->
-  <title>10×10 블록 퍼즐 · Core Chaos V6</title>
+  <!-- V6.1: Classic + 카오스 러시 · first-run tutorial and plain-language event guidance -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.1</title>
   <style>
     :root {
       color-scheme: dark;
@@ -116,12 +116,24 @@
       box-shadow: 0 0 0 1px rgba(84,216,255,.12), 0 0 16px rgba(84,216,255,.10);
       background: rgba(84,216,255,.08);
     }
-    #sound-btn {
+    #sound-btn,
+    #help-btn {
       flex: 0 0 44px;
       padding: 0;
       font-size: 20px;
       line-height: 1;
-      aria-label: "소리 켜기 또는 끄기";
+    }
+    #help-btn { font-size: 17px; font-weight: 900; }
+    .mode-guide {
+      margin: -4px 0 10px;
+      padding: 8px 10px;
+      border: 1px solid rgba(84,216,255,.12);
+      border-radius: 10px;
+      background: rgba(84,216,255,.045);
+      color: #c5d0e9;
+      font-size: 11px;
+      line-height: 1.4;
+      text-align: center;
     }
 
     .stats {
@@ -1405,12 +1417,80 @@
       #game.chaos-mode .fever-panel { margin:7px 0 6px; padding:8px 10px; }
       #game.chaos-mode .fever-rule { display:none; }
       #game.chaos-mode .chaos-panel { margin:6px 0; padding:8px 10px; }
-      #game.chaos-mode .chaos-rule { font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      #game.chaos-mode .chaos-rule { font-size:10px; white-space:normal; overflow:visible; text-overflow:clip; }
       #game.chaos-mode .nickname-row { margin:5px 0 6px; }
       #game.chaos-mode #board { width:min(100%, 374px); }
       #game.chaos-mode #tray { margin-top:8px; }
       #game.chaos-mode .hint { margin-top:6px; }
     }
+
+    /* V6.1 clarity layer ------------------------------------------------ */
+    .tutorial-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1400;
+      display: grid;
+      place-items: center;
+      padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+      background: rgba(4,7,16,.92);
+    }
+    .tutorial-overlay[hidden] { display: none !important; }
+    .tutorial-card {
+      width: min(100%, 380px);
+      padding: 22px 18px 18px;
+      border: 1px solid rgba(84,216,255,.34);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(22,31,57,.98), rgba(10,15,31,.98));
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+      text-align: center;
+    }
+    .tutorial-kicker {
+      color: #65f5c9;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+    .tutorial-icon { margin: 14px 0 8px; font-size: 52px; line-height: 1; }
+    .tutorial-title { font-size: 23px; font-weight: 950; letter-spacing: -.035em; }
+    .tutorial-text {
+      min-height: 54px;
+      margin-top: 9px;
+      color: #c8d1e6;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+    .tutorial-dots { display:flex; justify-content:center; gap:7px; margin:16px 0; }
+    .tutorial-dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.18); }
+    .tutorial-dot.active { width:22px; border-radius:999px; background:#54d8ff; }
+    .tutorial-actions { display:grid; grid-template-columns:.8fr 1.2fr; gap:8px; }
+    .tutorial-actions .primary {
+      border-color: rgba(84,216,255,.72);
+      background: linear-gradient(135deg, rgba(84,216,255,.24), rgba(189,92,255,.20));
+      font-weight: 900;
+    }
+    body.tutorial-open { overflow: hidden; touch-action: none; }
+    #item-tip {
+      position: fixed;
+      left: 50%;
+      bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px));
+      z-index: 1200;
+      width: min(88vw, 360px);
+      padding: 11px 13px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 12px;
+      background: rgba(8,13,27,.96);
+      color: #f7f9ff;
+      text-align: center;
+      transform: translate(-50%, 18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      box-shadow: 0 12px 34px rgba(0,0,0,.42);
+    }
+    #item-tip.visible { opacity: 1; transform: translate(-50%, 0); }
+    #item-tip strong { color:#fff3a8; font-size:13px; }
+    #item-tip span { display:block; margin-top:3px; color:#c6d0e5; font-size:11px; line-height:1.4; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -1427,41 +1507,43 @@
 
     <div class="mode-bar" aria-label="게임 모드">
       <button class="mode-btn active" data-mode="classic" type="button">클래식</button>
-      <button class="mode-btn" data-mode="chaos" type="button">CORE CHAOS</button>
+      <button class="mode-btn" data-mode="chaos" type="button">카오스 러시</button>
+      <button id="help-btn" type="button" aria-label="게임 방법 보기" title="게임 방법">?</button>
       <button id="sound-btn" type="button" aria-label="소리 끄기" title="소리 끄기">🔊</button>
     </div>
+    <p id="mode-guide" class="mode-guide">아래 블록을 놓아 가로나 세로 한 줄을 완성해.</p>
 
     <section class="stats" aria-label="게임 상태">
       <div class="stat-card">
-        <div class="stat-label">score</div>
+        <div class="stat-label">점수</div>
         <div id="score" class="stat-value">0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">best</div>
+        <div class="stat-label">최고</div>
         <div id="best" class="stat-value">0</div>
       </div>
       <div id="combo-wrap" class="stat-card">
-        <div class="stat-label">combo</div>
+        <div class="stat-label">콤보</div>
         <div id="combo" class="stat-value">0</div>
       </div>
     </section>
     <section class="fever-panel" aria-label="코어 오버드라이브 상태">
       <div class="fever-head">
-        <span class="fever-title">CORE OVERDRIVE</span>
+        <span class="fever-title">폭주 게이지</span>
         <strong id="fever-status">0%</strong>
       </div>
       <div class="fever-track"><div id="fever-fill"></div></div>
-      <div class="core-bank-line"><span>CORE BANK</span><strong id="core-bank">0</strong></div>
-      <div class="fever-rule">블록으로 에너지 축적 · 라인 삭제 순간 점수로 방출</div>
+      <div class="core-bank-line"><span>보너스 저장</span><strong id="core-bank">0</strong></div>
+      <div class="fever-rule">블록으로 보너스를 모으고 · 줄을 지우면 점수로 터져</div>
     </section>
 
     <section id="chaos-panel" class="chaos-panel" aria-label="카오스 이벤트 상태" hidden>
       <div class="chaos-head">
-        <span class="chaos-title">CHAOS SIGNAL</span>
-        <strong id="chaos-status">STANDBY</strong>
+        <span class="chaos-title">현재 사건</span>
+        <strong id="chaos-status">준비 중</strong>
       </div>
       <div class="chaos-track"><div id="chaos-fill"></div></div>
-      <div id="chaos-rule" class="chaos-rule">3번째 트레이부터 변칙 이벤트가 시작돼.</div>
+      <div id="chaos-rule" class="chaos-rule">아래 블록 3개를 모두 쓰면 첫 사건이 시작돼.</div>
     </section>
 
     <section id="meltdown-panel" class="meltdown-panel legacy-mode-panel" aria-label="코어 온도 상태" hidden>
@@ -1488,18 +1570,18 @@
 
     <div id="board" role="grid" aria-label="10×10 게임 보드"></div>
     <div id="tray" aria-label="사용할 블록 3개"></div>
-    <p id="game-hint" class="hint">드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.</p>
+    <p id="game-hint" class="hint">아래 블록을 끌어 놓거나 · 블록을 누른 뒤 원하는 칸을 눌러.</p>
   </main>
   <section id="gameover" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="gameover-title" aria-describedby="gameover-message">
       <div class="gameover-card">
-        <div class="gameover-kicker">RUN RESULT</div>
+        <div class="gameover-kicker">게임 결과</div>
         <div id="gameover-title" class="gameover-title">게임 종료</div>
         <div id="gameover-message" class="gameover-message">놓을 수 있는 블록이 없어.</div>
         <div class="gameover-sub">최종 점수 <strong id="final-score">0</strong></div>
         <div class="summary-grid">
           <div class="summary-item"><div class="summary-label">삭제 라인</div><div id="final-lines" class="summary-value">0</div></div>
           <div class="summary-item"><div class="summary-label">최대 콤보</div><div id="final-combo" class="summary-value">0</div></div>
-          <div class="summary-item"><div id="final-mode-label" class="summary-label">오버드라이브</div><div id="final-fever" class="summary-value">0</div></div>
+          <div class="summary-item"><div id="final-mode-label" class="summary-label">폭주 횟수</div><div id="final-fever" class="summary-value">0</div></div>
         </div>
         <button id="restart-btn" class="full-btn" type="button">같은 모드 다시 시작</button>
       </div>
@@ -1514,6 +1596,20 @@
       <div id="draft-choices"></div>
     </div>
   </section>
+  <section id="tutorial-overlay" class="tutorial-overlay" role="dialog" aria-modal="true" aria-labelledby="tutorial-title" hidden>
+    <div class="tutorial-card">
+      <div class="tutorial-kicker">10초 게임 방법</div>
+      <div id="tutorial-icon" class="tutorial-icon">🧩</div>
+      <div id="tutorial-title" class="tutorial-title">블록을 놓아</div>
+      <div id="tutorial-text" class="tutorial-text">아래 블록을 끌어서 보드의 빈칸에 놓아.</div>
+      <div id="tutorial-dots" class="tutorial-dots" aria-hidden="true"></div>
+      <div class="tutorial-actions">
+        <button id="tutorial-skip" type="button">건너뛰기</button>
+        <button id="tutorial-next" class="primary" type="button">다음</button>
+      </div>
+    </div>
+  </section>
+  <div id="item-tip" aria-live="polite"><strong></strong><span></span></div>
   <div id="screen-flash" aria-hidden="true"></div>
   <div id="effects-layer" aria-hidden="true"></div>
   <div id="event-banner" aria-live="polite"><div class="event-main"></div><div class="event-sub"></div></div>
@@ -1577,16 +1673,16 @@
     TIME:'time'
   });
   const SPECIAL_META = Object.freeze({
-    [SPECIAL_TYPES.EXPLOSION]: { icon:'💥', name:'폭발 코어', short:'BLAST', color:'#ff604d', glow:'rgba(255,84,68,.84)' },
-    [SPECIAL_TYPES.LASER_ROW]: { icon:'↔️', name:'가로 레이저', short:'LASER H', color:'#50e7ff', glow:'rgba(80,231,255,.82)' },
-    [SPECIAL_TYPES.LASER_COL]: { icon:'↕️', name:'세로 레이저', short:'LASER V', color:'#54a6ff', glow:'rgba(84,166,255,.82)' },
-    [SPECIAL_TYPES.MAGNET]: { icon:'🧲', name:'자력 코어', short:'MAGNET', color:'#d57aff', glow:'rgba(213,122,255,.84)' },
-    [SPECIAL_TYPES.TIME]: { icon:'◈', name:'에너지 균열', short:'RIFT', color:'#ffd75a', glow:'rgba(255,215,90,.84)' }
+    [SPECIAL_TYPES.EXPLOSION]: { icon:'💥', name:'폭탄', short:'주변 폭발', help:'원하는 칸에 놓으면 주변 3×3 블록이 폭발해.', color:'#ff604d', glow:'rgba(255,84,68,.84)' },
+    [SPECIAL_TYPES.LASER_ROW]: { icon:'↔️', name:'가로 레이저', short:'가로줄 제거', help:'원하는 칸에 놓으면 그 가로줄의 블록이 모두 사라져.', color:'#50e7ff', glow:'rgba(80,231,255,.82)' },
+    [SPECIAL_TYPES.LASER_COL]: { icon:'↕️', name:'세로 레이저', short:'세로줄 제거', help:'원하는 칸에 놓으면 그 세로줄의 블록이 모두 사라져.', color:'#54a6ff', glow:'rgba(84,166,255,.82)' },
+    [SPECIAL_TYPES.MAGNET]: { icon:'🧲', name:'자석', short:'블록 모으기', help:'원하는 곳 주변의 흩어진 블록을 한쪽으로 모아.', color:'#d57aff', glow:'rgba(213,122,255,.84)' },
+    [SPECIAL_TYPES.TIME]: { icon:'◈', name:'폭주 충전', short:'폭주 충전', help:'놓는 즉시 폭주 게이지와 보너스 저장량을 채워.', color:'#ffd75a', glow:'rgba(255,215,90,.84)' }
   });
 
-  const CHAOS_FIRST_EVENT_TRAY = 3;
-  const CHAOS_GAP_MIN = 2;
-  const CHAOS_GAP_MAX = 3;
+  const CHAOS_FIRST_EVENT_TRAY = 2;
+  const CHAOS_GAP_MIN = 1;
+  const CHAOS_GAP_MAX = 2;
   const CHAOS_TYPES = Object.freeze({
     SPECIAL_STORM:'special-storm',
     MINI_RUSH:'mini-rush',
@@ -1596,12 +1692,12 @@
     CORE_JACKPOT:'core-jackpot'
   });
   const CHAOS_META = Object.freeze({
-    [CHAOS_TYPES.SPECIAL_STORM]: { icon:'⚠️', name:'SPECIAL STORM', short:'특수 코어 2개', description:'다음 트레이에 서로 다른 특수 코어 2개 · 특수 점수 ×2', trays:1, color:'#ffcf4a', weight:20 },
-    [CHAOS_TYPES.MINI_RUSH]: { icon:'⚡', name:'MINI RUSH', short:'소형 블록 러시', description:'2개 트레이 동안 1~3칸 블록 중심 · 라인 점수 ×1.5', trays:2, color:'#65f5c9', weight:19 },
-    [CHAOS_TYPES.GIANT_OVERLOAD]: { icon:'⬢', name:'GIANT OVERLOAD', short:'대형 블록 과부하', description:'다음 트레이가 대형 블록 · 배치와 BANK ×3 · 라인 성공 보너스', trays:1, color:'#ff704f', weight:15 },
-    [CHAOS_TYPES.LASER_GRID]: { icon:'✚', name:'LASER GRID', short:'연쇄 레이저', description:'2개 트레이 동안 라인 삭제 시 인접 행·열도 자동 소거', trays:2, color:'#50e7ff', weight:18 },
-    [CHAOS_TYPES.REACTOR_SURGE]: { icon:'☢', name:'REACTOR SURGE', short:'라인 출력 ×3', description:'2개 트레이 동안 라인 점수 ×3 · 라인을 놓치면 즉시 종료', trays:2, color:'#bd5cff', weight:16 },
-    [CHAOS_TYPES.CORE_JACKPOT]: { icon:'◆', name:'CORE JACKPOT', short:'3회 안에 잭팟', description:'3번 배치 안에 라인을 지우면 해당 획득 점수 ×5', trays:99, moves:3, color:'#ff69cf', weight:12 }
+    [CHAOS_TYPES.SPECIAL_STORM]: { icon:'⚠️', name:'SPECIAL STORM', title:'특수 블록 2개!', instruction:'폭탄과 레이저로 보드를 한꺼번에 정리해.', trays:1, color:'#ffcf4a', weight:20 },
+    [CHAOS_TYPES.MINI_RUSH]: { icon:'⚡', name:'MINI RUSH', title:'작은 블록 러시!', instruction:'작은 블록으로 빈칸을 빠르게 채워. 줄 점수는 1.5배야.', trays:2, color:'#65f5c9', weight:19 },
+    [CHAOS_TYPES.GIANT_OVERLOAD]: { icon:'⬢', name:'GIANT OVERLOAD', title:'대형 블록 도전!', instruction:'큰 블록을 놓으면 배치 점수와 보너스 저장이 3배야.', trays:1, color:'#ff704f', weight:15 },
+    [CHAOS_TYPES.LASER_GRID]: { icon:'✚', name:'LASER GRID', title:'연쇄 레이저!', instruction:'한 줄을 지우면 옆줄도 함께 폭발해.', trays:2, color:'#50e7ff', weight:18 },
+    [CHAOS_TYPES.REACTOR_SURGE]: { icon:'☢', name:'REACTOR SURGE', title:'점수 3배!', instruction:'이번에 줄을 지우면 점수가 3배. 실패하면 효과가 끝나.', trays:2, color:'#bd5cff', weight:16 },
+    [CHAOS_TYPES.CORE_JACKPOT]: { icon:'◆', name:'CORE JACKPOT', title:'잭팟 찬스!', instruction:'3번 안에 한 줄을 지우면 점수가 5배야.', trays:99, moves:3, color:'#ff69cf', weight:12 }
   });
 
   const DRAFT_CARDS = Object.freeze([
@@ -1702,6 +1798,8 @@
     comboWrap: document.getElementById('combo-wrap'),
     nickname: document.getElementById('nickname'),
     soundBtn: document.getElementById('sound-btn'),
+    helpBtn: document.getElementById('help-btn'),
+    modeGuide: document.getElementById('mode-guide'),
     gameover: document.getElementById('gameover'),
     finalScore: document.getElementById('final-score'),
     gameoverTitle: document.getElementById('gameover-title'),
@@ -1733,9 +1831,73 @@
     chaosPanel: document.getElementById('chaos-panel'),
     chaosFill: document.getElementById('chaos-fill'),
     chaosStatus: document.getElementById('chaos-status'),
-    chaosRule: document.getElementById('chaos-rule')
+    chaosRule: document.getElementById('chaos-rule'),
+    tutorialOverlay: document.getElementById('tutorial-overlay'),
+    tutorialIcon: document.getElementById('tutorial-icon'),
+    tutorialTitle: document.getElementById('tutorial-title'),
+    tutorialText: document.getElementById('tutorial-text'),
+    tutorialDots: document.getElementById('tutorial-dots'),
+    tutorialSkip: document.getElementById('tutorial-skip'),
+    tutorialNext: document.getElementById('tutorial-next'),
+    itemTip: document.getElementById('item-tip')
   };
 
+
+  const TUTORIAL_STEPS = Object.freeze([
+    { icon:'🧩', title:'블록을 놓아', text:'아래 블록을 끌어서 보드의 빈칸에 놓아.' },
+    { icon:'✨', title:'한 줄을 완성해', text:'가로나 세로 한 줄을 모두 채우면 그 줄이 사라지고 점수가 올라가.' },
+    { icon:'⚡', title:'블록 3개를 모두 써', text:'세 블록을 모두 쓰면 새 블록 3개가 나와. 카오스 러시는 그때마다 새로운 사건이 시작돼.' }
+  ]);
+  let tutorialStep = 0;
+  let itemTipTimer = null;
+
+  function renderTutorial() {
+    const step = TUTORIAL_STEPS[tutorialStep];
+    els.tutorialIcon.textContent = step.icon;
+    els.tutorialTitle.textContent = step.title;
+    els.tutorialText.textContent = step.text;
+    els.tutorialNext.textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? '시작' : '다음';
+    els.tutorialDots.innerHTML = TUTORIAL_STEPS.map((_, index) => `<span class="tutorial-dot${index === tutorialStep ? ' active' : ''}"></span>`).join('');
+  }
+
+  function openTutorial(force = false) {
+    if (!force && safeLocalGet('block-game-tutorial-v2') === '1') return;
+    tutorialStep = 0;
+    renderTutorial();
+    els.tutorialOverlay.hidden = false;
+    document.body.classList.add('tutorial-open');
+    window.setTimeout(() => els.tutorialNext.focus({ preventScroll:true }), 40);
+  }
+
+  function closeTutorial() {
+    safeLocalSet('block-game-tutorial-v2', '1');
+    els.tutorialOverlay.hidden = true;
+    document.body.classList.remove('tutorial-open');
+  }
+
+  function nextTutorialStep() {
+    if (tutorialStep >= TUTORIAL_STEPS.length - 1) {
+      closeTutorial();
+      return;
+    }
+    tutorialStep++;
+    renderTutorial();
+  }
+
+  function showSpecialHelp(type) {
+    const meta = SPECIAL_META[type];
+    if (!meta) return;
+    const key = `block-game-special-help-${type}`;
+    if (safeLocalGet(key) === '1') return;
+    safeLocalSet(key, '1');
+    if (itemTipTimer) window.clearTimeout(itemTipTimer);
+    const title = els.itemTip.querySelector('strong');
+    const text = els.itemTip.querySelector('span');
+    title.textContent = `${meta.icon} ${meta.name}`;
+    text.textContent = meta.help;
+    els.itemTip.classList.add('visible');
+    itemTipTimer = window.setTimeout(() => els.itemTip.classList.remove('visible'), 3000);
+  }
 
   function isChaosMode() { return mode === 'chaos'; }
   function isChaosEvent(type) { return isChaosMode() && chaosEvent === type; }
@@ -1766,17 +1928,23 @@
       return;
     }
     els.chaosFill.style.width = `${chaosProgressPercent()}%`;
+    const blocksHere = tray.filter(Boolean).length;
     if (chaosEvent) {
       const meta = CHAOS_META[chaosEvent];
       els.game.dataset.chaos = chaosEvent;
-      const counter = chaosEvent === CHAOS_TYPES.CORE_JACKPOT ? `${chaosMovesLeft}회` : `${chaosTraysLeft} 트레이`;
-      els.chaosStatus.textContent = `${meta.name} · ${counter}`;
-      els.chaosRule.textContent = meta.description;
+      if (chaosEvent === CHAOS_TYPES.CORE_JACKPOT) {
+        els.chaosStatus.textContent = `${meta.title} · 남은 기회 ${chaosMovesLeft}`;
+      } else {
+        const remainingBlocks = Math.max(0, blocksHere + Math.max(0, chaosTraysLeft - 1) * 3);
+        els.chaosStatus.textContent = `${meta.title} · 블록 ${remainingBlocks}개`;
+      }
+      els.chaosRule.textContent = meta.instruction;
     } else {
       els.game.removeAttribute('data-chaos');
-      const next = Math.max(1, chaosNextAtTray - trayRound);
-      els.chaosStatus.textContent = `NEXT · ${next} 트레이`;
-      els.chaosRule.textContent = '2~3개 트레이마다 게임 규칙이 갑자기 바뀌어.';
+      const setsUntil = Math.max(1, chaosNextAtTray - trayRound);
+      const remainingBlocks = Math.max(1, blocksHere + Math.max(0, setsUntil - 1) * 3);
+      els.chaosStatus.textContent = `다음 사건까지 블록 ${remainingBlocks}개`;
+      els.chaosRule.textContent = '아래 블록 3개를 모두 쓰면 새 블록과 사건이 시작돼.';
     }
   }
 
@@ -1814,7 +1982,7 @@
     chaosLastEvent = type;
     updateChaosUI();
     pulseChaosPanel();
-    announceEvent(meta.name, meta.short, type === CHAOS_TYPES.GIANT_OVERLOAD ? 'danger' : 'fever');
+    announceEvent(meta.title, meta.instruction, type === CHAOS_TYPES.GIANT_OVERLOAD ? 'danger' : 'fever');
     flashScreen(type === CHAOS_TYPES.GIANT_OVERLOAD ? 'danger' : 'fever');
     screenShake(type === CHAOS_TYPES.CORE_JACKPOT || type === CHAOS_TYPES.SPECIAL_STORM ? 'large' : 'medium');
     createShockwave(meta.color, .68);
@@ -1829,11 +1997,11 @@
     if (success) {
       chaosEventsCompleted++;
       chaosEventSucceeded = true;
-      announceEvent(message || 'CHAOS CLEARED', meta.name, 'fever');
+      announceEvent('사건 성공!', meta.title, 'fever');
       createShockwave(meta.color, .56);
       burstParticles(16, [meta.color,'#ffffff'], 130);
     } else if (message) {
-      announceEvent(message, meta.name, '');
+      announceEvent(message.includes('LOST') ? '기회 종료' : '사건 종료', meta.title, '');
     }
     chaosEvent = '';
     chaosTraysLeft = 0;
@@ -2497,14 +2665,17 @@
     updateChaosUI();
 
     if (isChaosEvent(CHAOS_TYPES.SPECIAL_STORM)) {
-      announceEvent('SPECIAL STORM', '특수 코어 2개 투하', 'fever');
+      announceEvent('특수 블록 2개!', '원하는 칸에 놓으면 즉시 발동해.', 'fever');
       createShockwave(CHAOS_META[CHAOS_TYPES.SPECIAL_STORM].color, .62);
       burstParticles(24, ['#ffcf4a','#ff604d','#50e7ff','#ffffff'], 160);
       screenShake('medium');
       beepSequence([330,520,760,920], .06);
+      const firstStormSpecial = tray.find(piece => isSpecialPiece(piece));
+      if (firstStormSpecial) showSpecialHelp(firstStormSpecial.specialType);
     } else if (specialSpawned && specialType) {
       const meta = SPECIAL_META[specialType];
-      announceEvent('SPECIAL CORE', meta.name, specialType === SPECIAL_TYPES.EXPLOSION ? 'danger' : 'fever');
+      announceEvent(`${meta.icon} ${meta.name}`, meta.help, specialType === SPECIAL_TYPES.EXPLOSION ? 'danger' : 'fever');
+      showSpecialHelp(specialType);
       createShockwave(meta.color, .5);
       burstParticles(20, [meta.color, '#ffffff'], 135);
       screenShake('small');
@@ -2732,7 +2903,7 @@
   function showFloatingScore(points, tone = '') {
     const floating = document.createElement('div');
     floating.className = `floating-score ${tone}`.trim();
-    floating.textContent = `+${formatNumber(points)}${feverActive ? `  ×${FEVER_MULTIPLIER} OVERDRIVE` : ''}`;
+    floating.textContent = `+${formatNumber(points)}${feverActive ? `  ×${FEVER_MULTIPLIER} 폭주` : ''}`;
     const center = boardCenter();
     floating.style.left = `${center.x}px`;
     floating.style.top = `${center.y + Math.min(84, Math.max(58, els.board.getBoundingClientRect().height * .18))}px`;
@@ -2757,8 +2928,8 @@
     els.game.classList.toggle('core-ready', coreReady && !feverActive);
     document.body.classList.toggle('overdrive-active', feverActive);
     els.feverStatus.textContent = feverActive
-      ? `OVERDRIVE · ${feverMovesLeft}회`
-      : coreReady ? 'CORE READY' : `${Math.round(feverGauge)}%`;
+      ? `폭주 · ${feverMovesLeft}회`
+      : coreReady ? '준비 완료' : `${Math.round(feverGauge)}%`;
     els.coreBank.textContent = formatNumber(coreBank);
   }
 
@@ -2893,7 +3064,7 @@
     pendingOverdriveBonus = 500;
     updateFeverUI();
     triggerOverdriveImpact(true);
-    announceEvent('CORE OVERDRIVE', `BANK ×${OVERDRIVE_BANK_MULTIPLIER} · SCORE ×${FEVER_MULTIPLIER}`, 'fever');
+    announceEvent('폭주 시작!', `보너스 저장 ×${OVERDRIVE_BANK_MULTIPLIER} · 점수 ×${FEVER_MULTIPLIER}`, 'fever');
     flashScreen('fever');
     screenShake('large');
     createShockwave('#57f3ff', .7);
@@ -2910,7 +3081,7 @@
     if (feverGauge >= FEVER_MAX) {
       feverGauge = FEVER_MAX;
       coreReady = true;
-      announceEvent('CORE READY', '다음 라인 삭제에서 오버드라이브', 'fever');
+      announceEvent('폭주 준비 완료', '다음 줄을 지우면 폭주가 시작돼.', 'fever');
       createShockwave('#ffcf4a', .58);
       beepSequence([520,680,860], .065);
     }
@@ -2928,7 +3099,7 @@
       coreReady = false;
       els.game.classList.remove('fever-active');
       document.body.classList.remove('overdrive-active');
-      announceEvent('OVERDRIVE CASH OUT', `이번 폭주 +${formatNumber(gained)}`, 'fever');
+      announceEvent('폭주 점수 정산', `이번 폭주 +${formatNumber(gained)}`, 'fever');
       createShockwave('#ffcf4a', .7);
       burstParticles(30, ['#ffcf4a','#57f3ff','#ffffff'], 175);
       beepSequence([620,500,390], .065);
@@ -3090,9 +3261,13 @@
   }
 
   function updateModeUI() {
-    els.gameHint.textContent = isChaosMode()
-      ? '드래그 또는 터치 배치 · 2~3개 트레이마다 규칙이 갑자기 바뀌어.'
-      : '드래그 또는 터치 배치 · 특수 코어는 원하는 칸에서 발동해.';
+    if (isChaosMode()) {
+      els.modeGuide.textContent = '블록 3개를 모두 쓰면 새로운 사건이 시작돼. 화면 지시만 따라 하면 돼!';
+      els.gameHint.textContent = '현재 사건의 지시를 보고 · 아래 블록을 끌어서 놓아.';
+    } else {
+      els.modeGuide.textContent = '아래 블록을 놓아 가로나 세로 한 줄을 완성해.';
+      els.gameHint.textContent = '아래 블록을 끌어 놓거나 · 블록을 누른 뒤 원하는 칸을 눌러.';
+    }
     updateMeltdownUI();
     updateDraftUI();
     updateChaosUI();
@@ -3754,6 +3929,7 @@
 
       els.tray.appendChild(slot);
     });
+    updateChaosUI();
   }
 
   function setMode(nextMode) {
@@ -3763,6 +3939,10 @@
       button.classList.toggle('active', button.dataset.mode === mode);
     });
     restart();
+    if (mode === 'chaos' && safeLocalGet('block-game-chaos-intro-v1') !== '1') {
+      safeLocalSet('block-game-chaos-intro-v1', '1');
+      window.setTimeout(() => announceEvent('카오스 러시', '블록 3개를 모두 쓰면 새로운 사건이 시작돼.', 'fever'), 180);
+    }
   }
 
   function triggerGameOver(reason = 'NO_MOVES') {
@@ -3780,7 +3960,7 @@
     els.finalScore.textContent = formatNumber(score);
     els.finalLines.textContent = formatNumber(totalLines);
     els.finalCombo.textContent = `×${maxCombo}`;
-    els.finalModeLabel.textContent = isChaosMode() ? '카오스 클리어' : '오버드라이브';
+    els.finalModeLabel.textContent = isChaosMode() ? '사건 성공' : '폭주 횟수';
     els.finalFever.textContent = String(isChaosMode() ? chaosEventsCompleted : feverCount);
     els.draftOverlay.classList.remove('visible');
     document.body.classList.remove('draft-open');
@@ -3794,7 +3974,7 @@
     document.documentElement.classList.add('game-over-open');
     document.body.classList.add('game-over-open');
     window.setTimeout(() => els.restartBtn.focus({ preventScroll: true }), 80);
-    announceEvent(meltdownEnded ? 'CORE MELTDOWN' : 'RUN OVER', formatNumber(score), meltdownEnded ? 'danger' : '');
+    announceEvent(meltdownEnded ? '게임 종료' : '게임 종료', `최종 점수 ${formatNumber(score)}`, meltdownEnded ? 'danger' : '');
     flashScreen(meltdownEnded ? 'danger' : 'normal');
     screenShake(meltdownEnded ? 'large' : 'medium');
   }
@@ -3908,6 +4088,9 @@
     button.addEventListener('click', () => setMode(button.dataset.mode));
   });
   els.soundBtn.addEventListener('click', toggleSound);
+  els.helpBtn.addEventListener('click', () => openTutorial(true));
+  els.tutorialNext.addEventListener('click', nextTutorialStep);
+  els.tutorialSkip.addEventListener('click', closeTutorial);
   els.nickname.addEventListener('change', saveNickname);
   els.nickname.addEventListener('blur', saveNickname);
   els.restartBtn.addEventListener('click', restart);
@@ -3935,8 +4118,9 @@
 
   void loadNickname();
   restart();
+  window.setTimeout(() => openTutorial(false), 120);
 
-  // Build: CORE OVERDRIVE V5.5 · smooth drag + TRAY DIRECTOR edition
+  // Build: 카오스 러시 V6.1 · plain-language onboarding edition
 
   </script>
 </body>
