@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.5: mobile viewport fill · unified full-width play area -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.5</title>
+  <!-- V6.6: chaos waves · instant missions · bonus cells · last chance -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.6</title>
   <style>
     :root {
       color-scheme: dark;
@@ -1954,6 +1954,77 @@
         min-height: 112px;
       }
     }
+
+
+    /* V6.6 CHAOS WAVE --------------------------------------------------- */
+    .board-cell.chaos-bonus-gold,
+    .board-cell.chaos-bonus-blue {
+      position: relative;
+      isolation: isolate;
+    }
+    .board-cell.chaos-bonus-gold::after,
+    .board-cell.chaos-bonus-blue::after {
+      content: '';
+      position: absolute;
+      inset: 17%;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: .94;
+    }
+    .board-cell.chaos-bonus-gold::after {
+      background: radial-gradient(circle, #fff7a8 0 22%, #ffcf4a 24% 52%, transparent 55%);
+      box-shadow: 0 0 0 2px rgba(255,207,74,.30), 0 0 12px rgba(255,207,74,.72);
+    }
+    .board-cell.chaos-bonus-blue::after {
+      background: radial-gradient(circle, #e8ffff 0 20%, #57f3ff 22% 50%, transparent 53%);
+      box-shadow: 0 0 0 2px rgba(87,243,255,.26), 0 0 12px rgba(87,243,255,.68);
+    }
+    #game.chaos-wave-up .chaos-panel {
+      border-color: rgba(255,207,74,.92);
+      box-shadow: 0 0 0 1px rgba(255,207,74,.20), 0 0 22px rgba(255,207,74,.22);
+    }
+    #board.last-chance-select {
+      border-color: #ffcf4a;
+      box-shadow: 0 0 0 2px rgba(255,207,74,.24), 0 0 28px rgba(255,207,74,.20);
+    }
+    #board.last-chance-select .board-cell:not([style*="background: var(--surface-2)"]) {
+      cursor: crosshair;
+    }
+
+    #last-chance-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 260;
+      display: none;
+      place-items: center;
+      padding: max(16px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      background: rgba(4,7,18,.88);
+    }
+    #last-chance-overlay.visible { display: grid; }
+    .last-chance-card {
+      width: min(100%, 370px);
+      border: 1px solid rgba(255,207,74,.72);
+      border-radius: 20px;
+      padding: 20px;
+      background: linear-gradient(160deg, rgba(31,28,48,.98), rgba(11,16,34,.98));
+      box-shadow: 0 20px 70px rgba(0,0,0,.52), 0 0 34px rgba(255,207,74,.14);
+      text-align: center;
+    }
+    .last-chance-kicker { color:#ffcf4a; font-size:12px; font-weight:900; letter-spacing:.12em; }
+    .last-chance-title { margin-top:6px; font-size:28px; font-weight:950; }
+    .last-chance-copy { margin:8px 0 16px; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+    .last-chance-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .last-chance-actions button { min-height:82px; padding:12px 8px; font-weight:900; }
+    .last-chance-actions button span { display:block; margin-top:5px; color:var(--text-secondary); font-size:11px; font-weight:650; }
+    #last-chance-swap { border-color:rgba(87,243,255,.55); background:rgba(87,243,255,.08); }
+    #last-chance-remove { border-color:rgba(255,207,74,.58); background:rgba(255,207,74,.08); }
+
+    @media (max-width: 520px) {
+      #game.chaos-mode .chaos-title { max-width:44%; }
+      #game.chaos-mode .chaos-rule { line-height:1.35; }
+      .last-chance-card { padding:18px 15px; }
+    }
+
 </style>
 </head>
 <body>
@@ -2045,6 +2116,18 @@
         <div id="draft-modal-sub" class="draft-modal-sub">강화 하나를 선택해 이번 런의 빌드를 완성해.</div>
       </header>
       <div id="draft-choices"></div>
+    </div>
+  </section>
+
+  <section id="last-chance-overlay" aria-hidden="true" aria-modal="true" role="dialog" aria-labelledby="last-chance-title">
+    <div class="last-chance-card">
+      <div class="last-chance-kicker">CHAOS RESCUE</div>
+      <div id="last-chance-title" class="last-chance-title">마지막 한 수!</div>
+      <div class="last-chance-copy">이번 판에 한 번만 사용할 수 있어.<br>살아남을 방법을 골라.</div>
+      <div class="last-chance-actions">
+        <button id="last-chance-swap" type="button">블록 교체<span>남은 블록을 새 조합으로 변경</span></button>
+        <button id="last-chance-remove" type="button">한 칸 제거<span>보드의 막힌 칸 하나를 직접 제거</span></button>
+      </div>
     </div>
   </section>
   <div id="item-tip" aria-live="polite"><strong></strong><span></span></div>
@@ -4714,10 +4797,416 @@
     els.soundBtn.title = '소리 켜기';
   }
 
+
+
+  /* V6.6 CHAOS WAVE PATCH --------------------------------------------- */
+  let chaosWave = 1;
+  let chaosWaveProgress = 0;
+  let chaosMission = null;
+  let chaosBonusCells = new Map();
+  let chaosDoublePressure = false;
+  let chaosLastChanceUsed = false;
+  let chaosLastChanceSelecting = false;
+  let chaosActionPiece = null;
+  let chaosActionLineCount = 0;
+  let chaosActionSpecialCleared = 0;
+
+  const chaosTitleNode = document.querySelector('.chaos-title');
+  const lastChanceOverlay = document.getElementById('last-chance-overlay');
+  const lastChanceSwapButton = document.getElementById('last-chance-swap');
+  const lastChanceRemoveButton = document.getElementById('last-chance-remove');
+
+  function chaosWaveReward() {
+    return 450 + chaosWave * 250;
+  }
+
+  function chaosMissionText() {
+    if (!chaosMission) return '';
+    if (chaosMission.done) return `미션 성공 +${formatNumber(chaosMission.reward)}`;
+    const progress = chaosMission.type === 'score'
+      ? `${formatNumber(Math.min(chaosMission.target, Math.max(0, score - chaosMission.startScore)))}/${formatNumber(chaosMission.target)}`
+      : `${Math.min(chaosMission.target, chaosMission.progress)}/${chaosMission.target}`;
+    return `미션: ${chaosMission.label} ${progress} · ${chaosMission.movesLeft}회`;
+  }
+
+  function updateChaosWaveUI() {
+    if (!isChaosMode()) return;
+    chaosTitleNode.textContent = `웨이브 ${chaosWave} · ${chaosWaveProgress}/3`;
+    const baseRule = els.chaosRule.textContent.split(' · 미션:')[0].split(' · 보너스 칸')[0];
+    const additions = [];
+    const missionText = chaosMissionText();
+    if (missionText) additions.push(missionText);
+    if (chaosBonusCells.size > 0) additions.push(`보너스 칸 ${chaosBonusCells.size}`);
+    if (chaosDoublePressure) additions.push('이중 사건');
+    els.chaosRule.textContent = additions.length ? `${baseRule} · ${additions.join(' · ')}` : baseRule;
+  }
+
+  function chooseChaosMission() {
+    if (chaosEvent === CHAOS_TYPES.SPECIAL_STORM) {
+      return { type:'special', label:'특수 블록 사용', target:1, moves:3 };
+    }
+    if (chaosEvent === CHAOS_TYPES.MINI_RUSH) {
+      return { type:'small', label:'작은 블록 사용', target:2, moves:4 };
+    }
+    const pool = [
+      { type:'line', label:'줄 삭제', target:1, moves:3 },
+      { type:'score', label:'점수 획득', target:350 + chaosWave * 100, moves:3 },
+      { type:'small', label:'작은 블록 사용', target:2, moves:4 }
+    ];
+    if (tray.some(piece => isSpecialPiece(piece))) pool.push({ type:'special', label:'특수 블록 사용', target:1, moves:3 });
+    return pool[Math.floor(rng() * pool.length)];
+  }
+
+  function startChaosMission() {
+    if (!isChaosMode() || !chaosEvent || gameOver) return;
+    const chosen = chooseChaosMission();
+    const pressureCut = chaosDoublePressure ? 1 : 0;
+    chaosMission = {
+      ...chosen,
+      progress:0,
+      movesLeft:Math.max(2, chosen.moves - pressureCut),
+      startScore:score,
+      reward:300 + chaosWave * 160 + (chaosDoublePressure ? 250 : 0),
+      done:false
+    };
+    updateChaosWaveUI();
+  }
+
+  function finishChaosMission(success, reason = '') {
+    if (!chaosMission || chaosMission.done) return;
+    if (success) {
+      chaosMission.done = true;
+      const reward = chaosMission.reward;
+      addScorePoints(reward, 'release');
+      addFever(8 + Math.min(12, chaosWave * 2));
+      announceEvent('즉석 미션 성공!', `${chaosMission.label} · +${formatNumber(reward)}`, 'fever');
+      createShockwave('#ffcf4a', .52);
+      burstParticles(14, ['#ffcf4a','#57f3ff','#ffffff'], 110);
+      beepSequence([560,760,980], .055);
+    } else {
+      announceEvent('미션 실패', reason || chaosMission.label, 'danger');
+    }
+    updateChaosWaveUI();
+  }
+
+  function checkChaosMissionCompletion() {
+    if (!chaosMission || chaosMission.done) return;
+    let complete = false;
+    if (chaosMission.type === 'score') complete = score - chaosMission.startScore >= chaosMission.target;
+    else complete = chaosMission.progress >= chaosMission.target;
+    if (complete) finishChaosMission(true);
+  }
+
+  function noteChaosPieceUse(piece) {
+    chaosActionPiece = piece || null;
+    if (!chaosMission || chaosMission.done || !piece) return;
+    if (chaosMission.type === 'small' && !isSpecialPiece(piece) && piece.shape.length <= 3) chaosMission.progress++;
+    if (chaosMission.type === 'special' && isSpecialPiece(piece)) chaosMission.progress++;
+    checkChaosMissionCompletion();
+  }
+
+  function noteChaosLineResult(lineCount) {
+    chaosActionLineCount = lineCount;
+    if (!chaosMission || chaosMission.done) return;
+    if (chaosMission.type === 'line' && lineCount > 0) chaosMission.progress += lineCount;
+    checkChaosMissionCompletion();
+  }
+
+  function endChaosMissionMove() {
+    if (!chaosMission || chaosMission.done) return;
+    if (chaosMission.type === 'score') checkChaosMissionCompletion();
+    if (chaosMission.done) return;
+    chaosMission.movesLeft = Math.max(0, chaosMission.movesLeft - 1);
+    if (chaosMission.movesLeft <= 0) finishChaosMission(false, '기회를 모두 사용했어');
+    updateChaosWaveUI();
+  }
+
+  function spawnChaosBonusCells(count) {
+    if (!isChaosMode()) return;
+    const candidates = [];
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        const key = `${row},${col}`;
+        if (!board[row][col] && !chaosBonusCells.has(key)) candidates.push([row,col]);
+      }
+    }
+    candidates.sort(() => rng() - .5);
+    const maxTotal = chaosWave >= 4 ? 7 : 6;
+    const room = Math.max(0, maxTotal - chaosBonusCells.size);
+    for (const [row,col] of candidates.slice(0, Math.min(count, room))) {
+      chaosBonusCells.set(`${row},${col}`, rng() < .68 ? 'gold' : 'blue');
+    }
+    renderBoard();
+    updateChaosWaveUI();
+  }
+
+  function rewardBonusCells(keys, lineClear = false) {
+    let gold = 0;
+    let blue = 0;
+    for (const key of keys) {
+      const type = chaosBonusCells.get(key);
+      if (!type) continue;
+      chaosBonusCells.delete(key);
+      if (type === 'gold') gold++;
+      else blue++;
+    }
+    if (!gold && !blue) return;
+    const pointReward = gold * (lineClear ? 420 : 130);
+    const gaugeReward = blue * (lineClear ? 22 : 10);
+    if (pointReward) addScorePoints(pointReward, 'release');
+    if (gaugeReward) addFever(gaugeReward);
+    announceEvent(lineClear ? '보너스 칸 폭발!' : '보너스 칸 획득!', `${pointReward ? `+${formatNumber(pointReward)}점` : ''}${pointReward && gaugeReward ? ' · ' : ''}${gaugeReward ? `폭주 +${gaugeReward}%` : ''}`, 'fever');
+    createShockwave(gold ? '#ffcf4a' : '#57f3ff', .48);
+    updateChaosWaveUI();
+  }
+
+  function bonusKeysForPlacement(piece, row, col) {
+    if (!piece || isSpecialPiece(piece)) return [];
+    return piece.shape.map(([dr,dc]) => `${row + dr},${col + dc}`).filter(key => chaosBonusCells.has(key));
+  }
+
+  function bonusKeysForLines(rows, cols) {
+    const keys = [];
+    for (const key of chaosBonusCells.keys()) {
+      const [row,col] = key.split(',').map(Number);
+      if (rows.includes(row) || cols.includes(col)) keys.push(key);
+    }
+    return keys;
+  }
+
+  function hideLastChance() {
+    lastChanceOverlay.classList.remove('visible');
+    lastChanceOverlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('last-chance-open');
+  }
+
+  function showLastChance() {
+    if (!isChaosMode() || chaosLastChanceUsed || gameOver) return false;
+    cancelDragInteraction(true);
+    selected = -1;
+    phase = PHASE.DRAFT;
+    renderTray();
+    lastChanceOverlay.classList.add('visible');
+    lastChanceOverlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('last-chance-open');
+    beepSequence([300,420,620], .075);
+    if (navigator.vibrate) navigator.vibrate([35,20,55]);
+    return true;
+  }
+
+  function recoveryTray() {
+    let pieces = createDirectedNormalTray(-1);
+    if (!pieces.some(canPlaceAnywhere)) {
+      const fitting = SHAPE_CATALOG.filter(entry => canPlaceAnywhere({shape:entry.shape, specialType:null}));
+      const base = fitting.length ? fitting : SHAPES_BY_CLASS.small;
+      pieces = [0,1,2].map(index => normalPieceFromEntry(base[index % base.length]));
+    }
+    return pieces;
+  }
+
+  lastChanceSwapButton.addEventListener('click', () => {
+    chaosLastChanceUsed = true;
+    chaosLastChanceSelecting = false;
+    hideLastChance();
+    phase = PHASE.PLAYING;
+    tray = recoveryTray();
+    selected = -1;
+    renderTray();
+    announceEvent('블록 교체 완료!', '새 블록으로 한 번 더 이어가.', 'fever');
+    flashScreen('fever');
+    checkGameOver();
+  });
+
+  lastChanceRemoveButton.addEventListener('click', () => {
+    chaosLastChanceUsed = true;
+    chaosLastChanceSelecting = true;
+    hideLastChance();
+    phase = PHASE.DRAFT;
+    els.board.classList.add('last-chance-select');
+    announceEvent('한 칸을 골라!', '보드에서 제거할 블록 칸을 눌러.', 'fever');
+  });
+
+  const v66OriginalUpdateChaosUI = updateChaosUI;
+  updateChaosUI = function() {
+    v66OriginalUpdateChaosUI();
+    if (isChaosMode()) updateChaosWaveUI();
+  };
+
+  const v66OriginalChaosGap = chaosGap;
+  chaosGap = function() {
+    if (chaosWave >= 3) return 0;
+    if (chaosWave === 2) return rng() < .72 ? 0 : 1;
+    return v66OriginalChaosGap();
+  };
+
+  const v66OriginalStartChaosEvent = startChaosEvent;
+  startChaosEvent = function(forcedType = '') {
+    v66OriginalStartChaosEvent(forcedType);
+    if (!chaosEvent) return;
+    chaosDoublePressure = chaosWave >= 2 && chaosEventNumber % 3 === 0;
+    startChaosMission();
+    const bonusCount = Math.min(5, 1 + chaosWave + (chaosDoublePressure ? 1 : 0));
+    spawnChaosBonusCells(bonusCount);
+    if (chaosDoublePressure) {
+      announceEvent('이중 사건!', '현재 사건과 즉석 미션을 동시에 성공시켜.', 'danger');
+      flashScreen('danger');
+      screenShake('medium');
+    }
+    updateChaosWaveUI();
+  };
+
+  const v66OriginalFinishChaosEvent = finishChaosEvent;
+  finishChaosEvent = function(success = false, message = '') {
+    const hadEvent = Boolean(chaosEvent);
+    if (hadEvent && chaosMission && !chaosMission.done) finishChaosMission(false, '사건이 먼저 끝났어');
+    v66OriginalFinishChaosEvent(success, message);
+    if (!hadEvent) return;
+    chaosWaveProgress++;
+    chaosDoublePressure = false;
+    chaosMission = null;
+    if (chaosWaveProgress >= 3) {
+      chaosWaveProgress = 0;
+      chaosWave++;
+      const reward = chaosWaveReward();
+      addScorePoints(reward, 'release');
+      els.game.classList.remove('chaos-wave-up');
+      void els.game.offsetWidth;
+      els.game.classList.add('chaos-wave-up');
+      window.setTimeout(() => els.game.classList.remove('chaos-wave-up'), 720);
+      announceEvent(`웨이브 ${chaosWave}!`, `속도 상승 · 돌파 보너스 +${formatNumber(reward)}`, 'fever');
+      createShockwave('#ffcf4a', .78);
+      burstParticles(22, ['#ffcf4a','#ff69cf','#57f3ff','#ffffff'], 170);
+      beepSequence([420,620,840,1100], .07);
+      chaosNextAtTray = Math.min(chaosNextAtTray, trayRound);
+    }
+    updateChaosUI();
+  };
+
+  const v66OriginalRenderBoard = renderBoard;
+  renderBoard = function() {
+    v66OriginalRenderBoard();
+    for (const row of cellEls) {
+      for (const cell of row) cell.classList.remove('chaos-bonus-gold', 'chaos-bonus-blue');
+    }
+    if (isChaosMode()) {
+      for (const [key,type] of chaosBonusCells.entries()) {
+        const [row,col] = key.split(',').map(Number);
+        cellEls[row]?.[col]?.classList.add(type === 'gold' ? 'chaos-bonus-gold' : 'chaos-bonus-blue');
+      }
+    }
+  };
+
+  const v66OriginalConsumeSelectedPiece = consumeSelectedPiece;
+  consumeSelectedPiece = function() {
+    const piece = selected >= 0 ? tray[selected] : null;
+    if (isChaosMode()) noteChaosPieceUse(piece);
+    return v66OriginalConsumeSelectedPiece();
+  };
+
+  const v66OriginalScorePlacement = scorePlacement;
+  scorePlacement = function(placedCount, lineCount = 0) {
+    const result = v66OriginalScorePlacement(placedCount, lineCount);
+    if (isChaosMode()) noteChaosLineResult(lineCount);
+    return result;
+  };
+
+  const v66OriginalResolveClearedLines = resolveClearedLines;
+  resolveClearedLines = function(rows, cols, startedInFever, scoreResult, sourceLabel = '') {
+    if (isChaosMode()) rewardBonusCells(bonusKeysForLines(rows, cols), true);
+    return v66OriginalResolveClearedLines(rows, cols, startedInFever, scoreResult, sourceLabel);
+  };
+
+  const v66OriginalAfterPlacementFlow = afterPlacementFlow;
+  afterPlacementFlow = function(startedInFever = false, lineCount = 0) {
+    if (isChaosMode()) endChaosMissionMove();
+    chaosActionPiece = null;
+    chaosActionLineCount = 0;
+    chaosActionSpecialCleared = 0;
+    return v66OriginalAfterPlacementFlow(startedInFever, lineCount);
+  };
+
+  const v66OriginalOnCellClick = onCellClick;
+  onCellClick = function(row, col) {
+    if (chaosLastChanceSelecting) {
+      if (!board[row]?.[col]) {
+        rejectPlacement(row, col);
+        return;
+      }
+      board[row][col] = null;
+      chaosLastChanceSelecting = false;
+      els.board.classList.remove('last-chance-select');
+      phase = PHASE.PLAYING;
+      recentCells.add(`${row},${col}`);
+      renderBoard();
+      if (!tray.some(piece => piece && canPlaceAnywhere(piece))) tray = recoveryTray();
+      renderTray();
+      announceEvent('한 칸 제거 완료!', '마지막 기회로 게임을 이어가.', 'fever');
+      createShockwave('#ffcf4a', .58);
+      checkGameOver();
+      return;
+    }
+    const piece = selected >= 0 ? tray[selected] : null;
+    const valid = Boolean(piece && fitsAt(piece, row, col));
+    const bonusKeys = valid && isChaosMode() ? bonusKeysForPlacement(piece, row, col) : [];
+    const result = v66OriginalOnCellClick(row, col);
+    if (valid && bonusKeys.length) rewardBonusCells(bonusKeys, false);
+    return result;
+  };
+
+  const v66OriginalCheckGameOver = checkGameOver;
+  checkGameOver = function() {
+    if (gameOver || phase !== PHASE.PLAYING) return;
+    const anyAvailable = tray.some(piece => piece && canPlaceAnywhere(piece));
+    if (anyAvailable) return;
+    if (showLastChance()) return;
+    v66OriginalCheckGameOver();
+  };
+
+  const v66OriginalTriggerGameOver = triggerGameOver;
+  triggerGameOver = function(reason = 'NO_MOVES') {
+    hideLastChance();
+    chaosLastChanceSelecting = false;
+    els.board.classList.remove('last-chance-select');
+    v66OriginalTriggerGameOver(reason);
+    if (isChaosMode()) {
+      els.finalModeLabel.textContent = '최고 웨이브';
+      els.finalFever.textContent = String(chaosWave);
+    }
+  };
+
+  const v66OriginalRestart = restart;
+  restart = function() {
+    chaosWave = 1;
+    chaosWaveProgress = 0;
+    chaosMission = null;
+    chaosBonusCells = new Map();
+    chaosDoublePressure = false;
+    chaosLastChanceUsed = false;
+    chaosLastChanceSelecting = false;
+    chaosActionPiece = null;
+    chaosActionLineCount = 0;
+    chaosActionSpecialCleared = 0;
+    hideLastChance();
+    els.board.classList.remove('last-chance-select');
+    v66OriginalRestart();
+    updateChaosWaveUI();
+  };
+
+  const v66OriginalUpdateModeUI = updateModeUI;
+  updateModeUI = function() {
+    v66OriginalUpdateModeUI();
+    if (isChaosMode()) {
+      els.modeGuide.textContent = '사건과 즉석 미션이 연속으로 바뀌는 모드야.';
+      els.gameHint.textContent = '빛나는 보너스 칸과 현재 사건을 노려서 웨이브를 돌파해.';
+      updateChaosWaveUI();
+    }
+  };
+
+
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.5 · fullscreen mobile layout
+  // Build: 카오스 러시 V6.6 · waves, missions, bonus cells, last chance
 
   </script>
 </body>
