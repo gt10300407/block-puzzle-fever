@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.2: Classic + 카오스 러시 · mobile tray fixed -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.2</title>
+  <!-- V6.4: overlay compositor · chaos pressure · danger line -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.4</title>
   <style>
     :root {
       color-scheme: dark;
@@ -1590,6 +1590,194 @@
       }
     }
 
+
+    /* V6.3 UNIFIED MOBILE LAYOUT ----------------------------------------
+       클래식과 카오스 러시가 같은 보드·블록 배치 흐름을 사용한다.
+       닉네임 행은 제거하고, 카오스 전용 fixed tray/padding을 무효화한다. */
+    .nickname-row { display: none !important; }
+
+    @media (max-width: 520px) {
+      body {
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-right: max(8px, env(safe-area-inset-right));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        padding-left: max(8px, env(safe-area-inset-left));
+      }
+
+      #game,
+      #game.chaos-mode {
+        width: min(100%, 414px);
+        padding-bottom: 0 !important;
+      }
+
+      .mode-bar,
+      #game.chaos-mode .mode-bar {
+        gap: 6px;
+        margin-bottom: 7px;
+      }
+      .mode-btn,
+      #game.chaos-mode .mode-btn,
+      #sound-btn,
+      #game.chaos-mode #sound-btn {
+        min-height: 38px;
+      }
+      .mode-btn,
+      #game.chaos-mode .mode-btn {
+        padding: 7px 8px;
+        font-size: 12px;
+      }
+      #sound-btn,
+      #game.chaos-mode #sound-btn {
+        flex-basis: 40px;
+        font-size: 18px;
+      }
+
+      .mode-guide {
+        margin: 0 0 7px;
+        padding: 6px 8px;
+        font-size: 10px;
+        line-height: 1.25;
+      }
+      #game.chaos-mode .mode-guide { display: none !important; }
+
+      .stats,
+      #game.chaos-mode .stats {
+        gap: 6px;
+        margin-bottom: 7px;
+      }
+      .stat-card,
+      #game.chaos-mode .stat-card {
+        min-height: 48px;
+        padding: 6px 8px;
+      }
+      .stat-label,
+      #game.chaos-mode .stat-label { font-size: 9px; }
+      .stat-value,
+      #game.chaos-mode .stat-value {
+        font-size: clamp(18px, 5.2vw, 22px);
+      }
+
+      .fever-panel,
+      #game.chaos-mode .fever-panel {
+        margin: 0 0 7px;
+        padding: 7px 9px;
+      }
+      .fever-head,
+      #game.chaos-mode .fever-head {
+        margin-bottom: 4px;
+        font-size: 10px;
+      }
+      #fever-status { font-size: 10px; }
+      .fever-track,
+      #game.chaos-mode .fever-track { height: 8px; }
+      .core-bank-line,
+      #game.chaos-mode .core-bank-line {
+        margin-top: 4px;
+        padding: 3px 7px;
+        font-size: 8px;
+      }
+      #core-bank,
+      #game.chaos-mode #core-bank { font-size: 12px; }
+      .fever-rule { display: none; }
+
+      #game.chaos-mode .chaos-panel {
+        margin: 0 0 7px;
+        padding: 7px 9px;
+        min-height: 42px;
+        border-radius: 10px;
+      }
+      #game.chaos-mode .chaos-head { gap: 6px; }
+      #game.chaos-mode .chaos-title,
+      #game.chaos-mode #chaos-status { font-size: 9px; }
+      #game.chaos-mode .chaos-track { display: none; }
+      #game.chaos-mode .chaos-rule {
+        margin-top: 3px;
+        font-size: 9px;
+        line-height: 1.2;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      #board,
+      #game.chaos-mode #board {
+        width: min(100%, 356px);
+        margin-inline: auto;
+        --board-padding: 5px;
+      }
+
+      #tray,
+      #game.chaos-mode #tray {
+        position: static !important;
+        inset: auto !important;
+        z-index: auto !important;
+        width: min(100%, 356px);
+        margin: 8px auto 0;
+        padding: 0;
+        gap: 7px;
+        transform: none !important;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      .tray-slot,
+      #game.chaos-mode .tray-slot {
+        min-height: 70px;
+        padding: 5px;
+        border-radius: 10px;
+      }
+      .piece-square,
+      #game.chaos-mode .piece-square {
+        width: clamp(13px, 4vw, 16px);
+        height: clamp(13px, 4vw, 16px);
+      }
+      #game.chaos-mode .special-icon { font-size: clamp(24px, 7vw, 30px); }
+      #game.chaos-mode .special-name { font-size: 8px; }
+      #game.chaos-mode .special-desc { font-size: 7px; }
+
+      .hint,
+      #game.chaos-mode .hint { display: none !important; }
+    }
+
+    @media (max-width: 365px) {
+      #board,
+      #game.chaos-mode #board,
+      #tray,
+      #game.chaos-mode #tray { width: 100%; }
+      .tray-slot,
+      #game.chaos-mode .tray-slot { min-height: 64px; }
+    }
+
+  
+    /* V6.4: one-at-a-time feedback compositor and urgent chaos target */
+    #event-banner { top: 35%; width: min(86vw, 370px); }
+    #event-banner .event-main { font-size: clamp(28px, 8.8vw, 48px); }
+    #event-banner .event-sub { font-size: 12px; line-height: 1.35; }
+    .floating-score { font-size: clamp(27px, 8.2vw, 42px); }
+    .chaos-danger-cell {
+      box-shadow: inset 0 0 0 3px rgba(255,79,112,.92), inset 0 0 18px rgba(255,45,92,.42);
+      border-color: rgba(255,138,158,.92) !important;
+    }
+    #game[data-chaos="danger-line"] { --chaos-color:#ff4f70; }
+    #game.chaos-panic .chaos-panel {
+      border-color:#ff4f70;
+      background:linear-gradient(135deg, rgba(255,44,86,.15), rgba(17,23,42,.94));
+    }
+    #game.chaos-urgent-hit .chaos-panel { animation: chaosUrgentHit .42s ease-out 1; }
+    @keyframes chaosUrgentHit {
+      0% { transform:scale(1); }
+      38% { transform:scale(1.025); box-shadow:0 0 28px rgba(255,79,112,.48); }
+      100% { transform:scale(1); }
+    }
+    @media (max-width: 480px) {
+      #event-banner { top: 32%; }
+      #event-banner .event-main { font-size: clamp(26px, 8.4vw, 42px); }
+      #event-banner .event-sub { margin-top:6px; font-size:10px; }
+    }
+
   </style>
 </head>
 <body>
@@ -1653,10 +1841,7 @@
       <div id="draft-build"><span class="build-empty">아직 선택한 강화가 없어.</span></div>
     </section>
 
-    <div class="nickname-row">
-      <label for="nickname">닉네임</label>
-      <input id="nickname" maxlength="12" autocomplete="nickname" placeholder="플레이어">
-    </div>
+    <input id="nickname" type="hidden" value="플레이어" aria-hidden="true">
 
     <div id="board" role="grid" aria-label="10×10 게임 보드"></div>
     <div id="tray" aria-label="사용할 블록 3개"></div>
@@ -1757,16 +1942,17 @@
     [SPECIAL_TYPES.TIME]: { icon:'◈', name:'폭주 충전', short:'폭주 충전', help:'놓는 즉시 폭주 게이지와 보너스 저장량을 채워.', color:'#ffd75a', glow:'rgba(255,215,90,.84)' }
   });
 
-  const CHAOS_FIRST_EVENT_TRAY = 2;
-  const CHAOS_GAP_MIN = 1;
-  const CHAOS_GAP_MAX = 2;
+  const CHAOS_FIRST_EVENT_TRAY = 1;
+  const CHAOS_GAP_MIN = 0;
+  const CHAOS_GAP_MAX = 1;
   const CHAOS_TYPES = Object.freeze({
     SPECIAL_STORM:'special-storm',
     MINI_RUSH:'mini-rush',
     GIANT_OVERLOAD:'giant-overload',
     LASER_GRID:'laser-grid',
     REACTOR_SURGE:'reactor-surge',
-    CORE_JACKPOT:'core-jackpot'
+    CORE_JACKPOT:'core-jackpot',
+    DANGER_LINE:'danger-line'
   });
   const CHAOS_META = Object.freeze({
     [CHAOS_TYPES.SPECIAL_STORM]: { icon:'⚠️', name:'SPECIAL STORM', title:'특수 블록 2개!', instruction:'폭탄과 레이저로 보드를 한꺼번에 정리해.', trays:1, color:'#ffcf4a', weight:20 },
@@ -1774,7 +1960,8 @@
     [CHAOS_TYPES.GIANT_OVERLOAD]: { icon:'⬢', name:'GIANT OVERLOAD', title:'대형 블록 도전!', instruction:'큰 블록을 놓으면 배치 점수와 보너스 저장이 3배야.', trays:1, color:'#ff704f', weight:15 },
     [CHAOS_TYPES.LASER_GRID]: { icon:'✚', name:'LASER GRID', title:'연쇄 레이저!', instruction:'한 줄을 지우면 옆줄도 함께 폭발해.', trays:2, color:'#50e7ff', weight:18 },
     [CHAOS_TYPES.REACTOR_SURGE]: { icon:'☢', name:'REACTOR SURGE', title:'점수 3배!', instruction:'이번에 줄을 지우면 점수가 3배. 실패하면 효과가 끝나.', trays:2, color:'#bd5cff', weight:16 },
-    [CHAOS_TYPES.CORE_JACKPOT]: { icon:'◆', name:'CORE JACKPOT', title:'잭팟 찬스!', instruction:'3번 안에 한 줄을 지우면 점수가 5배야.', trays:99, moves:3, color:'#ff69cf', weight:12 }
+    [CHAOS_TYPES.CORE_JACKPOT]: { icon:'◆', name:'CORE JACKPOT', title:'잭팟 찬스!', instruction:'3번 안에 한 줄을 지우면 점수가 5배야.', trays:99, moves:3, color:'#ff69cf', weight:12 },
+    [CHAOS_TYPES.DANGER_LINE]: { icon:'‼', name:'DANGER LINE', title:'위험 줄 경보!', instruction:'빨간 줄을 3번 안에 완성해서 지워. 실패하면 방해 블록이 떨어져.', trays:99, moves:3, color:'#ff4f70', weight:18 }
   });
 
   const DRAFT_CARDS = Object.freeze([
@@ -1861,6 +2048,20 @@
   let chaosEventsCompleted = 0;
   let chaosLastEvent = '';
   let chaosEventSucceeded = false;
+  let chaosEventNumber = 0;
+  let chaosStreak = 0;
+  let chaosBestStreak = 0;
+  let chaosTargetAxis = '';
+  let chaosTargetIndex = -1;
+  let chaosUrgencyKey = '';
+
+  let overlayQueue = [];
+  let overlayBusy = false;
+  let overlayTimer = 0;
+  let activeFloatingScore = null;
+  let scoreOverlayAccumulator = 0;
+  let scoreOverlayTone = '';
+  let scoreOverlayFlushTimer = 0;
 
   const pendingTimeouts = new Set();
   const memoryStore = new Map();
@@ -1932,6 +2133,7 @@
   function isChaosEvent(type) { return isChaosMode() && chaosEvent === type; }
 
   function chaosGap() {
+    if (chaosStreak >= 2) return 0;
     return CHAOS_GAP_MIN + Math.floor(rng() * (CHAOS_GAP_MAX - CHAOS_GAP_MIN + 1));
   }
 
@@ -1939,12 +2141,101 @@
     if (!isChaosMode()) return 0;
     if (chaosEvent) {
       const meta = CHAOS_META[chaosEvent];
-      if (chaosEvent === CHAOS_TYPES.CORE_JACKPOT) return Math.max(0, Math.round(chaosMovesLeft / Math.max(1, meta.moves) * 100));
+      if (chaosEvent === CHAOS_TYPES.CORE_JACKPOT || chaosEvent === CHAOS_TYPES.DANGER_LINE) {
+        return Math.max(0, Math.round(chaosMovesLeft / Math.max(1, meta.moves) * 100));
+      }
       return Math.max(0, Math.round(chaosTraysLeft / Math.max(1, meta.trays) * 100));
     }
     const remaining = Math.max(0, chaosNextAtTray - (trayRound + 1));
     const span = Math.max(1, chaosNextAtTray - Math.max(0, chaosNextAtTray - CHAOS_GAP_MAX));
     return Math.max(0, Math.min(100, Math.round((1 - remaining / span) * 100)));
+  }
+
+  function clearChaosTarget() {
+    chaosTargetAxis = '';
+    chaosTargetIndex = -1;
+    if (cellEls.length) applyChaosTargetHighlight();
+  }
+
+  function chooseDangerLineTarget() {
+    const candidates = [];
+    for (let row = 0; row < SIZE; row++) {
+      const count = board[row].filter(Boolean).length;
+      if (count < SIZE) candidates.push({ axis:'row', index:row, count });
+    }
+    for (let col = 0; col < SIZE; col++) {
+      let count = 0;
+      for (let row = 0; row < SIZE; row++) if (board[row][col]) count++;
+      if (count < SIZE) candidates.push({ axis:'col', index:col, count });
+    }
+    candidates.sort((a,b) => b.count - a.count || rng() - .5);
+    const pool = candidates.slice(0, Math.min(8, candidates.length));
+    const picked = pool[Math.floor(rng() * Math.max(1, pool.length))] || { axis:'row', index:Math.floor(rng()*SIZE) };
+    chaosTargetAxis = picked.axis;
+    chaosTargetIndex = picked.index;
+  }
+
+  function applyChaosTargetHighlight() {
+    for (const row of cellEls) for (const cell of row) cell.classList.remove('chaos-danger-cell');
+    if (!isChaosEvent(CHAOS_TYPES.DANGER_LINE) || chaosTargetIndex < 0) return;
+    if (chaosTargetAxis === 'row') {
+      for (let col = 0; col < SIZE; col++) cellEls[chaosTargetIndex]?.[col]?.classList.add('chaos-danger-cell');
+    } else {
+      for (let row = 0; row < SIZE; row++) cellEls[row]?.[chaosTargetIndex]?.classList.add('chaos-danger-cell');
+    }
+  }
+
+  function pulseChaosUrgency() {
+    if (!isChaosMode()) return;
+    els.game.classList.remove('chaos-urgent-hit');
+    void els.game.offsetWidth;
+    els.game.classList.add('chaos-urgent-hit');
+    window.setTimeout(() => els.game.classList.remove('chaos-urgent-hit'), 460);
+    beepSequence([420,300], .055);
+    if (navigator.vibrate) navigator.vibrate([24,18,34]);
+  }
+
+  function dangerLineWasCleared(rows, cols) {
+    return chaosTargetAxis === 'row' ? rows.includes(chaosTargetIndex) : cols.includes(chaosTargetIndex);
+  }
+
+  function dropDangerPenalty() {
+    const empty = [];
+    if (chaosTargetAxis === 'row') {
+      for (let col = 0; col < SIZE; col++) if (!board[chaosTargetIndex][col]) empty.push([chaosTargetIndex,col]);
+    } else {
+      for (let row = 0; row < SIZE; row++) if (!board[row][chaosTargetIndex]) empty.push([row,chaosTargetIndex]);
+    }
+    empty.sort(() => rng() - .5);
+    const dropped = empty.slice(0,3);
+    for (const [row,col] of dropped) {
+      board[row][col] = '#59243b';
+      recentCells.add(`${row},${col}`);
+    }
+    renderBoard();
+    announceEvent('방해 블록 낙하!', `${dropped.length}칸이 막혔어`, 'danger');
+    flashScreen('danger');
+    screenShake('medium');
+    createShockwave('#ff4f70', .62);
+    return dropped.length;
+  }
+
+  function resolveDangerLineTurn(rows = [], cols = []) {
+    if (!isChaosEvent(CHAOS_TYPES.DANGER_LINE)) return;
+    if (dangerLineWasCleared(rows, cols)) {
+      const bonus = 700 + Math.min(5, chaosStreak) * 180;
+      addScorePoints(bonus, 'release');
+      finishChaosEvent(true, `위험 줄 제거 · +${formatNumber(bonus)}`);
+      return;
+    }
+    chaosMovesLeft = Math.max(0, chaosMovesLeft - 1);
+    if (chaosMovesLeft <= 0) {
+      dropDangerPenalty();
+      finishChaosEvent(false, '위험 줄 실패');
+    } else {
+      updateChaosUI();
+      pulseChaosUrgency();
+    }
   }
 
   function updateChaosUI() {
@@ -1954,27 +2245,43 @@
     els.game.classList.toggle('chaos-active', active && Boolean(chaosEvent));
     if (!active) {
       els.game.removeAttribute('data-chaos');
+      els.game.classList.remove('chaos-panic');
+      clearChaosTarget();
       return;
     }
     els.chaosFill.style.width = `${chaosProgressPercent()}%`;
     const blocksHere = tray.filter(Boolean).length;
+    let urgent = false;
     if (chaosEvent) {
       const meta = CHAOS_META[chaosEvent];
       els.game.dataset.chaos = chaosEvent;
-      if (chaosEvent === CHAOS_TYPES.CORE_JACKPOT) {
+      if (chaosEvent === CHAOS_TYPES.CORE_JACKPOT || chaosEvent === CHAOS_TYPES.DANGER_LINE) {
         els.chaosStatus.textContent = `${meta.title} · 남은 기회 ${chaosMovesLeft}`;
+        urgent = chaosMovesLeft <= 1;
       } else {
         const remainingBlocks = Math.max(0, blocksHere + Math.max(0, chaosTraysLeft - 1) * 3);
         els.chaosStatus.textContent = `${meta.title} · 블록 ${remainingBlocks}개`;
+        urgent = remainingBlocks <= 1;
       }
-      els.chaosRule.textContent = meta.instruction;
+      els.chaosRule.textContent = `${meta.instruction}${chaosStreak > 0 ? ` · 연속 성공 ×${chaosStreak}` : ''}`;
     } else {
       els.game.removeAttribute('data-chaos');
-      const setsUntil = Math.max(1, chaosNextAtTray - trayRound);
-      const remainingBlocks = Math.max(1, blocksHere + Math.max(0, setsUntil - 1) * 3);
-      els.chaosStatus.textContent = `다음 사건까지 블록 ${remainingBlocks}개`;
-      els.chaosRule.textContent = '아래 블록 3개를 모두 쓰면 새 블록과 사건이 시작돼.';
+      const setsUntil = Math.max(0, chaosNextAtTray - trayRound);
+      const remainingBlocks = Math.max(0, blocksHere + Math.max(0, setsUntil - 1) * 3);
+      els.chaosStatus.textContent = remainingBlocks > 0 ? `다음 사건까지 블록 ${remainingBlocks}개` : '다음 블록부터 사건 발생';
+      els.chaosRule.textContent = chaosStreak > 0
+        ? `연속 성공 ×${chaosStreak} · 연속 성공할수록 사건이 빨라지고 점수가 커져.`
+        : '블록 3개를 모두 쓰면 새로운 사건이 시작돼.';
     }
+    els.game.classList.toggle('chaos-panic', urgent);
+    const urgencyKey = urgent ? `${chaosEvent}:${chaosMovesLeft}:${blocksHere}` : '';
+    if (urgent && urgencyKey !== chaosUrgencyKey) {
+      chaosUrgencyKey = urgencyKey;
+      pulseChaosUrgency();
+    } else if (!urgent) {
+      chaosUrgencyKey = '';
+    }
+    applyChaosTargetHighlight();
   }
 
   function pulseChaosPanel() {
@@ -1987,6 +2294,7 @@
 
   function chooseChaosEvent() {
     const occupancy = boardOccupancyRatio();
+    if ((chaosEventNumber + 1) % 3 === 0 && occupancy >= .25 && chaosLastEvent !== CHAOS_TYPES.DANGER_LINE) return CHAOS_TYPES.DANGER_LINE;
     const candidates = Object.values(CHAOS_TYPES).filter(type => type !== chaosLastEvent);
     const weights = candidates.map(type => {
       let weight = CHAOS_META[type].weight;
@@ -1995,6 +2303,8 @@
       if (type === CHAOS_TYPES.GIANT_OVERLOAD && occupancy <= .35) weight *= 1.55;
       if (type === CHAOS_TYPES.LASER_GRID && occupancy >= .55) weight *= 1.35;
       if (type === CHAOS_TYPES.CORE_JACKPOT && combo >= 3) weight *= 1.25;
+      if (type === CHAOS_TYPES.DANGER_LINE && occupancy < .25) weight *= .04;
+      if (type === CHAOS_TYPES.DANGER_LINE && occupancy >= .55) weight *= 1.55;
       return weight;
     });
     return weightedPick(candidates, weights);
@@ -2005,14 +2315,17 @@
     const type = forcedType || chooseChaosEvent();
     const meta = CHAOS_META[type];
     chaosEvent = type;
+    chaosEventNumber++;
     chaosTraysLeft = meta.trays || 1;
     chaosMovesLeft = meta.moves || 0;
     chaosEventSucceeded = false;
     chaosLastEvent = type;
+    if (type === CHAOS_TYPES.DANGER_LINE) chooseDangerLineTarget();
+    else clearChaosTarget();
     updateChaosUI();
     pulseChaosPanel();
-    announceEvent(meta.title, meta.instruction, type === CHAOS_TYPES.GIANT_OVERLOAD ? 'danger' : 'fever');
-    flashScreen(type === CHAOS_TYPES.GIANT_OVERLOAD ? 'danger' : 'fever');
+    announceEvent(meta.title, meta.instruction, type === CHAOS_TYPES.GIANT_OVERLOAD || type === CHAOS_TYPES.DANGER_LINE ? 'danger' : 'fever');
+    flashScreen(type === CHAOS_TYPES.GIANT_OVERLOAD || type === CHAOS_TYPES.DANGER_LINE ? 'danger' : 'fever');
     screenShake(type === CHAOS_TYPES.CORE_JACKPOT || type === CHAOS_TYPES.SPECIAL_STORM ? 'large' : 'medium');
     createShockwave(meta.color, .68);
     burstParticles(type === CHAOS_TYPES.CORE_JACKPOT ? 30 : 22, [meta.color,'#ffffff','#57f3ff'], 175);
@@ -2022,26 +2335,37 @@
 
   function finishChaosEvent(success = false, message = '') {
     if (!chaosEvent) return;
-    const meta = CHAOS_META[chaosEvent];
+    const finishedType = chaosEvent;
+    const meta = CHAOS_META[finishedType];
     if (success) {
       chaosEventsCompleted++;
       chaosEventSucceeded = true;
-      announceEvent('사건 성공!', meta.title, 'fever');
+      chaosStreak++;
+      chaosBestStreak = Math.max(chaosBestStreak, chaosStreak);
+      const chainBonus = 180 * chaosStreak;
+      addScorePoints(chainBonus, 'release');
+      announceEvent(message || '사건 성공!', `연속 성공 ×${chaosStreak} · 보너스 +${formatNumber(chainBonus)}`, 'fever');
       createShockwave(meta.color, .56);
-      burstParticles(16, [meta.color,'#ffffff'], 130);
-    } else if (message) {
-      announceEvent(message.includes('LOST') ? '기회 종료' : '사건 종료', meta.title, '');
+      burstParticles(Math.min(MAX_EFFECT_PARTICLES, 12 + chaosStreak * 2), [meta.color,'#ffffff'], 130 + chaosStreak * 8);
+      if (chaosStreak > 0 && chaosStreak % 3 === 0) {
+        announceEvent('카오스 가속!', '다음 사건이 바로 이어져.', 'danger');
+        beepSequence([520,700,920,1180], .06);
+      }
+    } else {
+      if (message) announceEvent(message, chaosStreak > 0 ? `연속 성공 ×${chaosStreak} 종료` : meta.title, 'danger');
+      chaosStreak = 0;
     }
     chaosEvent = '';
     chaosTraysLeft = 0;
     chaosMovesLeft = 0;
+    clearChaosTarget();
     chaosNextAtTray = trayRound + chaosGap();
     updateChaosUI();
   }
 
   function prepareChaosForNextTray() {
     if (!isChaosMode() || gameOver) return;
-    if (chaosEvent && chaosEvent !== CHAOS_TYPES.CORE_JACKPOT) {
+    if (chaosEvent && chaosEvent !== CHAOS_TYPES.CORE_JACKPOT && chaosEvent !== CHAOS_TYPES.DANGER_LINE) {
       chaosTraysLeft = Math.max(0, chaosTraysLeft - 1);
       if (chaosTraysLeft <= 0) finishChaosEvent(chaosEventSucceeded, chaosEventSucceeded ? 'CHAOS CLEARED' : 'CHAOS SHIFT');
     }
@@ -2694,7 +3018,7 @@
     updateChaosUI();
 
     if (isChaosEvent(CHAOS_TYPES.SPECIAL_STORM)) {
-      announceEvent('특수 블록 2개!', '원하는 칸에 놓으면 즉시 발동해.', 'fever');
+      pulseChaosPanel();
       createShockwave(CHAOS_META[CHAOS_TYPES.SPECIAL_STORM].color, .62);
       burstParticles(24, ['#ffcf4a','#ff604d','#50e7ff','#ffffff'], 160);
       screenShake('medium');
@@ -2929,25 +3253,81 @@
     if (feverActive) triggerOverdriveImpact(tier === 'critical' || lineCount >= 2);
   }
 
+  function clearOverlayFeedback() {
+    overlayQueue = [];
+    overlayBusy = false;
+    scoreOverlayAccumulator = 0;
+    scoreOverlayTone = '';
+    if (overlayTimer) window.clearTimeout(overlayTimer);
+    if (scoreOverlayFlushTimer) window.clearTimeout(scoreOverlayFlushTimer);
+    overlayTimer = 0;
+    scoreOverlayFlushTimer = 0;
+    if (activeFloatingScore) activeFloatingScore.remove();
+    activeFloatingScore = null;
+    els.eventBanner.className = '';
+  }
+
+  function enqueueOverlay(item) {
+    if (!item) return;
+    if (overlayQueue.length >= 6) overlayQueue.splice(0, overlayQueue.length - 5);
+    overlayQueue.push(item);
+    runOverlayQueue();
+  }
+
+  function runOverlayQueue() {
+    if (overlayBusy || !overlayQueue.length || gameOver) return;
+    overlayBusy = true;
+    const item = overlayQueue.shift();
+    const finish = () => {
+      overlayBusy = false;
+      overlayTimer = 0;
+      runOverlayQueue();
+    };
+    if (item.type === 'score') {
+      const floating = document.createElement('div');
+      activeFloatingScore = floating;
+      floating.className = `floating-score ${item.tone || ''}`.trim();
+      floating.textContent = `+${formatNumber(item.points)}${feverActive ? ` ×${FEVER_MULTIPLIER} 폭주` : ''}`;
+      const rect = els.board.getBoundingClientRect();
+      floating.style.left = `${rect.left + rect.width / 2}px`;
+      floating.style.top = `${rect.top + rect.height * .72}px`;
+      els.effectsLayer.appendChild(floating);
+      overlayTimer = window.setTimeout(() => {
+        floating.remove();
+        if (activeFloatingScore === floating) activeFloatingScore = null;
+        finish();
+      }, 720);
+      return;
+    }
+    const mainEl = els.eventBanner.querySelector('.event-main');
+    const subEl = els.eventBanner.querySelector('.event-sub');
+    mainEl.textContent = item.main;
+    subEl.textContent = item.sub || '';
+    els.eventBanner.className = item.tone || '';
+    void els.eventBanner.offsetWidth;
+    els.eventBanner.classList.add('visible');
+    overlayTimer = window.setTimeout(() => {
+      els.eventBanner.classList.remove('visible');
+      finish();
+    }, item.duration || 820);
+  }
+
   function showFloatingScore(points, tone = '') {
-    const floating = document.createElement('div');
-    floating.className = `floating-score ${tone}`.trim();
-    floating.textContent = `+${formatNumber(points)}${feverActive ? `  ×${FEVER_MULTIPLIER} 폭주` : ''}`;
-    const center = boardCenter();
-    floating.style.left = `${center.x}px`;
-    floating.style.top = `${center.y + Math.min(84, Math.max(58, els.board.getBoundingClientRect().height * .18))}px`;
-    els.effectsLayer.appendChild(floating);
-    window.setTimeout(() => floating.remove(), 1000);
+    scoreOverlayAccumulator += Math.max(0, Number(points) || 0);
+    if (tone === 'overdrive' || tone === 'bomb' || !scoreOverlayTone) scoreOverlayTone = tone;
+    if (scoreOverlayFlushTimer) return;
+    scoreOverlayFlushTimer = window.setTimeout(() => {
+      const total = scoreOverlayAccumulator;
+      const finalTone = scoreOverlayTone;
+      scoreOverlayAccumulator = 0;
+      scoreOverlayTone = '';
+      scoreOverlayFlushTimer = 0;
+      if (total > 0) enqueueOverlay({ type:'score', points:total, tone:finalTone });
+    }, 70);
   }
 
   function announceEvent(main, sub = '', tone = '') {
-    const mainEl = els.eventBanner.querySelector('.event-main');
-    const subEl = els.eventBanner.querySelector('.event-sub');
-    mainEl.textContent = main;
-    subEl.textContent = sub;
-    els.eventBanner.className = tone;
-    void els.eventBanner.offsetWidth;
-    els.eventBanner.classList.add('visible');
+    enqueueOverlay({ type:'banner', main, sub, tone, duration: tone === 'danger' ? 900 : 800 });
   }
 
   function updateFeverUI() {
@@ -3189,8 +3569,9 @@
     }
 
     let chaosTotalMultiplier = 1;
-    if (surgeActive && lineCount > 0) chaosTotalMultiplier = 3;
-    if (jackpotActive && lineCount > 0) chaosTotalMultiplier = 5;
+    if (lineCount > 0 && isChaosMode()) chaosTotalMultiplier *= 1 + Math.min(5, chaosStreak) * .10;
+    if (surgeActive && lineCount > 0) chaosTotalMultiplier *= 3;
+    if (jackpotActive && lineCount > 0) chaosTotalMultiplier *= 5;
     const awarded = addScorePoints(Math.round((directPoints + lineBonus + release) * chaosTotalMultiplier), release > 0 ? (feverActive ? 'overdrive' : 'release') : '');
 
     if (jackpotActive) {
@@ -3338,6 +3719,7 @@
       }
     }
     recentCells.clear();
+    applyChaosTargetHighlight();
   }
 
   function clearPreview() {
@@ -3501,11 +3883,13 @@
     }
 
     const tier = comboTier();
-    const chaosLabel = isChaosEvent(CHAOS_TYPES.LASER_GRID) && laserOccupied > 0 ? 'LASER GRID' : '';
-    const mainText = chaosLabel || (tier === 'critical' ? 'CRITICAL CHAIN' : tier === 'breaker' ? 'CORE BREAKER' : tier === 'surge' ? 'ENERGY SURGE' : lineCount === 1 ? 'LINE RELEASE' : lineCount === 2 ? 'DOUBLE RELEASE' : `${lineCount} LINE BURST`);
-    const releaseText = scoreResult.release > 0 ? ` · CORE +${formatNumber(scoreResult.release * (feverActive ? FEVER_MULTIPLIER : 1))}` : '';
-    const laserText = laserOccupied > 0 ? ` · LASER ${laserOccupied}` : '';
-    announceEvent(mainText, `${sourceLabel ? `${sourceLabel} · ` : ''}COMBO ×${combo}${releaseText}${laserText}`, combo >= 5 || feverActive || laserOccupied > 0 ? 'fever' : '');
+    const chaosLabel = isChaosEvent(CHAOS_TYPES.LASER_GRID) && laserOccupied > 0 ? '연쇄 레이저!' : '';
+    const mainText = chaosLabel || (tier === 'critical' ? '크리티컬 연쇄!' : tier === 'breaker' ? '코어 브레이커!' : tier === 'surge' ? '에너지 폭발!' : lineCount === 1 ? '라인 삭제!' : lineCount === 2 ? '두 줄 동시 삭제!' : `${lineCount}줄 폭발!`);
+    const details = [];
+    if (sourceLabel) details.push(sourceLabel);
+    details.push(`콤보 ×${combo}`);
+    if (laserOccupied > 0) details.push(`레이저 ${laserOccupied}칸`);
+    announceEvent(mainText, details.join(' · '), combo >= 5 || feverActive || laserOccupied > 0 ? 'fever' : '');
     flashCells(clearCells, feverActive ? '#fff3a8' : '#ffffff');
     if (laserCells.length) flashCells(laserCells, '#50e7ff');
     flashScreen(combo >= 5 || lineCount >= 3 || feverActive || laserOccupied > 0 ? 'fever' : 'normal');
@@ -3591,9 +3975,11 @@
       const lineCount = rows.length + cols.length;
       if (lineCount > 0) {
         const result = scorePlacement(0, lineCount);
+        resolveDangerLineTurn(rows, cols);
         if (resolveMeltdownTurn({ lineCount, specialType: piece.specialType, clearedCount, movedCount })) return;
         resolveClearedLines(rows, cols, startedInFever, result, meta.short);
       } else {
+        resolveDangerLineTurn([], []);
         if (resolveMeltdownTurn({ specialType: piece.specialType, clearedCount, movedCount })) return;
         if (isBoardEmpty() && clearedCount > 0) awardAllClear();
         afterPlacementFlow(startedInFever, 0);
@@ -3632,6 +4018,7 @@
     const { rows, cols } = getFullLines();
     const lineCount = rows.length + cols.length;
     const scoreResult = scorePlacement(placedCount, lineCount);
+    resolveDangerLineTurn(rows, cols);
     if (resolveMeltdownTurn({ placedCount, lineCount })) return;
 
     if (lineCount > 0) {
@@ -3982,6 +4369,7 @@
     phase = PHASE.GAME_OVER;
     selected = -1;
     cancelPendingTimeouts();
+    clearOverlayFeedback();
     clearPreview();
     renderTray();
     beep(220, 0.3);
@@ -3989,8 +4377,8 @@
     els.finalScore.textContent = formatNumber(score);
     els.finalLines.textContent = formatNumber(totalLines);
     els.finalCombo.textContent = `×${maxCombo}`;
-    els.finalModeLabel.textContent = isChaosMode() ? '사건 성공' : '폭주 횟수';
-    els.finalFever.textContent = String(isChaosMode() ? chaosEventsCompleted : feverCount);
+    els.finalModeLabel.textContent = isChaosMode() ? '최대 연속 성공' : '폭주 횟수';
+    els.finalFever.textContent = String(isChaosMode() ? `×${chaosBestStreak}` : feverCount);
     els.draftOverlay.classList.remove('visible');
     document.body.classList.remove('draft-open');
     const meltdownEnded = reason === 'MELTDOWN';
@@ -4081,6 +4469,12 @@
     chaosEventsCompleted = 0;
     chaosLastEvent = '';
     chaosEventSucceeded = false;
+    chaosEventNumber = 0;
+    chaosStreak = 0;
+    chaosBestStreak = 0;
+    chaosTargetAxis = '';
+    chaosTargetIndex = -1;
+    chaosUrgencyKey = '';
     selected = -1;
     gameOver = false;
     phase = PHASE.PLAYING;
@@ -4098,7 +4492,8 @@
     els.draftOverlay.classList.remove('visible');
     document.body.classList.remove('draft-open');
     els.effectsLayer.innerHTML = '';
-    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning', 'meltdown-warning-hit', 'draft-mode', 'chaos-mode', 'chaos-active', 'chaos-hit');
+    clearOverlayFeedback();
+    els.game.classList.remove('fever-active', 'core-ready', 'meltdown-mode', 'meltdown-hot', 'meltdown-critical', 'meltdown-warning', 'meltdown-warning-hit', 'draft-mode', 'chaos-mode', 'chaos-active', 'chaos-hit', 'chaos-panic', 'chaos-urgent-hit');
     els.game.removeAttribute('data-chaos');
     document.body.classList.remove('overdrive-active');
     els.board.classList.remove('shake-small', 'shake-medium', 'shake-large', 'drag-over-valid', 'drag-over-invalid', 'combo-surge', 'combo-breaker', 'combo-critical', 'overdrive-sweep', 'overdrive-hit');
@@ -4129,6 +4524,7 @@
     if (document.hidden) {
       cancelDragInteraction();
       els.effectsLayer.innerHTML = '';
+      clearOverlayFeedback();
       els.board.classList.remove('overdrive-sweep', 'overdrive-hit', 'combo-surge', 'combo-breaker', 'combo-critical');
       els.game.classList.remove('meltdown-warning-hit');
     }
@@ -4145,7 +4541,7 @@
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.2 · mobile tray hotfix
+  // Build: 카오스 러시 V6.4 · pressure and overlay compositor
 
   </script>
 </body>
