@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.1: Classic + 카오스 러시 · first-run tutorial and plain-language event guidance -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.1</title>
+  <!-- V6.2: Classic + 카오스 러시 · mobile tray fixed -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.2</title>
   <style>
     :root {
       color-scheme: dark;
@@ -116,14 +116,12 @@
       box-shadow: 0 0 0 1px rgba(84,216,255,.12), 0 0 16px rgba(84,216,255,.10);
       background: rgba(84,216,255,.08);
     }
-    #sound-btn,
-    #help-btn {
+    #sound-btn {
       flex: 0 0 44px;
       padding: 0;
       font-size: 20px;
       line-height: 1;
     }
-    #help-btn { font-size: 17px; font-weight: 900; }
     .mode-guide {
       margin: -4px 0 10px;
       padding: 8px 10px;
@@ -1423,53 +1421,6 @@
       #game.chaos-mode #tray { margin-top:8px; }
       #game.chaos-mode .hint { margin-top:6px; }
     }
-
-    /* V6.1 clarity layer ------------------------------------------------ */
-    .tutorial-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1400;
-      display: grid;
-      place-items: center;
-      padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
-      background: rgba(4,7,16,.92);
-    }
-    .tutorial-overlay[hidden] { display: none !important; }
-    .tutorial-card {
-      width: min(100%, 380px);
-      padding: 22px 18px 18px;
-      border: 1px solid rgba(84,216,255,.34);
-      border-radius: 18px;
-      background: linear-gradient(145deg, rgba(22,31,57,.98), rgba(10,15,31,.98));
-      box-shadow: 0 22px 70px rgba(0,0,0,.55);
-      text-align: center;
-    }
-    .tutorial-kicker {
-      color: #65f5c9;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .12em;
-    }
-    .tutorial-icon { margin: 14px 0 8px; font-size: 52px; line-height: 1; }
-    .tutorial-title { font-size: 23px; font-weight: 950; letter-spacing: -.035em; }
-    .tutorial-text {
-      min-height: 54px;
-      margin-top: 9px;
-      color: #c8d1e6;
-      font-size: 14px;
-      line-height: 1.55;
-      word-break: keep-all;
-    }
-    .tutorial-dots { display:flex; justify-content:center; gap:7px; margin:16px 0; }
-    .tutorial-dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.18); }
-    .tutorial-dot.active { width:22px; border-radius:999px; background:#54d8ff; }
-    .tutorial-actions { display:grid; grid-template-columns:.8fr 1.2fr; gap:8px; }
-    .tutorial-actions .primary {
-      border-color: rgba(84,216,255,.72);
-      background: linear-gradient(135deg, rgba(84,216,255,.24), rgba(189,92,255,.20));
-      font-weight: 900;
-    }
-    body.tutorial-open { overflow: hidden; touch-action: none; }
     #item-tip {
       position: fixed;
       left: 50%;
@@ -1499,6 +1450,146 @@
         transition-duration: .01ms !important;
       }
     }
+  
+
+    /* V6.2 MOBILE TRAY HOTFIX -------------------------------------------
+       카오스 모드의 안내 패널은 압축하고, 조작 블록 3개는 iPhone Safari의
+       실제 보이는 화면 하단에 고정한다. 드래그 중에는 기존 drag-lock이
+       페이지 이동을 차단한다. */
+    @media (max-width: 520px) {
+      #game.chaos-mode {
+        padding-bottom: calc(92px + max(8px, env(safe-area-inset-bottom)));
+      }
+
+      #game.chaos-mode .mode-guide,
+      #game.chaos-mode .nickname-row,
+      #game.chaos-mode .hint {
+        display: none !important;
+      }
+
+      #game.chaos-mode .mode-bar {
+        margin-bottom: 6px;
+      }
+      #game.chaos-mode .mode-btn,
+      #game.chaos-mode #sound-btn {
+        min-height: 36px;
+      }
+
+      #game.chaos-mode .stats {
+        margin-bottom: 6px;
+      }
+      #game.chaos-mode .stat-card {
+        min-height: 44px;
+        padding: 5px 7px;
+      }
+      #game.chaos-mode .stat-value {
+        font-size: clamp(17px, 5vw, 21px);
+      }
+
+      #game.chaos-mode .fever-panel {
+        margin: 5px 0;
+        padding: 6px 8px;
+      }
+      #game.chaos-mode .fever-head {
+        margin-bottom: 3px;
+        font-size: 10px;
+      }
+      #game.chaos-mode .fever-track {
+        height: 7px;
+      }
+      #game.chaos-mode .core-bank-line {
+        margin-top: 3px;
+        padding: 2px 6px;
+        font-size: 8px;
+      }
+      #game.chaos-mode #core-bank {
+        font-size: 11px;
+      }
+
+      #game.chaos-mode .chaos-panel {
+        margin: 5px 0 6px;
+        padding: 6px 8px;
+        border-radius: 10px;
+      }
+      #game.chaos-mode .chaos-head {
+        gap: 6px;
+      }
+      #game.chaos-mode .chaos-title,
+      #game.chaos-mode #chaos-status {
+        font-size: 9px;
+      }
+      #game.chaos-mode .chaos-track {
+        display: none;
+      }
+      #game.chaos-mode .chaos-rule {
+        margin-top: 3px;
+        font-size: 9px;
+        line-height: 1.22;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      #game.chaos-mode #board {
+        width: min(100%, 360px);
+        margin-inline: auto;
+        --board-padding: 5px;
+      }
+
+      #game.chaos-mode #tray {
+        position: fixed;
+        left: 50%;
+        bottom: max(6px, env(safe-area-inset-bottom));
+        z-index: 1500;
+        width: min(calc(100vw - 16px), 414px);
+        margin: 0;
+        padding: 6px;
+        gap: 6px;
+        transform: translateX(-50%);
+        border: 1px solid rgba(84,216,255,.22);
+        border-radius: 14px;
+        background: rgba(8,13,29,.96);
+        box-shadow: 0 -8px 28px rgba(0,0,0,.48), 0 0 20px rgba(84,216,255,.08);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+      #game.chaos-mode .tray-slot {
+        min-height: 68px;
+        padding: 4px;
+        border-radius: 10px;
+      }
+      #game.chaos-mode .piece-grid {
+        gap: 2px;
+      }
+      #game.chaos-mode .piece-square {
+        width: clamp(12px, 3.8vw, 16px);
+        height: clamp(12px, 3.8vw, 16px);
+        border-radius: 3px;
+      }
+      #game.chaos-mode .special-icon {
+        font-size: clamp(24px, 7vw, 30px);
+      }
+      #game.chaos-mode .special-name {
+        font-size: 8px;
+      }
+      #game.chaos-mode .special-desc {
+        font-size: 7px;
+      }
+    }
+
+    @media (max-height: 740px) and (max-width: 520px) {
+      #game.chaos-mode #board {
+        width: min(100%, 332px);
+      }
+      #game.chaos-mode .fever-panel {
+        display: none;
+      }
+      #game.chaos-mode .chaos-rule {
+        -webkit-line-clamp: 1;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1508,7 +1599,6 @@
     <div class="mode-bar" aria-label="게임 모드">
       <button class="mode-btn active" data-mode="classic" type="button">클래식</button>
       <button class="mode-btn" data-mode="chaos" type="button">카오스 러시</button>
-      <button id="help-btn" type="button" aria-label="게임 방법 보기" title="게임 방법">?</button>
       <button id="sound-btn" type="button" aria-label="소리 끄기" title="소리 끄기">🔊</button>
     </div>
     <p id="mode-guide" class="mode-guide">아래 블록을 놓아 가로나 세로 한 줄을 완성해.</p>
@@ -1594,19 +1684,6 @@
         <div id="draft-modal-sub" class="draft-modal-sub">강화 하나를 선택해 이번 런의 빌드를 완성해.</div>
       </header>
       <div id="draft-choices"></div>
-    </div>
-  </section>
-  <section id="tutorial-overlay" class="tutorial-overlay" role="dialog" aria-modal="true" aria-labelledby="tutorial-title" hidden>
-    <div class="tutorial-card">
-      <div class="tutorial-kicker">10초 게임 방법</div>
-      <div id="tutorial-icon" class="tutorial-icon">🧩</div>
-      <div id="tutorial-title" class="tutorial-title">블록을 놓아</div>
-      <div id="tutorial-text" class="tutorial-text">아래 블록을 끌어서 보드의 빈칸에 놓아.</div>
-      <div id="tutorial-dots" class="tutorial-dots" aria-hidden="true"></div>
-      <div class="tutorial-actions">
-        <button id="tutorial-skip" type="button">건너뛰기</button>
-        <button id="tutorial-next" class="primary" type="button">다음</button>
-      </div>
     </div>
   </section>
   <div id="item-tip" aria-live="polite"><strong></strong><span></span></div>
@@ -1798,7 +1875,6 @@
     comboWrap: document.getElementById('combo-wrap'),
     nickname: document.getElementById('nickname'),
     soundBtn: document.getElementById('sound-btn'),
-    helpBtn: document.getElementById('help-btn'),
     modeGuide: document.getElementById('mode-guide'),
     gameover: document.getElementById('gameover'),
     finalScore: document.getElementById('final-score'),
@@ -1832,57 +1908,10 @@
     chaosFill: document.getElementById('chaos-fill'),
     chaosStatus: document.getElementById('chaos-status'),
     chaosRule: document.getElementById('chaos-rule'),
-    tutorialOverlay: document.getElementById('tutorial-overlay'),
-    tutorialIcon: document.getElementById('tutorial-icon'),
-    tutorialTitle: document.getElementById('tutorial-title'),
-    tutorialText: document.getElementById('tutorial-text'),
-    tutorialDots: document.getElementById('tutorial-dots'),
-    tutorialSkip: document.getElementById('tutorial-skip'),
-    tutorialNext: document.getElementById('tutorial-next'),
     itemTip: document.getElementById('item-tip')
   };
 
-
-  const TUTORIAL_STEPS = Object.freeze([
-    { icon:'🧩', title:'블록을 놓아', text:'아래 블록을 끌어서 보드의 빈칸에 놓아.' },
-    { icon:'✨', title:'한 줄을 완성해', text:'가로나 세로 한 줄을 모두 채우면 그 줄이 사라지고 점수가 올라가.' },
-    { icon:'⚡', title:'블록 3개를 모두 써', text:'세 블록을 모두 쓰면 새 블록 3개가 나와. 카오스 러시는 그때마다 새로운 사건이 시작돼.' }
-  ]);
-  let tutorialStep = 0;
   let itemTipTimer = null;
-
-  function renderTutorial() {
-    const step = TUTORIAL_STEPS[tutorialStep];
-    els.tutorialIcon.textContent = step.icon;
-    els.tutorialTitle.textContent = step.title;
-    els.tutorialText.textContent = step.text;
-    els.tutorialNext.textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? '시작' : '다음';
-    els.tutorialDots.innerHTML = TUTORIAL_STEPS.map((_, index) => `<span class="tutorial-dot${index === tutorialStep ? ' active' : ''}"></span>`).join('');
-  }
-
-  function openTutorial(force = false) {
-    if (!force && safeLocalGet('block-game-tutorial-v2') === '1') return;
-    tutorialStep = 0;
-    renderTutorial();
-    els.tutorialOverlay.hidden = false;
-    document.body.classList.add('tutorial-open');
-    window.setTimeout(() => els.tutorialNext.focus({ preventScroll:true }), 40);
-  }
-
-  function closeTutorial() {
-    safeLocalSet('block-game-tutorial-v2', '1');
-    els.tutorialOverlay.hidden = true;
-    document.body.classList.remove('tutorial-open');
-  }
-
-  function nextTutorialStep() {
-    if (tutorialStep >= TUTORIAL_STEPS.length - 1) {
-      closeTutorial();
-      return;
-    }
-    tutorialStep++;
-    renderTutorial();
-  }
 
   function showSpecialHelp(type) {
     const meta = SPECIAL_META[type];
@@ -4088,9 +4117,6 @@
     button.addEventListener('click', () => setMode(button.dataset.mode));
   });
   els.soundBtn.addEventListener('click', toggleSound);
-  els.helpBtn.addEventListener('click', () => openTutorial(true));
-  els.tutorialNext.addEventListener('click', nextTutorialStep);
-  els.tutorialSkip.addEventListener('click', closeTutorial);
   els.nickname.addEventListener('change', saveNickname);
   els.nickname.addEventListener('blur', saveNickname);
   els.restartBtn.addEventListener('click', restart);
@@ -4118,9 +4144,8 @@
 
   void loadNickname();
   restart();
-  window.setTimeout(() => openTutorial(false), 120);
 
-  // Build: 카오스 러시 V6.1 · plain-language onboarding edition
+  // Build: 카오스 러시 V6.2 · mobile tray hotfix
 
   </script>
 </body>
