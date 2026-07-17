@@ -2686,7 +2686,151 @@
       .time-mini-cell { width:6px; height:6px; }
     }
 
-</style>
+
+
+    /* V7.1 · CHAOS MOBILE STABILITY + BLOCKER BUDGET --------------------
+       카오스 러시는 모바일 한 화면 안에 보드와 현재 블록 3개를 유지한다.
+       iOS 하단 홈 제스처 영역과 겹치지 않게 안전 여백을 확보하고,
+       방해 블록은 압박 단계별 예산을 넘어 누적되지 않는다. */
+    @media (max-width: 520px) {
+      body.chaos-mobile-lock {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100dvh;
+        overflow: hidden !important;
+        overscroll-behavior: none;
+      }
+      body.chaos-mobile-lock #game.chaos-mode {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        overflow: hidden;
+        padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px)) !important;
+        overscroll-behavior: none;
+      }
+      #game.chaos-mode .mode-bar {
+        margin-bottom: 5px !important;
+        gap: 5px !important;
+      }
+      #game.chaos-mode .mode-btn,
+      #game.chaos-mode #sound-btn {
+        min-height: 38px !important;
+      }
+      #game.chaos-mode .mode-btn {
+        padding: 6px 5px !important;
+        font-size: 11px !important;
+      }
+      #game.chaos-mode .stats {
+        margin-bottom: 5px !important;
+        gap: 5px !important;
+      }
+      #game.chaos-mode .stat-card {
+        min-height: 48px !important;
+        padding: 5px 7px !important;
+      }
+      #game.chaos-mode .stat-label { font-size: 8px !important; }
+      #game.chaos-mode .stat-value { font-size: clamp(17px, 5vw, 21px) !important; }
+      #game.chaos-mode .fever-panel {
+        margin: 0 0 5px !important;
+        padding: 6px 8px !important;
+      }
+      #game.chaos-mode .fever-head {
+        margin-bottom: 3px !important;
+        font-size: 9px !important;
+      }
+      #game.chaos-mode .fever-track { height: 7px !important; }
+      #game.chaos-mode .core-bank-line {
+        margin-top: 3px !important;
+        padding: 2px 6px !important;
+      }
+      #game.chaos-mode .chaos-panel {
+        min-height: 0 !important;
+        margin: 0 0 5px !important;
+        padding: 6px 7px !important;
+      }
+      #game.chaos-mode .chaos-head { gap: 4px !important; }
+      #game.chaos-mode .chaos-title,
+      #game.chaos-mode #chaos-status { font-size: 8px !important; }
+      #game.chaos-mode #chaos-guide-btn {
+        min-height: 24px;
+        padding: 3px 7px;
+        font-size: 8px;
+      }
+      #game.chaos-mode #chaos-rule {
+        margin-top: 2px !important;
+        font-size: 7.5px !important;
+        line-height: 1.15 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #game.chaos-mode .chaos-traffic {
+        margin-top: 3px !important;
+        gap: 3px !important;
+      }
+      #game.chaos-mode .chaos-traffic-pair { gap: 3px !important; }
+      #game.chaos-mode .chaos-lane,
+      #game.chaos-mode .chaos-action-result {
+        padding: 2px 4px !important;
+        border-radius: 6px !important;
+      }
+      #game.chaos-mode .chaos-lane span,
+      #game.chaos-mode .chaos-action-result span { font-size: 6.5px !important; }
+      #game.chaos-mode .chaos-lane strong,
+      #game.chaos-mode .chaos-action-result strong {
+        font-size: 7.5px !important;
+        line-height: 1.15 !important;
+      }
+      #game.chaos-mode .chaos-action-result { min-height: 19px !important; }
+
+      #game.chaos-mode #board {
+        width: var(--chaos-fit-size, min(100%, 356px)) !important;
+        max-width: none !important;
+        margin-inline: auto;
+        flex: 0 0 auto;
+        touch-action: none;
+      }
+      #game.chaos-mode #tray {
+        position: static !important;
+        width: var(--chaos-fit-size, min(100%, 356px)) !important;
+        max-width: none !important;
+        margin: 5px auto max(8px, env(safe-area-inset-bottom)) !important;
+        gap: 6px !important;
+        flex: 0 0 auto;
+        touch-action: none;
+        overscroll-behavior: none;
+      }
+      #game.chaos-mode .tray-slot {
+        min-height: var(--chaos-tray-height, 66px) !important;
+        aspect-ratio: auto !important;
+        padding: 4px !important;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      #game.chaos-mode .piece-square {
+        width: clamp(12px, 3.7vw, 16px) !important;
+        height: clamp(12px, 3.7vw, 16px) !important;
+      }
+      #game.chaos-mode.chaos-ultra-compact .fever-panel .core-bank-line { display:none; }
+      #game.chaos-mode.chaos-ultra-compact .chaos-action-result { display:none; }
+      #game.chaos-mode.chaos-ultra-compact .chaos-rule { display:none !important; }
+    }
+
+    .board-cell.pressure-blocker {
+      background:
+        linear-gradient(45deg, transparent 42%, rgba(255,211,220,.68) 43% 49%, transparent 50%),
+        linear-gradient(-45deg, transparent 42%, rgba(255,211,220,.68) 43% 49%, transparent 50%),
+        repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 5px, transparent 5px 10px),
+        linear-gradient(145deg, #6d2945, #321422) !important;
+    }
+    .board-cell.pressure-blocker::after {
+      content: '✕';
+      color: rgba(255,234,238,.80);
+    }
+
+  </style>
 </head>
 <body>
   <main id="game">
@@ -7190,6 +7334,277 @@
     refreshTrafficUI();
     renderTray();
   }
+
+
+/* V7.1 CHAOS MOBILE + BLOCKER BUDGET HOTFIX */
+(() => {
+  'use strict';
+  const BUILD = 'V7.1_CHAOS_MOBILE_BLOCKER_HOTFIX';
+  const MOBILE_MAX = 520;
+  const BLOCKER_CAPS = Object.freeze({ calm:0, warning:6, danger:9, collapse:12 });
+  let lockedScrollY = 0;
+  let fitFrame = 0;
+
+  function isChaosMobile() {
+    return mode === 'chaos' && window.matchMedia(`(max-width:${MOBILE_MAX}px)`).matches;
+  }
+
+  function blockerCap(stage = pressureStageInfo()) {
+    return BLOCKER_CAPS[stage.key] ?? 12;
+  }
+
+  function applyChaosBodyLock(active) {
+    const body = document.body;
+    if (active) {
+      if (!body.classList.contains('chaos-mobile-lock')) {
+        lockedScrollY = window.scrollY || 0;
+        body.style.top = `-${lockedScrollY}px`;
+        body.classList.add('chaos-mobile-lock');
+      }
+    } else if (body.classList.contains('chaos-mobile-lock')) {
+      body.classList.remove('chaos-mobile-lock');
+      body.style.top = '';
+      window.scrollTo(0, lockedScrollY);
+    }
+  }
+
+  function fitChaosMobileViewport() {
+    if (fitFrame) cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(() => {
+      fitFrame = 0;
+      const active = isChaosMobile();
+      applyChaosBodyLock(active);
+      if (!active) {
+        els.game.style.removeProperty('--chaos-fit-size');
+        els.game.style.removeProperty('--chaos-tray-height');
+        els.game.classList.remove('chaos-ultra-compact');
+        return;
+      }
+
+      const viewportHeight = Math.floor(window.visualViewport?.height || window.innerHeight || 800);
+      const viewportWidth = Math.floor(window.visualViewport?.width || document.documentElement.clientWidth || 390);
+      const gameRect = els.game.getBoundingClientRect();
+      const boardRect = els.board.getBoundingClientRect();
+      const contentBeforeBoard = Math.max(0, boardRect.top - gameRect.top);
+      const horizontalRoom = Math.max(268, viewportWidth - 16);
+      let trayHeight = viewportHeight < 740 ? 60 : viewportHeight < 850 ? 66 : 72;
+      const bottomReserve = 20;
+      const gap = 6;
+      let boardSize = Math.floor(Math.min(horizontalRoom, viewportHeight - gameRect.top - contentBeforeBoard - trayHeight - bottomReserve - gap));
+      boardSize = Math.max(268, boardSize);
+      const ultraCompact = boardSize < 314;
+      els.game.classList.toggle('chaos-ultra-compact', ultraCompact);
+
+      if (ultraCompact) {
+        // 숨겨진 보조 행을 반영해 한 번 더 계산한다.
+        requestAnimationFrame(() => {
+          const refreshedBoard = els.board.getBoundingClientRect();
+          const refreshedGame = els.game.getBoundingClientRect();
+          const refreshedBefore = Math.max(0, refreshedBoard.top - refreshedGame.top);
+          let refreshedSize = Math.floor(Math.min(horizontalRoom, viewportHeight - refreshedGame.top - refreshedBefore - trayHeight - bottomReserve - gap));
+          refreshedSize = Math.max(268, refreshedSize);
+          els.game.style.setProperty('--chaos-fit-size', `${refreshedSize}px`);
+          els.game.style.setProperty('--chaos-tray-height', `${trayHeight}px`);
+        });
+      }
+      els.game.style.setProperty('--chaos-fit-size', `${boardSize}px`);
+      els.game.style.setProperty('--chaos-tray-height', `${trayHeight}px`);
+    });
+  }
+
+  function rowBlockerCount(row, extra = []) {
+    let count = 0;
+    for (let col = 0; col < SIZE; col++) if (board[row][col] === PRESSURE_BLOCK_VALUE) count++;
+    for (const [r] of extra) if (r === row) count++;
+    return count;
+  }
+  function colBlockerCount(col, extra = []) {
+    let count = 0;
+    for (let row = 0; row < SIZE; row++) if (board[row][col] === PRESSURE_BLOCK_VALUE) count++;
+    for (const [,c] of extra) if (c === col) count++;
+    return count;
+  }
+  function blockerAdjacency(row, col, extra = []) {
+    let total = 0;
+    const extraSet = new Set(extra.map(([r,c]) => `${r},${c}`));
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const nr = row + dr, nc = col + dc;
+        if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE) continue;
+        if (board[nr][nc] === PRESSURE_BLOCK_VALUE || extraSet.has(`${nr},${nc}`)) total++;
+      }
+    }
+    return total;
+  }
+
+  // 낙하 위치를 줄·열당 최대 2개로 분산하고, 기존 방해 블록 주변을 우선 피한다.
+  choosePressureWarningCells = function(count) {
+    const stage = pressureStageInfo();
+    const cap = blockerCap(stage);
+    const room = Math.max(0, cap - pressureBlockerCount());
+    const target = Math.max(0, Math.min(Math.round(count || 0), room));
+    if (!target) return [];
+
+    const candidates = [];
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        const key = `${row},${col}`;
+        if (board[row][col]) continue;
+        if (chaosBonusCells?.has(key)) continue;
+        if (pressureCandidateWouldCompleteLine(row, col)) continue;
+        candidates.push({ row, col, jitter:rng() });
+      }
+    }
+    candidates.sort((a,b) => a.jitter - b.jitter);
+
+    const selectedCells = [];
+    for (let pass = 0; pass < 2 && selectedCells.length < target; pass++) {
+      const rowLimit = pass === 0 ? 2 : 3;
+      const colLimit = pass === 0 ? 2 : 3;
+      const ordered = [...candidates].sort((a,b) => {
+        const aa = blockerAdjacency(a.row, a.col, selectedCells);
+        const bb = blockerAdjacency(b.row, b.col, selectedCells);
+        return aa - bb || a.jitter - b.jitter;
+      });
+      for (const candidate of ordered) {
+        if (selectedCells.length >= target) break;
+        const {row,col} = candidate;
+        if (selectedCells.some(([r,c]) => r === row && c === col)) continue;
+        if (rowBlockerCount(row, selectedCells) >= rowLimit) continue;
+        if (colBlockerCount(col, selectedCells) >= colLimit) continue;
+        board[row][col] = PRESSURE_BLOCK_VALUE;
+        const safe = pressureHasMoveAfterTemporaryDrop();
+        board[row][col] = null;
+        if (safe) selectedCells.push([row,col]);
+      }
+    }
+    return selectedCells;
+  };
+
+  function applyOverflowPressure(reason = '압박 실패') {
+    combo = 0;
+    comboGrace = 0;
+    coreBank = Math.max(0, Math.floor(coreBank * .9));
+    updateStats();
+    updateFeverUI();
+    if (typeof setActionResult === 'function') setActionResult(`방해 블록 한도 · 콤보 초기화 · 보너스 10% 감소`, 'danger');
+    if (navigator.vibrate) navigator.vibrate([20,18,28]);
+    return 0;
+  }
+
+  const baseQueuePressurePenaltyV71 = queuePressurePenalty;
+  queuePressurePenalty = function(count, reason = '압박 실패', force = false) {
+    if (!isChaosMode() || gameOver) return 0;
+    const stage = pressureStageInfo();
+    const cap = blockerCap(stage);
+    const existing = pressureBlockerCount();
+    const pendingNow = pressurePending?.count || 0;
+    const requested = Math.max(1, Math.min(4, Math.round(count || stage.failBlocks || 1)));
+    const allowedPending = Math.max(0, cap - existing);
+    const finalPending = Math.min(Math.max(pendingNow, requested), allowedPending);
+    if (finalPending <= 0) return applyOverflowPressure(reason);
+    return baseQueuePressurePenaltyV71(finalPending, reason, force);
+  };
+
+  const baseRefreshTrafficUIV71 = refreshTrafficUI;
+  refreshTrafficUI = function() {
+    const result = baseRefreshTrafficUIV71();
+    if (isChaosMode()) {
+      const cap = blockerCap();
+      const blockers = pressureBlockerCount();
+      if (blockers > 0) {
+        dangerText.textContent = dangerText.textContent.replace(/방해\s+(\d+)(?:\/\d+)?개/, `방해 ${blockers}/${cap}개`);
+        if (blockers >= cap) dangerText.textContent += ' · 추가 낙하 제한';
+      }
+    }
+    fitChaosMobileViewport();
+    return result;
+  };
+
+  const baseRenderBoardV71 = renderBoard;
+  renderBoard = function() {
+    const result = baseRenderBoardV71();
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        const cell = cellEls[row]?.[col];
+        if (!cell) continue;
+        if (board[row][col] === PRESSURE_BLOCK_VALUE) {
+          cell.title = '방해 블록 · 줄 완성, 폭탄, 레이저로 제거';
+          cell.setAttribute('aria-label', '방해 블록. 줄 완성, 폭탄, 레이저로 제거');
+        } else if (cell.getAttribute('aria-label')?.startsWith('방해 블록')) {
+          cell.removeAttribute('aria-label');
+          cell.removeAttribute('title');
+        }
+      }
+    }
+    fitChaosMobileViewport();
+    return result;
+  };
+
+  const baseAfterPlacementV71 = afterPlacementFlow;
+  afterPlacementFlow = function(startedInFever = false, lineCount = 0) {
+    const before = isChaosMode() ? pressureBlockerCount() : 0;
+    const result = baseAfterPlacementV71(startedInFever, lineCount);
+    if (isChaosMode()) {
+      const removed = Math.max(0, before - pressureBlockerCount());
+      if (removed > 0 && typeof setActionResult === 'function') {
+        const prefix = resultText?.textContent && !/블록을 놓으면/.test(resultText.textContent) ? `${resultText.textContent} · ` : '';
+        setActionResult(`${prefix}방해 블록 ${removed}개 정화`, 'fever');
+      }
+      fitChaosMobileViewport();
+    }
+    return result;
+  };
+
+  const baseSetModeV71 = setMode;
+  setMode = function(nextMode) {
+    const result = baseSetModeV71(nextMode);
+    window.setTimeout(fitChaosMobileViewport, 0);
+    return result;
+  };
+
+  const baseRestartV71 = restart;
+  restart = function() {
+    const result = baseRestartV71();
+    window.setTimeout(fitChaosMobileViewport, 0);
+    return result;
+  };
+
+  window.addEventListener('resize', fitChaosMobileViewport, {passive:true});
+  window.visualViewport?.addEventListener('resize', fitChaosMobileViewport, {passive:true});
+  window.visualViewport?.addEventListener('scroll', fitChaosMobileViewport, {passive:true});
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) window.setTimeout(fitChaosMobileViewport, 60);
+  });
+
+  // 가이드 문구도 실제 상한과 제거법에 맞춘다.
+  document.querySelectorAll('.chaos-guide-copy, .chaos-guide-tip').forEach(node => {
+    node.textContent = node.textContent
+      .replace('방해 블록도 줄 삭제·폭탄·레이저로 없앨 수 있어.', '방해 블록은 줄 삭제·폭탄·레이저로 없애고, 최대 12칸까지만 생겨.')
+      .replace('방해 블록이 생겨.', '제거 가능한 방해 블록이 생겨.');
+  });
+
+  window.__chaosV71Debug = {
+    cap(){ return blockerCap(); },
+    blockerCount(){ return pressureBlockerCount(); },
+    setScore(value){ score = Math.max(0, Number(value) || 0); updateStats(); refreshTrafficUI(); },
+    addBlockers(count = 20) {
+      const cells = choosePressureWarningCells(Number(count) || 0);
+      for (const [row,col] of cells) board[row][col] = PRESSURE_BLOCK_VALUE;
+      renderBoard(); refreshTrafficUI();
+      return pressureBlockerCount();
+    },
+    queue(count = 3){ return queuePressurePenalty(Number(count) || 3, 'DEBUG', true); },
+    materialize(){ return materializePressurePenalty(); },
+    fit(){ fitChaosMobileViewport(); return {size:getComputedStyle(els.game).getPropertyValue('--chaos-fit-size'), tray:getComputedStyle(els.game).getPropertyValue('--chaos-tray-height')}; }
+  };
+
+  fitChaosMobileViewport();
+  document.documentElement.dataset.chaosHotfixBuild = BUILD;
+})();
+
+
   document.documentElement.dataset.chaosBuild = BUILD;
 })();
 
