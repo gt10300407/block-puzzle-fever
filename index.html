@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V7.2: Time Crunch controls/mobile fit + V7.1 Chaos Rush hotfix -->
-  <title>10×10 블록 퍼즐 · 타임 크런치 V7.2</title>
+  <!-- V7.3: True responsive Time Crunch layout + V7.1 Chaos Rush hotfix -->
+  <title>10×10 블록 퍼즐 · 타임 크런치 V7.3</title>
   <style>
     :root {
       color-scheme: dark;
@@ -3012,7 +3012,97 @@
       #game.time-mode.time-ultra-compact .time-actions button { min-height:24px !important; }
     }
 
-  </style>
+  
+
+    /* V7.3 · TRUE RESPONSIVE TIME CRUNCH -------------------------------
+       Do not tune for one iPhone model.  The JS fitter measures the real
+       visual viewport and progressively compresses chrome before sizing
+       the board and the current tray. */
+    @media (max-width:520px) {
+      html.time-mobile-root {
+        width:100%;
+        height:100%;
+        overflow:hidden;
+      }
+      body.time-mobile-lock {
+        position:relative !important;
+        inset:auto !important;
+        top:auto !important;
+        width:100% !important;
+        height:var(--time-viewport-height,100dvh) !important;
+        min-height:0 !important;
+        overflow:hidden !important;
+        padding:
+          max(5px,env(safe-area-inset-top))
+          max(7px,env(safe-area-inset-right))
+          max(5px,env(safe-area-inset-bottom))
+          max(7px,env(safe-area-inset-left)) !important;
+      }
+      body.time-mobile-lock.time-scroll-fallback {
+        height:auto !important;
+        min-height:var(--time-viewport-height,100dvh) !important;
+        overflow-y:auto !important;
+        overscroll-behavior-y:contain;
+      }
+      body.time-mobile-lock #game.time-mode {
+        height:auto !important;
+        min-height:0 !important;
+        padding-bottom:0 !important;
+      }
+      #game.time-mode .mode-bar { margin-bottom:4px !important; }
+      #game.time-mode .stats { margin-bottom:4px !important; }
+      #game.time-mode .time-panel { margin-bottom:4px !important; }
+      #game.time-mode #tray { margin-top:4px !important; margin-bottom:0 !important; }
+
+      #game.time-mode.time-fit-compact .time-status-grid { display:none !important; }
+      #game.time-mode.time-fit-compact .time-result { min-height:19px; margin-top:3px; }
+      #game.time-mode.time-fit-compact .time-next-head { margin-top:3px; }
+      #game.time-mode.time-fit-compact .time-next-slot { height:24px; }
+      #game.time-mode.time-fit-compact .time-actions { margin-top:3px; }
+      #game.time-mode.time-fit-compact .time-actions button { min-height:23px !important; }
+
+      #game.time-mode.time-fit-tight .mode-btn,
+      #game.time-mode.time-fit-tight #sound-btn { min-height:32px !important; }
+      #game.time-mode.time-fit-tight .mode-btn { font-size:9.5px !important; }
+      #game.time-mode.time-fit-tight #sound-btn { flex-basis:34px !important; font-size:16px !important; }
+      #game.time-mode.time-fit-tight .stat-card { min-height:34px !important; padding:3px 5px !important; }
+      #game.time-mode.time-fit-tight .stat-label { font-size:6.8px !important; }
+      #game.time-mode.time-fit-tight .stat-value { font-size:16px !important; }
+      #game.time-mode.time-fit-tight .time-panel { padding:4px 6px !important; }
+      #game.time-mode.time-fit-tight #time-value { font-size:22px !important; }
+      #game.time-mode.time-fit-tight .time-run-controls button { min-height:23px !important; padding:2px 3px !important; font-size:7.3px !important; }
+      #game.time-mode.time-fit-tight .time-result { display:none !important; }
+      #game.time-mode.time-fit-tight .time-next-head small { display:none !important; }
+      #game.time-mode.time-fit-tight .time-next-head { margin:2px 1px 1px !important; }
+      #game.time-mode.time-fit-tight .time-next-slot { height:21px !important; }
+      #game.time-mode.time-fit-tight .time-mini-cell { width:4px !important; height:4px !important; }
+      #game.time-mode.time-fit-tight .time-actions button { min-height:21px !important; font-size:6.8px !important; padding:2px !important; }
+
+      #game.time-mode.time-fit-micro .mode-bar { gap:3px !important; }
+      #game.time-mode.time-fit-micro .mode-btn,
+      #game.time-mode.time-fit-micro #sound-btn { min-height:29px !important; }
+      #game.time-mode.time-fit-micro .mode-btn { font-size:8.6px !important; padding:2px !important; }
+      #game.time-mode.time-fit-micro #sound-btn { flex-basis:30px !important; font-size:14px !important; }
+      #game.time-mode.time-fit-micro .stats { gap:3px !important; }
+      #game.time-mode.time-fit-micro .stat-card { min-height:29px !important; padding:2px 4px !important; border-radius:7px !important; }
+      #game.time-mode.time-fit-micro .stat-label { display:none !important; }
+      #game.time-mode.time-fit-micro .stat-value { margin:0 !important; font-size:14px !important; text-align:center; }
+      #game.time-mode.time-fit-micro .time-head-actions { gap:2px !important; }
+      #game.time-mode.time-fit-micro .time-stage { font-size:6.8px !important; }
+      #game.time-mode.time-fit-micro .time-run-state { min-height:17px !important; font-size:6.5px !important; padding:1px 4px !important; }
+      #game.time-mode.time-fit-micro .time-track { margin:3px 0 !important; height:3px !important; }
+      #game.time-mode.time-fit-micro .time-run-controls { margin-top:2px !important; gap:3px !important; }
+      #game.time-mode.time-fit-micro .time-next-head { display:none !important; }
+      #game.time-mode.time-fit-micro .time-next-tray { margin-top:2px !important; }
+      #game.time-mode.time-fit-micro .time-next-slot { height:18px !important; }
+      #game.time-mode.time-fit-micro .time-actions { margin-top:2px !important; gap:3px !important; }
+      #game.time-mode.time-fit-micro .time-actions button { min-height:19px !important; font-size:6.2px !important; }
+      #game.time-mode.time-fit-micro .piece-square { width:11px !important; height:11px !important; border-radius:2px !important; }
+
+      #game.time-mode.time-fit-scroll #board,
+      #game.time-mode.time-fit-scroll #tray { margin-inline:auto !important; }
+    }
+</style>
 </head>
 <body>
   <main id="game">
@@ -7800,7 +7890,7 @@
 /* V7.2 TIME CRUNCH MODE · EXPLICIT START/PAUSE + MOBILE FIT */
 (() => {
   'use strict';
-  const BUILD = 'V7.2_TIME_CRUNCH_CONTROLS_MOBILE';
+  const BUILD = 'V7.3_TIME_CRUNCH_TRUE_RESPONSIVE';
   const START_SECONDS = 45;
   const MOBILE_MAX = 520;
   const TIME_REWARDS = Object.freeze({1:1,2:3,3:6,4:10});
@@ -7955,60 +8045,86 @@
   }
 
   function applyTimeBodyLock(active) {
-    const body = document.body;
-    if (active) {
-      if (!body.classList.contains('time-mobile-lock')) {
-        timeLockedScrollY = window.scrollY || 0;
-        body.style.top = `-${timeLockedScrollY}px`;
-        body.classList.add('time-mobile-lock');
-      }
-    } else if (body.classList.contains('time-mobile-lock')) {
-      body.classList.remove('time-mobile-lock');
-      body.style.top = '';
-      window.scrollTo(0,timeLockedScrollY);
+    const body=document.body;
+    document.documentElement.classList.toggle('time-mobile-root',active);
+    if(active){
+      if(!body.classList.contains('time-mobile-lock')) timeLockedScrollY=window.scrollY||0;
+      body.style.top='';
+      body.classList.add('time-mobile-lock');
+    }else{
+      body.classList.remove('time-mobile-lock','time-scroll-fallback');
+      body.style.top='';
+      document.documentElement.classList.remove('time-mobile-root');
     }
   }
   function fitTimeMobileViewport() {
-    if (timeFitFrame) cancelAnimationFrame(timeFitFrame);
+    if(timeFitFrame) cancelAnimationFrame(timeFitFrame);
     timeFitFrame=requestAnimationFrame(()=>{
       timeFitFrame=0;
       const active=isTimeMobile();
       applyTimeBodyLock(active);
+      const classes=['time-ultra-compact','time-fit-compact','time-fit-tight','time-fit-micro','time-fit-scroll'];
       if(!active){
         els.game.style.removeProperty('--time-fit-size');
         els.game.style.removeProperty('--time-tray-height');
-        els.game.classList.remove('time-ultra-compact');
+        document.body.style.removeProperty('--time-viewport-height');
+        els.game.classList.remove(...classes);
+        document.body.classList.remove('time-scroll-fallback');
         return;
       }
-      const viewportHeight=Math.floor(window.visualViewport?.height||window.innerHeight||800);
-      const viewportWidth=Math.floor(window.visualViewport?.width||document.documentElement.clientWidth||390);
-      const gameRect=els.game.getBoundingClientRect();
-      const boardRect=els.board.getBoundingClientRect();
-      const before=Math.max(0,boardRect.top-gameRect.top);
-      const horizontalRoom=Math.max(252,viewportWidth-16);
-      const bottomReserve=18;
-      const gap=6;
-      const baseTrayHeight=viewportHeight<700?54:viewportHeight<850?62:70;
-      const available=Math.max(0,viewportHeight-gameRect.top-before-bottomReserve-gap);
-      const widthLimitedBoard=Math.min(horizontalRoom,available-baseTrayHeight);
-      const spareAfterWideBoard=Math.max(0,available-Math.max(252,widthLimitedBoard));
-      const trayHeight=viewportHeight<700?baseTrayHeight:Math.max(baseTrayHeight,Math.min(120,spareAfterWideBoard));
-      let boardSize=Math.floor(Math.min(horizontalRoom,available-trayHeight));
-      boardSize=Math.max(252,boardSize);
-      const ultra=boardSize<300;
-      els.game.classList.toggle('time-ultra-compact',ultra);
-      els.game.style.setProperty('--time-fit-size',`${boardSize}px`);
-      els.game.style.setProperty('--time-tray-height',`${trayHeight}px`);
-      if(ultra){
+      const viewportHeight=Math.max(420,Math.floor(window.visualViewport?.height||window.innerHeight||800));
+      const viewportWidth=Math.max(280,Math.floor(window.visualViewport?.width||document.documentElement.clientWidth||390));
+      document.body.style.setProperty('--time-viewport-height',`${viewportHeight}px`);
+
+      els.game.classList.remove(...classes);
+      els.game.classList.toggle('time-fit-compact',viewportHeight<960);
+      els.game.classList.toggle('time-fit-tight',viewportHeight<850);
+      els.game.classList.toggle('time-fit-micro',viewportHeight<690);
+
+      // First pass: measure the real top chrome after the appropriate compact level.
+      els.game.style.setProperty('--time-fit-size',`${Math.min(430,viewportWidth-14)}px`);
+      const preliminaryTray=viewportHeight<690?46:viewportHeight<850?54:62;
+      els.game.style.setProperty('--time-tray-height',`${preliminaryTray}px`);
+
+      requestAnimationFrame(()=>{
+        const boardTop=Math.max(0,els.board.getBoundingClientRect().top);
+        const sideRoom=Math.max(214,Math.min(430,viewportWidth-14));
+        const bottomSafe=Math.max(6,Number.parseFloat(getComputedStyle(document.body).paddingBottom)||6);
+        let trayHeight=preliminaryTray;
+        let verticalRoom=viewportHeight-boardTop-bottomSafe-4;
+        let boardSize=Math.floor(Math.min(sideRoom,verticalRoom-trayHeight-4));
+
+        // If the first pass is still too tall, progressively remove secondary information,
+        // then measure again instead of forcing a device-specific minimum board size.
+        if(boardSize<270&&!els.game.classList.contains('time-fit-tight')) els.game.classList.add('time-fit-tight');
+        if(boardSize<235&&!els.game.classList.contains('time-fit-micro')) els.game.classList.add('time-fit-micro');
+
         requestAnimationFrame(()=>{
-          const refreshedBoard=els.board.getBoundingClientRect();
-          const refreshedGame=els.game.getBoundingClientRect();
-          const refreshedBefore=Math.max(0,refreshedBoard.top-refreshedGame.top);
-          let refreshedSize=Math.floor(Math.min(horizontalRoom,viewportHeight-refreshedGame.top-refreshedBefore-trayHeight-bottomReserve-gap));
-          refreshedSize=Math.max(252,refreshedSize);
-          els.game.style.setProperty('--time-fit-size',`${refreshedSize}px`);
+          const finalBoardTop=Math.max(0,els.board.getBoundingClientRect().top);
+          trayHeight=els.game.classList.contains('time-fit-micro')?44:els.game.classList.contains('time-fit-tight')?50:preliminaryTray;
+          verticalRoom=viewportHeight-finalBoardTop-bottomSafe-4;
+          boardSize=Math.floor(Math.min(sideRoom,verticalRoom-trayHeight-4));
+
+          // True responsive range.  Very short split-screen/webview heights get a scroll
+          // fallback rather than clipping controls below an overflow:hidden body.
+          const hardMinimum=206;
+          const needsScroll=boardSize<hardMinimum;
+          if(needsScroll){
+            boardSize=Math.min(sideRoom,280);
+            els.game.classList.add('time-fit-scroll');
+            document.body.classList.add('time-scroll-fallback');
+          }else{
+            document.body.classList.remove('time-scroll-fallback');
+          }
+          boardSize=Math.max(hardMinimum,boardSize);
+          els.game.classList.toggle('time-ultra-compact',boardSize<290);
+          els.game.style.setProperty('--time-fit-size',`${boardSize}px`);
+          els.game.style.setProperty('--time-tray-height',`${trayHeight}px`);
+
+          // Keep the active controls visible when Safari changes visualViewport height.
+          if(!needsScroll) window.scrollTo(0,0);
         });
-      }
+      });
     });
   }
 
