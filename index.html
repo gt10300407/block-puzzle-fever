@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V7.0: Time Crunch mode + V6.12 Chaos Rush -->
-  <title>10×10 블록 퍼즐 · 타임 크런치 V7.0</title>
+  <!-- V7.2: Time Crunch controls/mobile fit + V7.1 Chaos Rush hotfix -->
+  <title>10×10 블록 퍼즐 · 타임 크런치 V7.2</title>
   <style>
     :root {
       color-scheme: dark;
@@ -2830,6 +2830,188 @@
       color: rgba(255,234,238,.80);
     }
 
+
+    /* V7.2 · TIME CRUNCH RUN CONTROLS + MOBILE FIT -----------------------
+       타임 크런치는 자동 시작하지 않는다. 새로 시작 → 시작 → 정지/계속의
+       명시적인 상태를 사용하고, 모바일에서는 보드와 현재 블록 3개를
+       한 화면에 유지한다. */
+    .time-run-state {
+      display:inline-flex;
+      align-items:center;
+      min-height:22px;
+      padding:3px 7px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      color:#c7d0e6;
+      background:rgba(255,255,255,.035);
+      font-size:9px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .time-run-controls {
+      display:grid;
+      grid-template-columns:1.1fr 1fr 1fr;
+      gap:6px;
+      margin-top:7px;
+    }
+    .time-run-controls button {
+      min-height:34px;
+      padding:6px 7px;
+      font-size:9px;
+      font-weight:850;
+    }
+    #time-start-btn { border-color:rgba(101,245,201,.32); color:#cffff1; }
+    #time-pause-btn { border-color:rgba(255,207,74,.28); color:#ffe5a1; }
+    #time-new-btn { border-color:rgba(84,216,255,.24); }
+    #game.time-mode[data-time-state="ready"] .time-panel {
+      border-color:rgba(84,216,255,.42);
+      box-shadow:0 0 0 1px rgba(84,216,255,.08), 0 12px 30px rgba(0,0,0,.20);
+    }
+    #game.time-mode[data-time-state="paused"] .time-panel {
+      border-color:rgba(255,207,74,.48);
+    }
+    #game.time-mode[data-time-state="running"] .time-run-state {
+      color:#8fffdc;
+      border-color:rgba(101,245,201,.24);
+      background:rgba(101,245,201,.07);
+    }
+
+    @media (max-width:520px) {
+      body.time-mobile-lock {
+        position:fixed;
+        inset:0;
+        width:100%;
+        height:100dvh;
+        overflow:hidden !important;
+        overscroll-behavior:none;
+      }
+      body.time-mobile-lock #game.time-mode {
+        width:100%;
+        max-width:none;
+        height:100%;
+        overflow:hidden;
+        padding-bottom:max(10px,calc(env(safe-area-inset-bottom) + 7px)) !important;
+        overscroll-behavior:none;
+      }
+      #game.time-mode .mode-guide { display:none !important; }
+      #game.time-mode .mode-bar {
+        gap:5px !important;
+        margin-bottom:5px !important;
+      }
+      #game.time-mode .mode-btn,
+      #game.time-mode #sound-btn {
+        min-height:38px !important;
+      }
+      #game.time-mode .mode-btn {
+        padding:6px 4px !important;
+        font-size:10.5px !important;
+      }
+      #game.time-mode .stats {
+        gap:5px !important;
+        margin-bottom:5px !important;
+      }
+      #game.time-mode .stat-card {
+        min-height:46px !important;
+        padding:5px 7px !important;
+      }
+      #game.time-mode .stat-label { font-size:8px !important; }
+      #game.time-mode .stat-value { font-size:clamp(17px,5vw,21px) !important; }
+      #game.time-mode .time-panel {
+        margin:0 0 5px !important;
+        padding:6px 7px !important;
+        border-radius:11px !important;
+      }
+      #game.time-mode .time-head { gap:5px; }
+      #game.time-mode .time-head>div:first-child { gap:3px; min-width:0; }
+      #game.time-mode .time-kicker {
+        margin-right:4px;
+        font-size:8px;
+        letter-spacing:.08em;
+      }
+      #game.time-mode #time-value { font-size:25px; }
+      #game.time-mode .time-head small { font-size:9px; }
+      #game.time-mode .time-head-actions { gap:4px; }
+      #game.time-mode .time-stage { font-size:8px; }
+      #game.time-mode .time-run-state { min-height:20px; padding:2px 6px; font-size:7.5px; }
+      #game.time-mode .time-track { height:4px; margin:5px 0; }
+      #game.time-mode .time-run-controls { gap:4px; margin-top:4px; }
+      #game.time-mode .time-run-controls button {
+        min-height:28px !important;
+        padding:4px 4px !important;
+        font-size:8px !important;
+      }
+      #game.time-mode .time-status-grid { gap:4px; margin-top:4px; }
+      #game.time-mode .time-status-grid>div { padding:3px 5px; border-radius:7px; }
+      #game.time-mode .time-status-grid span { font-size:6.8px; }
+      #game.time-mode .time-status-grid strong { margin-top:1px; font-size:8px; }
+      #game.time-mode .time-result {
+        min-height:21px;
+        margin-top:4px;
+        padding:3px 6px;
+        border-radius:7px;
+      }
+      #game.time-mode .time-result span { font-size:6.8px; }
+      #game.time-mode .time-result strong { font-size:8px; }
+      #game.time-mode .time-next-head { margin:4px 1px 2px; }
+      #game.time-mode .time-next-head span { font-size:8px; }
+      #game.time-mode .time-next-head small { font-size:6.8px; }
+      #game.time-mode .time-next-tray { gap:4px; }
+      #game.time-mode .time-next-slot { height:29px; border-radius:7px; }
+      #game.time-mode .time-mini-cell { width:5px; height:5px; border-radius:1px; }
+      #game.time-mode .time-actions { gap:4px; margin-top:4px; }
+      #game.time-mode .time-actions button {
+        min-height:27px !important;
+        padding:4px !important;
+        font-size:7.5px !important;
+      }
+      #game.time-mode #board {
+        width:var(--time-fit-size,min(100%,356px)) !important;
+        max-width:none !important;
+        margin-inline:auto;
+        --board-padding:5px;
+        flex:0 0 auto;
+        touch-action:none;
+      }
+      #game.time-mode #tray {
+        position:static !important;
+        inset:auto !important;
+        z-index:auto !important;
+        width:var(--time-fit-size,min(100%,356px)) !important;
+        max-width:none !important;
+        margin:5px auto max(7px,env(safe-area-inset-bottom)) !important;
+        padding:0 !important;
+        gap:6px !important;
+        transform:none !important;
+        border:0 !important;
+        border-radius:0 !important;
+        background:transparent !important;
+        box-shadow:none !important;
+        flex:0 0 auto;
+        touch-action:none;
+        overscroll-behavior:none;
+      }
+      #game.time-mode .tray-slot {
+        min-height:var(--time-tray-height,64px) !important;
+        aspect-ratio:auto !important;
+        padding:4px !important;
+        border-radius:9px !important;
+        touch-action:none;
+        -webkit-user-select:none;
+        user-select:none;
+      }
+      #game.time-mode .piece-square {
+        width:clamp(12px,3.7vw,16px) !important;
+        height:clamp(12px,3.7vw,16px) !important;
+      }
+      #game.time-mode .hint { display:none !important; }
+      #game.time-mode.time-ultra-compact .time-status-grid { display:none; }
+      #game.time-mode.time-ultra-compact .time-result { display:none; }
+      #game.time-mode.time-ultra-compact .time-next-head small { display:none; }
+      #game.time-mode.time-ultra-compact .time-panel { padding:5px 6px !important; }
+      #game.time-mode.time-ultra-compact .time-next-slot { height:25px; }
+      #game.time-mode.time-ultra-compact .time-actions button { min-height:24px !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -2904,10 +3086,15 @@
         </div>
         <div class="time-head-actions">
           <span id="time-stage" class="time-stage">안정 · 점수 ×1</span>
-          <button id="time-pause-btn" type="button">일시정지</button>
+          <span id="time-run-state" class="time-run-state">시작 대기</span>
         </div>
       </div>
       <div class="time-track"><div id="time-fill"></div></div>
+      <div class="time-run-controls" aria-label="타임 크런치 실행 제어">
+        <button id="time-new-btn" type="button">새로 시작</button>
+        <button id="time-start-btn" type="button">시작</button>
+        <button id="time-pause-btn" type="button" disabled>정지</button>
+      </div>
       <div class="time-status-grid">
         <div><span>소모 속도</span><strong id="time-drain">×1</strong></div>
         <div><span>점수 배율</span><strong id="time-multiplier">×1</strong></div>
@@ -2977,6 +3164,7 @@
       <h2 id="time-pause-title">타임 크런치 일시정지</h2>
       <p>게임과 타이머가 멈췄어.</p>
       <button id="time-resume-btn" class="full-btn" type="button">계속하기</button>
+      <button id="time-pause-new-btn" class="full-btn" type="button">새로 시작</button>
     </div>
   </section>
 
@@ -7609,12 +7797,15 @@
 })();
 
 
-/* V7.0 TIME CRUNCH MODE */
+/* V7.2 TIME CRUNCH MODE · EXPLICIT START/PAUSE + MOBILE FIT */
 (() => {
   'use strict';
-  const BUILD = 'V7.0_TIME_CRUNCH';
+  const BUILD = 'V7.2_TIME_CRUNCH_CONTROLS_MOBILE';
   const START_SECONDS = 45;
+  const MOBILE_MAX = 520;
   const TIME_REWARDS = Object.freeze({1:1,2:3,3:6,4:10});
+  const RUN = Object.freeze({READY:'ready',RUNNING:'running',PAUSED:'paused',ENDED:'ended'});
+
   let timeRemaining = START_SECONDS;
   let timeElapsed = 0;
   let timeTotalEarned = 0;
@@ -7623,18 +7814,21 @@
   let timeHoldReadyRound = 0;
   let timeRaf = 0;
   let timeLastStamp = 0;
-  let timeManualPaused = false;
+  let timeRunState = RUN.READY;
   let timeChoiceOpen = false;
-  let timeBurstUntil = 0;
+  let timeBurstSeconds = 0;
   let timeNoClearStreak = 0;
   let timeAction = null;
   let timeMaxLines = 0;
   let timeHighestStage = 0;
   let timeLastCountdownSecond = -1;
+  let timeLockedScrollY = 0;
+  let timeFitFrame = 0;
 
   const timePanel = document.getElementById('time-panel');
   const timeValue = document.getElementById('time-value');
   const timeStageEl = document.getElementById('time-stage');
+  const timeRunStateEl = document.getElementById('time-run-state');
   const timeDrainEl = document.getElementById('time-drain');
   const timeMultiplierEl = document.getElementById('time-multiplier');
   const timeFill = document.getElementById('time-fill');
@@ -7643,6 +7837,8 @@
   const timeHoldStatus = document.getElementById('time-hold-status');
   const timeHoldBtn = document.getElementById('time-hold-btn');
   const timeReleaseBtn = document.getElementById('time-release-btn');
+  const timeNewBtn = document.getElementById('time-new-btn');
+  const timeStartBtn = document.getElementById('time-start-btn');
   const timePauseBtn = document.getElementById('time-pause-btn');
   const timeBackdrop = document.getElementById('time-countdown-backdrop');
   const timeChoiceOverlay = document.getElementById('time-choice-overlay');
@@ -7651,8 +7847,11 @@
   const timeChoiceScore = document.getElementById('time-choice-score');
   const timePauseOverlay = document.getElementById('time-pause-overlay');
   const timeResumeBtn = document.getElementById('time-resume-btn');
+  const timePauseNewBtn = document.getElementById('time-pause-new-btn');
 
   function isTimeMode() { return mode === 'time'; }
+  function isTimeMobile() { return isTimeMode() && window.matchMedia(`(max-width:${MOBILE_MAX}px)`).matches; }
+  function timeCanPlay() { return isTimeMode() && timeRunState === RUN.RUNNING && !timeChoiceOpen && !gameOver; }
   function clonePiece(piece) {
     if (!piece) return null;
     return {...piece, shape:(piece.shape || []).map(cell => [...cell])};
@@ -7666,13 +7865,33 @@
   }
   function effectiveScoreMultiplier() {
     const stage = currentTimeStage();
-    return Math.max(stage.score, performance.now() < timeBurstUntil ? 3 : 1);
+    return Math.max(stage.score, timeBurstSeconds > 0 ? 3 : 1);
   }
-  function timeIsPaused() { return timeManualPaused || timeChoiceOpen || gameOver || !isTimeMode(); }
   function setTimeResult(text, tone='') {
     timeResultText.textContent = text;
     const wrap = timeResultText.parentElement;
     wrap.style.borderColor = tone === 'danger' ? 'rgba(255,83,112,.42)' : tone === 'fever' ? 'rgba(255,207,74,.38)' : '';
+  }
+  function runStateLabel() {
+    if (timeRunState === RUN.RUNNING) return '진행 중';
+    if (timeRunState === RUN.PAUSED) return '정지됨';
+    if (timeRunState === RUN.ENDED) return '종료';
+    return '시작 대기';
+  }
+  function updateRunControls() {
+    if (!timeRunStateEl) return;
+    timeRunStateEl.textContent = runStateLabel();
+    els.game.dataset.timeState = timeRunState;
+    const ready = timeRunState === RUN.READY;
+    const paused = timeRunState === RUN.PAUSED;
+    const running = timeRunState === RUN.RUNNING;
+    timeStartBtn.textContent = paused ? '계속' : '시작';
+    timeStartBtn.disabled = running || timeRunState === RUN.ENDED;
+    timePauseBtn.disabled = !running;
+    timeNewBtn.disabled = false;
+    timeHoldBtn.disabled = !timeCanPlay() || selected < 0 || !tray[selected] || timeRemaining <= 2.2;
+    timeReleaseBtn.disabled = !timeCanPlay() || !timeHeldPiece || trayRound < timeHoldReadyRound || !tray.some(Boolean);
+    if (ready) setTimeResult('시작을 누르면 45초 카운트다운이 시작돼. 다음 블록부터 먼저 계산해.');
   }
   function renderMiniPiece(container,piece) {
     container.innerHTML='';
@@ -7682,8 +7901,9 @@
     const set=new Set(piece.shape.map(c=>`${c[0]},${c[1]}`));
     const grid=document.createElement('div');
     grid.className='time-mini-piece';
-    grid.style.gridTemplateColumns=`repeat(${cols},7px)`;
-    grid.style.gridTemplateRows=`repeat(${rows},7px)`;
+    const cellSize = isTimeMobile() ? 5 : 7;
+    grid.style.gridTemplateColumns=`repeat(${cols},${cellSize}px)`;
+    grid.style.gridTemplateRows=`repeat(${rows},${cellSize}px)`;
     grid.style.setProperty('--mini-color',piece.color || '#65f5c9');
     for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
       const cell=document.createElement('i');
@@ -7702,8 +7922,7 @@
       timeNextTrayEl.appendChild(slot);
     });
     timeHoldStatus.textContent = timeHeldPiece ? (trayRound >= timeHoldReadyRound ? '사용 가능' : '다음 세트부터') : '비어 있음';
-    timeHoldBtn.disabled = !isTimeMode() || selected < 0 || !tray[selected] || timeRemaining <= 2.2;
-    timeReleaseBtn.disabled = !isTimeMode() || !timeHeldPiece || trayRound < timeHoldReadyRound || !tray.some(Boolean);
+    updateRunControls();
   }
   function updateTimeUI() {
     if (!timeValue) return;
@@ -7711,18 +7930,18 @@
     timeHighestStage=Math.max(timeHighestStage,stage.level);
     const showDecimal=timeRemaining<=10;
     timeValue.textContent=showDecimal?Math.max(0,timeRemaining).toFixed(1):String(Math.max(0,Math.ceil(timeRemaining)));
-    const burst=performance.now()<timeBurstUntil;
-    timeStageEl.textContent=`${stage.label} · 점수 ×${burst?Math.max(3,stage.score):stage.score}`;
+    timeStageEl.textContent=`${stage.label} · 점수 ×${effectiveScoreMultiplier()}`;
     timeDrainEl.textContent=`×${stage.drain}`;
     timeMultiplierEl.textContent=`×${effectiveScoreMultiplier()}`;
     timeFill.style.width=`${Math.max(3,Math.min(100,timeRemaining<=60?timeRemaining/60*100:100))}%`;
     timeFill.style.background=stage.level>=3?'linear-gradient(90deg,#ff3e68,#ffb13b)':stage.level===2?'linear-gradient(90deg,#ff7a52,#ffcf4a)':'linear-gradient(90deg,#64f1d1,#ffcf4a,#ff5b78)';
-    els.game.classList.toggle('time-final-countdown',isTimeMode()&&timeRemaining>0&&timeRemaining<=10);
-    els.game.classList.toggle('time-final-3',isTimeMode()&&timeRemaining>0&&timeRemaining<=3);
+    const countdownActive = isTimeMode() && timeRunState === RUN.RUNNING && timeRemaining > 0 && timeRemaining <= 10;
+    els.game.classList.toggle('time-final-countdown',countdownActive);
+    els.game.classList.toggle('time-final-3',countdownActive&&timeRemaining<=3);
     els.game.classList.toggle('time-overcharge-1',isTimeMode()&&stage.level===1);
     els.game.classList.toggle('time-overcharge-2',isTimeMode()&&stage.level===2);
     els.game.classList.toggle('time-overcharge-3',isTimeMode()&&stage.level===3);
-    if (timeRemaining>0&&timeRemaining<=10) {
+    if (countdownActive) {
       const second=Math.ceil(timeRemaining);
       timeBackdrop.textContent=String(second);
       if(second!==timeLastCountdownSecond){
@@ -7732,20 +7951,84 @@
         if(second<=3&&navigator.vibrate) navigator.vibrate(22);
       }
     } else { timeBackdrop.textContent=''; timeLastCountdownSecond=-1; }
-    renderNextTray();
+    updateRunControls();
   }
+
+  function applyTimeBodyLock(active) {
+    const body = document.body;
+    if (active) {
+      if (!body.classList.contains('time-mobile-lock')) {
+        timeLockedScrollY = window.scrollY || 0;
+        body.style.top = `-${timeLockedScrollY}px`;
+        body.classList.add('time-mobile-lock');
+      }
+    } else if (body.classList.contains('time-mobile-lock')) {
+      body.classList.remove('time-mobile-lock');
+      body.style.top = '';
+      window.scrollTo(0,timeLockedScrollY);
+    }
+  }
+  function fitTimeMobileViewport() {
+    if (timeFitFrame) cancelAnimationFrame(timeFitFrame);
+    timeFitFrame=requestAnimationFrame(()=>{
+      timeFitFrame=0;
+      const active=isTimeMobile();
+      applyTimeBodyLock(active);
+      if(!active){
+        els.game.style.removeProperty('--time-fit-size');
+        els.game.style.removeProperty('--time-tray-height');
+        els.game.classList.remove('time-ultra-compact');
+        return;
+      }
+      const viewportHeight=Math.floor(window.visualViewport?.height||window.innerHeight||800);
+      const viewportWidth=Math.floor(window.visualViewport?.width||document.documentElement.clientWidth||390);
+      const gameRect=els.game.getBoundingClientRect();
+      const boardRect=els.board.getBoundingClientRect();
+      const before=Math.max(0,boardRect.top-gameRect.top);
+      const horizontalRoom=Math.max(252,viewportWidth-16);
+      const bottomReserve=18;
+      const gap=6;
+      const baseTrayHeight=viewportHeight<700?54:viewportHeight<850?62:70;
+      const available=Math.max(0,viewportHeight-gameRect.top-before-bottomReserve-gap);
+      const widthLimitedBoard=Math.min(horizontalRoom,available-baseTrayHeight);
+      const spareAfterWideBoard=Math.max(0,available-Math.max(252,widthLimitedBoard));
+      const trayHeight=viewportHeight<700?baseTrayHeight:Math.max(baseTrayHeight,Math.min(120,spareAfterWideBoard));
+      let boardSize=Math.floor(Math.min(horizontalRoom,available-trayHeight));
+      boardSize=Math.max(252,boardSize);
+      const ultra=boardSize<300;
+      els.game.classList.toggle('time-ultra-compact',ultra);
+      els.game.style.setProperty('--time-fit-size',`${boardSize}px`);
+      els.game.style.setProperty('--time-tray-height',`${trayHeight}px`);
+      if(ultra){
+        requestAnimationFrame(()=>{
+          const refreshedBoard=els.board.getBoundingClientRect();
+          const refreshedGame=els.game.getBoundingClientRect();
+          const refreshedBefore=Math.max(0,refreshedBoard.top-refreshedGame.top);
+          let refreshedSize=Math.floor(Math.min(horizontalRoom,viewportHeight-refreshedGame.top-refreshedBefore-trayHeight-bottomReserve-gap));
+          refreshedSize=Math.max(252,refreshedSize);
+          els.game.style.setProperty('--time-fit-size',`${refreshedSize}px`);
+        });
+      }
+    });
+  }
+
   function timerLoop(now) {
     timeRaf=0;
-    if (!isTimeMode()) return;
+    if (!isTimeMode() || timeRunState !== RUN.RUNNING) return;
     if (!timeLastStamp) timeLastStamp=now;
     const delta=Math.max(0,(now-timeLastStamp)/1000);
     timeLastStamp=now;
-    if(!timeIsPaused()){
+    if(!timeChoiceOpen&&!gameOver){
       const stage=currentTimeStage();
       timeRemaining-=delta*stage.drain;
       timeElapsed+=delta;
+      timeBurstSeconds=Math.max(0,timeBurstSeconds-delta);
       if(timeRemaining<=0){
-        timeRemaining=0; updateTimeUI(); triggerGameOver('TIME_UP'); return;
+        timeRemaining=0;
+        timeRunState=RUN.ENDED;
+        updateTimeUI();
+        triggerGameOver('TIME_UP');
+        return;
       }
     }
     updateTimeUI();
@@ -7757,19 +8040,44 @@
     timeRaf=requestAnimationFrame(timerLoop);
   }
   function stopTimerLoop(){ if(timeRaf) cancelAnimationFrame(timeRaf); timeRaf=0; }
+  function startOrResumeTime() {
+    if(!isTimeMode()||gameOver||timeRunState===RUN.ENDED)return;
+    timeRunState=RUN.RUNNING;
+    timePauseOverlay.hidden=true;
+    phase=PHASE.PLAYING;
+    timeLastStamp=performance.now();
+    setTimeResult(timeElapsed>0?'계속 진행 · 다음 블록까지 계산해.':'타이머 시작 · 다음 블록까지 보고 공간을 설계해.','fever');
+    updateRunControls();
+    startTimerLoop();
+  }
+  function pauseTime(reason='정지') {
+    if(!isTimeMode()||timeRunState!==RUN.RUNNING||gameOver)return;
+    timeRunState=RUN.PAUSED;
+    phase=PHASE.RESOLVING;
+    stopTimerLoop();
+    timePauseOverlay.hidden=false;
+    setTimeResult(`${reason} · 계속을 누를 때까지 게임과 시간이 멈춰.`);
+    updateRunControls();
+    window.setTimeout(()=>timeResumeBtn.focus({preventScroll:true}),30);
+  }
   function addTime(seconds,label='시간 충전'){
     const gained=Math.max(0,seconds);
     timeRemaining+=gained; timeTotalEarned+=gained;
-    setTimeResult(`${label} · +${gained}초`, 'fever');
+    setTimeResult(`${label} · +${gained}초`,'fever');
     updateTimeUI();
   }
   function rewardForLines(lines){ return TIME_REWARDS[Math.min(4,Math.max(1,lines))] || 0; }
   function closeChoice(){
-    timeChoiceOpen=false; timeChoiceOverlay.hidden=true; timeLastStamp=performance.now(); updateTimeUI();
+    timeChoiceOpen=false;
+    timeChoiceOverlay.hidden=true;
+    if(timeRunState===RUN.RUNNING) phase=PHASE.PLAYING;
+    timeLastStamp=performance.now();
+    updateTimeUI();
   }
   function openRewardChoice(lines){
     const seconds=rewardForLines(lines);
     timeChoiceOpen=true;
+    phase=PHASE.RESOLVING;
     timeChoiceOverlay.hidden=false;
     timeChoiceOverlay.dataset.seconds=String(seconds);
     timeChoiceOverlay.dataset.lines=String(lines);
@@ -7783,17 +8091,19 @@
   });
   timeChoiceScore.addEventListener('click',()=>{
     const lines=Number(timeChoiceOverlay.dataset.lines)||2;
-    closeChoice(); timeBurstUntil=performance.now()+8000;
-    setTimeResult(`${lines}줄 삭제 · 8초간 점수 ×3`, 'fever'); updateTimeUI();
+    closeChoice(); timeBurstSeconds=8;
+    setTimeResult(`${lines}줄 삭제 · 8초간 점수 ×3`,'fever'); updateTimeUI();
   });
+
   function resetTimeState(){
     stopTimerLoop();
     timeRemaining=START_SECONDS; timeElapsed=0; timeTotalEarned=0; timeNextTray=null; timeHeldPiece=null;
-    timeHoldReadyRound=0; timeManualPaused=false; timeChoiceOpen=false; timeBurstUntil=0; timeNoClearStreak=0;
+    timeHoldReadyRound=0; timeRunState=RUN.READY; timeChoiceOpen=false; timeBurstSeconds=0; timeNoClearStreak=0;
     timeAction=null; timeMaxLines=0; timeHighestStage=0; timeLastCountdownSecond=-1;
     timeChoiceOverlay.hidden=true; timePauseOverlay.hidden=true;
-    timeResultText.textContent='다음 블록까지 보고 공간을 설계해.';
+    timeResultText.textContent='시작을 누르면 45초 카운트다운이 시작돼.';
     els.game.classList.remove('time-final-countdown','time-final-3','time-overcharge-1','time-overcharge-2','time-overcharge-3');
+    els.game.dataset.timeState=RUN.READY;
   }
   function timeNormalTray(){ return cloneTray(createDirectedNormalTray(-1)); }
 
@@ -7831,8 +8141,21 @@
   const baseShowFloatingScore=showFloatingScore;
   showFloatingScore=function(points,tone=''){ if(!isTimeMode()) return baseShowFloatingScore(points,tone); };
 
+  const baseBeginPiecePointer=beginPiecePointer;
+  beginPiecePointer=function(event,index,slot){
+    if(isTimeMode()&&!timeCanPlay()){
+      event.preventDefault();
+      setTimeResult(timeRunState===RUN.READY?'먼저 시작을 눌러.':'정지 중이야. 계속을 눌러.','danger');
+      return;
+    }
+    return baseBeginPiecePointer(event,index,slot);
+  };
   const baseOnCellClick=onCellClick;
   onCellClick=function(row,col){
+    if(isTimeMode()&&!timeCanPlay()){
+      setTimeResult(timeRunState===RUN.READY?'먼저 시작을 눌러.':'정지 중이야. 계속을 눌러.','danger');
+      return;
+    }
     if(isTimeMode()&&phase===PHASE.PLAYING&&selected>=0&&tray[selected]){
       timeAction={startScore:score,pieceSize:tray[selected].shape?.length||1};
     }
@@ -7852,10 +8175,10 @@
         else setTimeResult(`블록 배치 · +${formatNumber(delta)}점 · 줄 없음 ${timeNoClearStreak}/3`,'');
       }else{
         timeNoClearStreak=0;
-        if(lineCount===1){ addTime(1,'1줄 삭제'); setTimeResult(`1줄 삭제 · +1초 · +${formatNumber(delta)}점`,'fever'); }
+        if(lineCount===1){ timeRemaining+=1; timeTotalEarned+=1; setTimeResult(`1줄 삭제 · +1초 · +${formatNumber(delta)}점`,'fever'); }
         else { setTimeResult(`${lineCount}줄 동시 삭제 · +${formatNumber(delta)}점 · 보상 선택`,'fever'); window.setTimeout(()=>{if(isTimeMode()&&!gameOver)openRewardChoice(lineCount);},80); }
       }
-      timeAction=null; updateTimeUI();
+      timeAction=null; updateTimeUI(); fitTimeMobileViewport();
     }
     return result;
   };
@@ -7870,15 +8193,18 @@
     timePanel.hidden=!active;
     els.game.classList.toggle('time-mode',active);
     if(active){
-      els.modeGuide.textContent='45초 안에 다음 블록까지 계산해 줄을 지우고, 시간을 벌거나 점수를 노려.';
-      els.gameHint.textContent='현재 블록 3개와 다음 블록 3개를 함께 보고 최적의 순서를 찾아.';
+      els.modeGuide.textContent='다음 블록 3개까지 계산하고, 줄을 지워 시간을 벌거나 점수를 노려.';
+      els.gameHint.textContent='새로 시작 후 시작을 눌러. 현재 블록과 다음 블록을 함께 계산해.';
       document.querySelector('.fever-panel').hidden=true;
       els.chaosPanel.hidden=true;
     }else{
       document.querySelector('.fever-panel').hidden=false;
       updateChaosUI();
+      els.game.classList.remove('time-ultra-compact');
+      els.game.removeAttribute('data-time-state');
     }
     updateTimeUI();
+    window.setTimeout(fitTimeMobileViewport,0);
     return result;
   };
 
@@ -7886,23 +8212,28 @@
   setMode=function(nextMode){
     if(nextMode!=='time'){
       stopTimerLoop();
+      timeRunState=RUN.READY;
+      timePauseOverlay.hidden=true;
+      applyTimeBodyLock(false);
       return baseSetMode(nextMode);
     }
     mode='time';
     document.querySelectorAll('.mode-btn').forEach(button=>button.classList.toggle('active',button.dataset.mode===mode));
     restart();
-    startTimerLoop();
-    if(safeLocalGet('block-game-time-intro-v1')!=='1'){
-      safeLocalSet('block-game-time-intro-v1','1');
-      setTimeResult('45초 시작 · 다음 3개까지 보고 줄을 지워 시간을 벌어.','fever');
-    }
+    window.__chaosV71Debug?.fit?.();
+    window.setTimeout(fitTimeMobileViewport,0);
   };
 
   const baseRestart=restart;
   restart=function(){
     resetTimeState();
     const result=baseRestart();
-    if(isTimeMode()) startTimerLoop();
+    if(isTimeMode()){
+      phase=PHASE.RESOLVING;
+      updateRunControls();
+      updateTimeUI();
+      window.setTimeout(fitTimeMobileViewport,0);
+    }
     updateModeUI();
     return result;
   };
@@ -7911,18 +8242,26 @@
   triggerGameOver=function(reason='NO_MOVES'){
     if(isTimeMode()){
       stopTimerLoop();
+      timeRunState=RUN.ENDED;
       const result=baseTriggerGameOver(reason);
       els.finalModeLabel.textContent='생존 시간';
       els.finalFever.textContent=`${timeElapsed.toFixed(1)}초`;
       els.gameoverTitle.textContent=reason==='TIME_UP'?'시간 종료':'게임 종료';
       els.gameoverMessage.textContent=reason==='TIME_UP'?'남은 시간이 0초가 됐어. 제한 시간 동안 만든 점수를 확인해.':'놓을 수 있는 블록이 없어 타임 크런치가 끝났어.';
+      updateRunControls();
       return result;
     }
     return baseTriggerGameOver(reason);
   };
 
+  timeNewBtn.addEventListener('click',()=>{ if(isTimeMode()) restart(); });
+  timeStartBtn.addEventListener('click',startOrResumeTime);
+  timePauseBtn.addEventListener('click',()=>pauseTime('정지'));
+  timeResumeBtn.addEventListener('click',startOrResumeTime);
+  timePauseNewBtn.addEventListener('click',()=>{ if(isTimeMode()) restart(); });
+
   timeHoldBtn.addEventListener('click',()=>{
-    if(!isTimeMode()||selected<0||!tray[selected]||timeRemaining<=2.2)return;
+    if(!timeCanPlay()||selected<0||!tray[selected]||timeRemaining<=2.2)return;
     timeRemaining-=2;
     timeHeldPiece=clonePiece(tray[selected]);
     timeHoldReadyRound=trayRound+1;
@@ -7932,30 +8271,44 @@
     updateTimeUI();
   });
   timeReleaseBtn.addEventListener('click',()=>{
-    if(!isTimeMode()||!timeHeldPiece||trayRound<timeHoldReadyRound)return;
+    if(!timeCanPlay()||!timeHeldPiece||trayRound<timeHoldReadyRound)return;
     let index=selected>=0&&tray[selected]?selected:tray.findIndex(Boolean);
     if(index<0)return;
     const swap=tray[index]; tray[index]=clonePiece(timeHeldPiece); timeHeldPiece=clonePiece(swap); selected=-1;
     setTimeResult('보관 블록과 현재 블록을 교체했어.','fever'); renderTray(); updateTimeUI();
   });
-  timePauseBtn.addEventListener('click',()=>{
-    if(!isTimeMode()||gameOver)return;
-    timeManualPaused=true; timePauseOverlay.hidden=false; timeResumeBtn.focus({preventScroll:true});
-  });
-  timeResumeBtn.addEventListener('click',()=>{
-    timeManualPaused=false; timePauseOverlay.hidden=true; timeLastStamp=performance.now();
-  });
 
   document.querySelectorAll('.mode-btn').forEach(button=>{
-    if(button.dataset.mode==='time'&&!button.dataset.timeBound){
-      button.dataset.timeBound='1';
+    if(button.dataset.mode==='time'&&!button.dataset.timeBoundV72){
+      button.dataset.timeBoundV72='1';
       button.addEventListener('click',event=>{event.stopImmediatePropagation();setMode('time');},true);
     }
   });
 
+  window.addEventListener('resize',fitTimeMobileViewport,{passive:true});
+  window.visualViewport?.addEventListener('resize',fitTimeMobileViewport,{passive:true});
+  window.visualViewport?.addEventListener('scroll',fitTimeMobileViewport,{passive:true});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden&&isTimeMode()&&timeRunState===RUN.RUNNING) pauseTime('화면 이탈로 자동 정지');
+    if(!document.hidden) window.setTimeout(fitTimeMobileViewport,60);
+  });
+  window.addEventListener('pageshow',event=>{
+    const activeButton=document.querySelector('.mode-btn.active')?.dataset.mode;
+    if(event.persisted&&(mode==='time'||activeButton==='time')){
+      mode='time';
+      document.querySelectorAll('.mode-btn').forEach(button=>button.classList.toggle('active',button.dataset.mode==='time'));
+      restart();
+    }
+    window.setTimeout(fitTimeMobileViewport,30);
+  });
+
   window.__timeCrunchDebug={
     setTime(value){timeRemaining=Math.max(0,Number(value)||0);updateTimeUI();},
-    getState(){return{mode,timeRemaining,timeElapsed,timeTotalEarned,stage:currentTimeStage(),nextCount:timeNextTray?.length||0,held:Boolean(timeHeldPiece),paused:timeIsPaused()};},
+    getState(){return{mode,timeRemaining,timeElapsed,timeTotalEarned,runState:timeRunState,stage:currentTimeStage(),nextCount:timeNextTray?.length||0,held:Boolean(timeHeldPiece),choiceOpen:timeChoiceOpen};},
+    start(){startOrResumeTime();},
+    pause(){pauseTime('DEBUG 정지');},
+    reset(){restart();},
+    fit(){fitTimeMobileViewport();return{size:getComputedStyle(els.game).getPropertyValue('--time-fit-size'),tray:getComputedStyle(els.game).getPropertyValue('--time-tray-height')};},
     openChoice(lines=2){openRewardChoice(lines);},
     addTime(seconds){addTime(Number(seconds)||0,'DEBUG');},
     getTray(){return tray.map(piece=>piece?piece.shape.map(c=>[...c]):null);},
@@ -7963,12 +8316,14 @@
     advanceTray(){tray=[null,null,null];initTray();return this.getTray();},
     select(index=0){selected=Number(index);renderTray();},
     placeFirst(index=0){
+      if(!timeCanPlay())return false;
       index=Number(index); const piece=tray[index]; if(!piece)return false;
       for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(fitsAt(piece,r,c)){selected=index;onCellClick(r,c);return true;}
       return false;
     }
   };
   document.documentElement.dataset.timeBuild=BUILD;
+  fitTimeMobileViewport();
 })();
 
 </script>
