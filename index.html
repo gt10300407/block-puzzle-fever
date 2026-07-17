@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V7.3: True responsive Time Crunch layout + V7.1 Chaos Rush hotfix -->
-  <title>10×10 블록 퍼즐 · 타임 크런치 V7.3</title>
+  <!-- V7.4: Unified responsive layout for Classic, Chaos Rush, and Time Crunch -->
+  <title>10×10 블록 퍼즐 · 통합 반응형 V7.4</title>
   <style>
     :root {
       color-scheme: dark;
@@ -3101,6 +3101,193 @@
 
       #game.time-mode.time-fit-scroll #board,
       #game.time-mode.time-fit-scroll #tray { margin-inline:auto !important; }
+    }
+
+
+    /* V7.4 · UNIFIED MOBILE RESPONSIVE LAYOUT -------------------------
+       All three modes use one measured viewport fitter.  Previous
+       chaos/time body locks are neutralized so a tray can never be
+       clipped by overflow:hidden. */
+    @media (max-width: 520px) {
+      html.unified-mobile-root,
+      html.time-mobile-root {
+        width: 100%;
+        min-height: 100%;
+        height: auto !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+      }
+      body.unified-mobile-responsive,
+      body.unified-mobile-responsive.chaos-mobile-lock,
+      body.unified-mobile-responsive.time-mobile-lock {
+        position: relative !important;
+        inset: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: var(--unified-vh, 100dvh) !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        overscroll-behavior-x: none;
+        overscroll-behavior-y: contain;
+        padding:
+          max(6px, env(safe-area-inset-top))
+          max(7px, env(safe-area-inset-right))
+          max(8px, env(safe-area-inset-bottom))
+          max(7px, env(safe-area-inset-left)) !important;
+      }
+      body.unified-mobile-responsive.unified-fit-no-scroll {
+        overflow-y: hidden !important;
+      }
+      body.unified-mobile-responsive.unified-fit-scroll {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      #game.mobile-unified-fit,
+      body.unified-mobile-responsive #game.chaos-mode,
+      body.unified-mobile-responsive #game.time-mode {
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        padding-bottom: 0 !important;
+      }
+
+      #game.mobile-unified-fit .mode-guide,
+      #game.mobile-unified-fit .nickname-row,
+      #game.mobile-unified-fit .hint {
+        display: none !important;
+      }
+      #game.mobile-unified-fit .mode-bar {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) 42px !important;
+        gap: 5px !important;
+        margin: 0 0 5px !important;
+      }
+      #game.mobile-unified-fit .mode-btn,
+      #game.mobile-unified-fit #sound-btn {
+        min-width: 0 !important;
+        min-height: 38px !important;
+        padding: 5px 4px !important;
+        font-size: 10.5px !important;
+      }
+      #game.mobile-unified-fit #sound-btn {
+        width: 42px !important;
+        flex: none !important;
+      }
+      #game.mobile-unified-fit .stats {
+        gap: 5px !important;
+        margin: 0 0 5px !important;
+      }
+      #game.mobile-unified-fit .stat-card {
+        min-height: 47px !important;
+        padding: 5px 7px !important;
+      }
+      #game.mobile-unified-fit .stat-label { font-size: 8px !important; }
+      #game.mobile-unified-fit .stat-value { font-size: clamp(18px, 5.4vw, 23px) !important; }
+
+      #game.mobile-unified-fit .fever-panel {
+        margin: 0 0 5px !important;
+        padding: 6px 8px !important;
+      }
+      #game.mobile-unified-fit .fever-head { margin-bottom: 3px !important; font-size: 9px !important; }
+      #game.mobile-unified-fit .fever-track { height: 7px !important; }
+      #game.mobile-unified-fit .core-bank-line { margin-top: 3px !important; padding: 2px 6px !important; }
+      #game.mobile-unified-fit .fever-rule { display: none !important; }
+
+      #game.mobile-unified-fit .chaos-panel {
+        margin: 0 0 5px !important;
+        padding: 6px 7px !important;
+        min-height: 0 !important;
+      }
+      #game.mobile-unified-fit .chaos-track { display: none !important; }
+      #game.mobile-unified-fit #chaos-rule {
+        max-height: 2.35em;
+        margin-top: 2px !important;
+        overflow: hidden !important;
+        white-space: normal !important;
+        font-size: 7.5px !important;
+        line-height: 1.15 !important;
+      }
+      #game.mobile-unified-fit .chaos-traffic { margin-top: 3px !important; gap: 3px !important; }
+      #game.mobile-unified-fit .chaos-action-result { min-height: 20px !important; }
+
+      #game.mobile-unified-fit .time-panel {
+        margin: 0 0 5px !important;
+        padding: 6px 7px !important;
+      }
+      #game.mobile-unified-fit .time-status-grid,
+      #game.mobile-unified-fit .time-result { display: none !important; }
+      #game.mobile-unified-fit .time-run-controls { margin-top: 4px !important; }
+      #game.mobile-unified-fit .time-next-head { margin: 4px 1px 2px !important; }
+      #game.mobile-unified-fit .time-next-head small { display: none !important; }
+      #game.mobile-unified-fit .time-next-slot { height: 28px !important; }
+      #game.mobile-unified-fit .time-actions { margin-top: 4px !important; }
+      #game.mobile-unified-fit .time-actions button { min-height: 26px !important; }
+
+      #game.mobile-unified-fit #board {
+        width: var(--unified-board-size, calc(100vw - 14px)) !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        flex: 0 0 auto !important;
+        touch-action: none;
+      }
+      #game.mobile-unified-fit #tray,
+      #game.mobile-unified-fit.chaos-mode #tray,
+      #game.mobile-unified-fit.time-mode #tray {
+        position: static !important;
+        inset: auto !important;
+        z-index: auto !important;
+        width: var(--unified-board-size, calc(100vw - 14px)) !important;
+        max-width: none !important;
+        margin: 5px auto 0 !important;
+        padding: 0 !important;
+        gap: 6px !important;
+        transform: none !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        flex: 0 0 auto !important;
+        touch-action: none;
+      }
+      #game.mobile-unified-fit .tray-slot {
+        min-height: var(--unified-tray-height, 68px) !important;
+        height: var(--unified-tray-height, 68px) !important;
+        aspect-ratio: auto !important;
+        padding: 4px !important;
+        border-radius: 10px !important;
+      }
+      #game.mobile-unified-fit .piece-square {
+        width: clamp(12px, 3.7vw, 16px) !important;
+        height: clamp(12px, 3.7vw, 16px) !important;
+      }
+
+      #game.mobile-unified-fit.unified-fit-tight .mode-btn,
+      #game.mobile-unified-fit.unified-fit-tight #sound-btn { min-height: 34px !important; }
+      #game.mobile-unified-fit.unified-fit-tight .stat-card { min-height: 39px !important; padding: 3px 5px !important; }
+      #game.mobile-unified-fit.unified-fit-tight .stat-value { font-size: 17px !important; }
+      #game.mobile-unified-fit.unified-fit-tight .fever-panel { padding: 4px 6px !important; }
+      #game.mobile-unified-fit.unified-fit-tight .chaos-action-result { display: none !important; }
+      #game.mobile-unified-fit.unified-fit-tight .time-next-slot { height: 23px !important; }
+      #game.mobile-unified-fit.unified-fit-tight .time-actions button { min-height: 22px !important; font-size: 7px !important; }
+
+      #game.mobile-unified-fit.unified-fit-micro .mode-bar { gap: 3px !important; }
+      #game.mobile-unified-fit.unified-fit-micro .mode-btn,
+      #game.mobile-unified-fit.unified-fit-micro #sound-btn { min-height: 30px !important; font-size: 8.7px !important; }
+      #game.mobile-unified-fit.unified-fit-micro .stats { gap: 3px !important; }
+      #game.mobile-unified-fit.unified-fit-micro .stat-card { min-height: 30px !important; padding: 2px 4px !important; }
+      #game.mobile-unified-fit.unified-fit-micro .stat-label { display: none !important; }
+      #game.mobile-unified-fit.unified-fit-micro .stat-value { margin: 0 !important; text-align: center; font-size: 14px !important; }
+      #game.mobile-unified-fit.unified-fit-micro .core-bank-line { display: none !important; }
+      #game.mobile-unified-fit.unified-fit-micro #chaos-rule,
+      #game.mobile-unified-fit.unified-fit-micro .chaos-action-result { display: none !important; }
+      #game.mobile-unified-fit.unified-fit-micro .time-stage { display: none !important; }
+      #game.mobile-unified-fit.unified-fit-micro .time-next-head { display: none !important; }
+      #game.mobile-unified-fit.unified-fit-micro .time-next-slot { height: 19px !important; }
+      #game.mobile-unified-fit.unified-fit-micro .time-actions { display: none !important; }
+      #game.mobile-unified-fit.unified-fit-micro .piece-square { width: 11px !important; height: 11px !important; }
     }
 </style>
 </head>
@@ -8442,6 +8629,156 @@
   fitTimeMobileViewport();
 })();
 
+
+
+/* V7.4 UNIFIED MOBILE VIEWPORT FITTER */
+(() => {
+  'use strict';
+  const BUILD='V7.4_UNIFIED_RESPONSIVE';
+  const MOBILE_MAX=520;
+  const game=document.getElementById('game');
+  const boardEl=document.getElementById('board');
+  const trayEl=document.getElementById('tray');
+  let frame=0;
+
+  function viewport(){
+    const vv=window.visualViewport;
+    return {
+      width:Math.max(280,Math.floor(vv?.width||window.innerWidth||390)),
+      height:Math.max(420,Math.floor(vv?.height||window.innerHeight||800))
+    };
+  }
+  function activeMobile(){ return window.matchMedia(`(max-width:${MOBILE_MAX}px)`).matches; }
+  function cleanup(){
+    document.documentElement.classList.remove('unified-mobile-root');
+    document.body.classList.remove('unified-mobile-responsive','unified-fit-no-scroll','unified-fit-scroll');
+    document.body.style.removeProperty('--unified-vh');
+    game.classList.remove('mobile-unified-fit','unified-fit-tight','unified-fit-micro','unified-fit-scroll');
+    game.style.removeProperty('--unified-board-size');
+    game.style.removeProperty('--unified-tray-height');
+  }
+  function fitUnifiedMobile(){
+    if(frame) cancelAnimationFrame(frame);
+    frame=requestAnimationFrame(()=>{
+      frame=0;
+      if(!activeMobile()){ cleanup(); return; }
+      const {width,height}=viewport();
+      document.documentElement.classList.add('unified-mobile-root');
+      document.body.classList.add('unified-mobile-responsive');
+      document.body.style.setProperty('--unified-vh',`${height}px`);
+      game.classList.add('mobile-unified-fit');
+      game.classList.remove('unified-fit-tight','unified-fit-micro','unified-fit-scroll');
+      document.body.classList.remove('unified-fit-scroll','unified-fit-no-scroll');
+
+      if(height<820) game.classList.add('unified-fit-tight');
+      if(height<660) game.classList.add('unified-fit-micro');
+
+      const bodyStyle=getComputedStyle(document.body);
+      const horizontalPadding=(parseFloat(bodyStyle.paddingLeft)||0)+(parseFloat(bodyStyle.paddingRight)||0);
+      const bottomPadding=parseFloat(bodyStyle.paddingBottom)||8;
+      const widthLimit=Math.max(250,Math.min(430,width-horizontalPadding));
+      const initialTray=height<660?52:height<820?62:78;
+      game.style.setProperty('--unified-board-size',`${widthLimit}px`);
+      game.style.setProperty('--unified-tray-height',`${initialTray}px`);
+
+      requestAnimationFrame(()=>{
+        let boardTop=Math.max(0,boardEl.getBoundingClientRect().top);
+        let room=Math.max(0,height-boardTop-bottomPadding-5);
+        let boardSize=Math.floor(Math.min(widthLimit,room-initialTray-5));
+
+        if(boardSize<300&&!game.classList.contains('unified-fit-tight')) game.classList.add('unified-fit-tight');
+        if(boardSize<245&&!game.classList.contains('unified-fit-micro')) game.classList.add('unified-fit-micro');
+
+        requestAnimationFrame(()=>{
+          boardTop=Math.max(0,boardEl.getBoundingClientRect().top);
+          room=Math.max(0,height-boardTop-bottomPadding-5);
+          const minTray=game.classList.contains('unified-fit-micro')?48:game.classList.contains('unified-fit-tight')?58:70;
+          boardSize=Math.floor(Math.min(widthLimit,room-minTray-5));
+          const minBoard=220;
+          let scroll=boardSize<minBoard;
+          if(scroll){
+            boardSize=Math.min(widthLimit,320);
+            game.classList.add('unified-fit-scroll');
+            document.body.classList.add('unified-fit-scroll');
+          } else {
+            document.body.classList.add('unified-fit-no-scroll');
+          }
+          boardSize=Math.max(minBoard,boardSize);
+          let trayHeight=Math.floor(room-boardSize-5);
+          trayHeight=Math.max(minTray,Math.min(118,trayHeight));
+          game.style.setProperty('--unified-board-size',`${boardSize}px`);
+          game.style.setProperty('--unified-tray-height',`${trayHeight}px`);
+
+          requestAnimationFrame(()=>{
+            const trayBottom=trayEl.getBoundingClientRect().bottom+bottomPadding;
+            if(!scroll&&trayBottom>height+1){
+              const overflow=Math.ceil(trayBottom-height+2);
+              const reduced=Math.max(minBoard,boardSize-overflow);
+              if(reduced===minBoard&&trayBottom>height+8){
+                game.classList.add('unified-fit-scroll');
+                document.body.classList.remove('unified-fit-no-scroll');
+                document.body.classList.add('unified-fit-scroll');
+              }else{
+                game.style.setProperty('--unified-board-size',`${reduced}px`);
+              }
+            }
+            if(document.body.classList.contains('unified-fit-no-scroll')) window.scrollTo(0,0);
+          });
+        });
+      });
+    });
+  }
+
+  const baseSetModeV74=setMode;
+  setMode=function(nextMode){
+    const result=baseSetModeV74(nextMode);
+    window.setTimeout(fitUnifiedMobile,0);
+    return result;
+  };
+  const baseRestartV74=restart;
+  restart=function(){
+    const result=baseRestartV74();
+    window.setTimeout(fitUnifiedMobile,0);
+    return result;
+  };
+  const baseRenderBoardV74=renderBoard;
+  renderBoard=function(){
+    const result=baseRenderBoardV74();
+    window.setTimeout(fitUnifiedMobile,0);
+    return result;
+  };
+  const baseRenderTrayV74=renderTray;
+  renderTray=function(){
+    const result=baseRenderTrayV74();
+    window.setTimeout(fitUnifiedMobile,0);
+    return result;
+  };
+
+  window.addEventListener('resize',fitUnifiedMobile,{passive:true});
+  window.addEventListener('orientationchange',()=>window.setTimeout(fitUnifiedMobile,80),{passive:true});
+  window.visualViewport?.addEventListener('resize',fitUnifiedMobile,{passive:true});
+  window.visualViewport?.addEventListener('scroll',fitUnifiedMobile,{passive:true});
+  window.addEventListener('pageshow',()=>window.setTimeout(fitUnifiedMobile,60));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)window.setTimeout(fitUnifiedMobile,60);});
+
+  window.__responsiveV74Debug={
+    fit(){fitUnifiedMobile();},
+    metrics(){
+      const v=viewport();
+      return {
+        mode,
+        viewport:v,
+        board:boardEl.getBoundingClientRect().toJSON(),
+        tray:trayEl.getBoundingClientRect().toJSON(),
+        boardSize:getComputedStyle(game).getPropertyValue('--unified-board-size'),
+        trayHeight:getComputedStyle(game).getPropertyValue('--unified-tray-height'),
+        scrolling:document.body.classList.contains('unified-fit-scroll')
+      };
+    }
+  };
+  document.documentElement.dataset.responsiveBuild=BUILD;
+  fitUnifiedMobile();
+})();
 </script>
 
 </body>
