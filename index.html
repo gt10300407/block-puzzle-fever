@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.11: chaos traffic control + clear blockers + frequent auxiliary mutation -->
-  <title>10×10 블록 퍼즐 · 카오스 러시 V6.10</title>
+  <!-- V6.12: rule-breaking chaos blocks + traffic control -->
+  <title>10×10 블록 퍼즐 · 카오스 러시 V6.12</title>
   <style>
     :root {
       color-scheme: dark;
@@ -2546,25 +2546,54 @@
     .chaos-action-result.result-fever strong { color:#fff0a5; }
     .chaos-action-result.result-danger strong { color:#ffbeca; }
     .chaos-action-result.result-normal strong { color:#d8f9ff; }
-    .tray-slot.mutation-pending-slot {
-      border-color:rgba(157,124,255,.54) !important;
-      box-shadow:inset 0 0 0 1px rgba(157,124,255,.13), 0 0 12px rgba(157,124,255,.14) !important;
+    /* V6.12 · 카오스 블록: 모양이 아니라 배치 규칙이 달라진다. */
+    .tray-slot.chaos-block-slot {
+      position:relative;
+      border-color:var(--chaos-block-color, rgba(157,124,255,.88)) !important;
+      box-shadow:0 0 0 2px color-mix(in srgb, var(--chaos-block-color, #9d7cff) 22%, transparent),
+                 0 0 20px color-mix(in srgb, var(--chaos-block-color, #9d7cff) 26%, transparent) !important;
+      background:linear-gradient(150deg, color-mix(in srgb, var(--chaos-block-color, #9d7cff) 13%, transparent), rgba(9,13,29,.92)) !important;
     }
-    .mutation-pending-tag {
+    .chaos-block-tag {
       position:absolute;
       left:5px;
       top:5px;
-      z-index:5;
+      z-index:6;
+      max-width:calc(100% - 10px);
       padding:3px 6px;
       border-radius:999px;
-      border:1px solid rgba(157,124,255,.38);
-      background:rgba(20,13,43,.88);
-      color:#cabaff;
+      border:1px solid color-mix(in srgb, var(--chaos-block-color, #9d7cff) 58%, white 12%);
+      background:rgba(10,12,27,.92);
+      color:#f4f0ff;
       font-size:7px;
-      font-weight:950;
-      letter-spacing:.03em;
+      font-weight:1000;
+      letter-spacing:.02em;
+      white-space:nowrap;
       pointer-events:none;
     }
+    .chaos-block-rule {
+      position:absolute;
+      left:5px;
+      right:5px;
+      bottom:4px;
+      z-index:6;
+      color:#cfd8ef;
+      font-size:6.5px;
+      font-weight:850;
+      line-height:1.15;
+      text-align:center;
+      text-shadow:0 1px 4px #000;
+      pointer-events:none;
+    }
+    .tray-slot.chaos-block-unstable[data-chaos-turns="1"] {
+      border-color:#ff5977 !important;
+      box-shadow:0 0 0 2px rgba(255,89,119,.22), 0 0 22px rgba(255,89,119,.34) !important;
+    }
+    .tray-slot.chaos-block-fragment {
+      border-style:dashed !important;
+    }
+    .drag-ghost.chaos-phase,
+    #drag-ghost.chaos-phase { filter:drop-shadow(0 0 8px rgba(255,105,207,.72)); }
     @media (max-width:520px) {
       #game.chaos-mode .chaos-panel { padding:7px 8px; }
       #game.chaos-mode .chaos-traffic { gap:3px; margin-top:4px; }
@@ -2823,7 +2852,7 @@
     [CHAOS_TYPES.REACTOR_SURGE]: { icon:'☢', name:'REACTOR SURGE', title:'점수 3배!', instruction:'이번에 줄을 지우면 점수가 3배. 실패하면 효과가 끝나.', trays:2, color:'#bd5cff', weight:16 },
     [CHAOS_TYPES.CORE_JACKPOT]: { icon:'◆', name:'CORE JACKPOT', title:'잭팟 찬스!', instruction:'3번 안에 한 줄을 지우면 점수가 5배야.', trays:99, moves:3, color:'#ff69cf', weight:12 },
     [CHAOS_TYPES.DANGER_LINE]: { icon:'‼', name:'DANGER LINE', title:'위험 줄 경보!', instruction:'빨간 줄을 3번 안에 완성해서 지워. 실패하면 방해 블록이 떨어져.', trays:99, moves:3, color:'#ff4f70', weight:18 },
-    [CHAOS_TYPES.BLOCK_MUTATION]: { icon:'🧬', name:'BLOCK MUTATION', title:'블록 변이!', instruction:'블록 하나를 놓으면 남은 블록 하나가 다른 모습으로 변해.', trays:1, color:'#9d7cff', weight:14 },
+    [CHAOS_TYPES.BLOCK_MUTATION]: { icon:'🧬', name:'BLOCK MUTATION', title:'카오스 블록!', instruction:'일반 규칙을 깨는 카오스 블록이 등장해.', trays:1, color:'#9d7cff', weight:14 },
     [CHAOS_TYPES.GRAVITY_SHIFT]: { icon:'⇣', name:'GRAVITY SHIFT', title:'중력 변화!', instruction:'이번 블록 세트를 다 쓰면 보드가 예고된 방향으로 한 번 쏠려.', trays:1, color:'#55d9ff', weight:10 }
   });
 
@@ -6019,7 +6048,7 @@
   }
 
   function guideMutationGravityScene() {
-    return `<div class="guide-scene"><div class="guide-scene-label">예고를 보고 다음 수를 준비해</div><div class="guide-last-card"><div class="guide-choice"><strong>🧬 블록 변이</strong><span>첫 블록을 놓으면 남은 블록 하나가 작아지거나 커지거나 특수 블록으로 변해.</span></div><div class="guide-choice"><strong>← 중력 변화</strong><span>블록 세 개를 다 쓰면 보드가 미리 알려준 방향으로 한 번 쏠려.</span></div></div></div>`;
+    return `<div class="guide-scene"><div class="guide-scene-label">카오스 블록은 배치 규칙부터 달라</div><div class="guide-last-card"><div class="guide-choice"><strong>◈ 관통·분열</strong><span>블록 하나를 뚫거나, 한 슬롯을 두 번 나눠 놓아.</span></div><div class="guide-choice"><strong>⚠ 불안정·복제</strong><span>빨리 쓰지 않으면 방해가 생기거나, 사용 뒤 조각이 하나 더 나와.</span></div><div class="guide-choice"><strong>← 중력 변화</strong><span>블록 세 개를 다 쓰면 보드가 화살표 방향으로 한 번 쏠려.</span></div></div></div>`;
   }
 
   function guideLastScene() {
@@ -6058,9 +6087,9 @@
       scene:guidePressureScene()
     },
     {
-      title:'블록 변화와 중력은 따로 알려줘',
-      copy:'블록 변이는 2~3세트마다 예고되고 첫 블록을 놓은 뒤 남은 블록 하나가 바뀌어. 중력 변화는 큰 사건으로만 나오고 블록 세 개를 다 쓴 뒤 보드가 화살표 방향으로 움직여.',
-      tip:'‘현재 목표 / 현재 위험 / 블록 변화’가 따로 표시돼. 중력과 변이가 겹치면 변이는 다음 세트로 미뤄져.',
+      title:'카오스 블록은 일반 블록과 규칙이 달라',
+      copy:'2~3세트마다 관통·분열·불안정·복제 중 하나가 바로 등장해. 단순히 돌아가거나 커지는 블록이 아니라, 놓는 방법과 결과 자체가 달라.',
+      tip:'블록 슬롯의 이름과 한 줄 설명을 보면 돼. 중력 사건 중에는 카오스 블록 등장이 다음 세트로 미뤄져.',
       scene:guideMutationGravityScene()
     },
     {
@@ -6495,23 +6524,22 @@
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.11 · traffic control + blockers + frequent mutation
+  // Build: 카오스 러시 V6.12 · rule-breaking chaos blocks
 
   </script>
 
 <script>
 'use strict';
 (() => {
-  const BUILD = 'V6.11';
+  const BUILD = 'V6.12';
   const traffic = {
     bannerTimer:0,
     resultTimer:0,
     action:null,
-    mutationCountdown:2 + Math.floor(rng() * 2),
-    mutationArmed:false,
-    mutationTriggered:false,
-    mutationLabel:'',
-    mutationSlot:-1
+    chaosBlockCountdown:2 + Math.floor(rng() * 2),
+    chaosBlockSlot:-1,
+    chaosBlockType:'',
+    chaosBlockLast:''
   };
 
   const goalText = document.getElementById('chaos-goal-text');
@@ -6619,14 +6647,14 @@
       const info = gravityDirectionInfo();
       change = `중력 ${info.arrow} · 세트 종료 후 ${info.label} 이동`;
       hasChange = true;
-    } else if (traffic.mutationArmed && !traffic.mutationTriggered) {
-      change = '변이 예정 · 첫 배치 뒤 1개 변경';
-      hasChange = true;
-    } else if (traffic.mutationTriggered && traffic.mutationLabel) {
-      change = `변이 완료 · ${traffic.mutationLabel}`;
-      hasChange = true;
     } else {
-      change = `변화 없음 · ${Math.max(1, traffic.mutationCountdown)}세트 뒤 변이`;
+      const activeChaosBlock = tray.find(piece => piece && (piece.chaosBlockType || piece.chaosFragmentType));
+      if (activeChaosBlock) {
+        change = chaosBlockStatusText(activeChaosBlock);
+        hasChange = true;
+      } else {
+        change = `카오스 블록 · ${Math.max(1, traffic.chaosBlockCountdown)}세트 뒤 등장`;
+      }
     }
     changeText.textContent = change;
     changeLane.classList.toggle('has-change', hasChange);
@@ -6693,106 +6721,273 @@
     return result;
   };
 
-  function scheduleNextMutation() {
-    traffic.mutationCountdown = 2 + Math.floor(rng() * 2);
-    traffic.mutationArmed = false;
-    traffic.mutationTriggered = false;
-    traffic.mutationLabel = '';
-    traffic.mutationSlot = -1;
+  const CHAOS_BLOCK_TYPES = Object.freeze({
+    PHASE:'phase',
+    SPLIT:'split',
+    UNSTABLE:'unstable',
+    CLONE:'clone'
+  });
+  const CHAOS_BLOCK_META = Object.freeze({
+    [CHAOS_BLOCK_TYPES.PHASE]: { name:'관통 코어', tag:'관통', rule:'블록 1칸을 뚫고 놓기', color:'#ff69cf' },
+    [CHAOS_BLOCK_TYPES.SPLIT]: { name:'분열 코어', tag:'분열', rule:'한 슬롯으로 두 번 배치', color:'#7f77dd' },
+    [CHAOS_BLOCK_TYPES.UNSTABLE]: { name:'불안정 코어', tag:'불안정', rule:'다른 블록 2번 안에 사용', color:'#ff704f' },
+    [CHAOS_BLOCK_TYPES.CLONE]: { name:'복제 코어', tag:'복제', rule:'사용 뒤 1칸 조각 생성', color:'#65f5c9' }
+  });
+
+  function scheduleNextChaosBlock() {
+    traffic.chaosBlockCountdown = score >= 50000 ? 2 : 2 + Math.floor(rng() * 2);
+    traffic.chaosBlockSlot = -1;
+    traffic.chaosBlockType = '';
+    traffic.chaosBlockLast = '';
   }
 
-  function armMutationForTray() {
-    if (!isChaosMode() || gameOver) return;
-    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT) {
-      traffic.mutationCountdown = Math.max(1, traffic.mutationCountdown);
-      return;
-    }
-    traffic.mutationCountdown--;
-    if (traffic.mutationCountdown <= 0) {
-      traffic.mutationArmed = true;
-      traffic.mutationTriggered = false;
-      traffic.mutationLabel = '';
-      setActionResult('변이 예고 · 첫 블록 뒤 남은 블록 하나가 바뀌어', 'fever');
-    }
+  function chaosBlockPiece(type, shape, extra = {}) {
+    const meta = CHAOS_BLOCK_META[type];
+    const rows = Math.max(...shape.map(cell => cell[0])) + 1;
+    const cols = Math.max(...shape.map(cell => cell[1])) + 1;
+    return {
+      shape:shape.map(cell => [...cell]),
+      color:meta.color,
+      specialType:null,
+      shapeId:-1000 - Object.values(CHAOS_BLOCK_TYPES).indexOf(type) * 10 - (extra.chaosStage || 0),
+      sizeClass:shape.length <= 2 ? 'small' : shape.length === 3 ? 'medium' : 'large',
+      orientation:rows === 1 ? 'horizontal' : cols === 1 ? 'vertical' : 'mixed',
+      form:rows === 1 || cols === 1 ? 'straight' : 'angled',
+      chaosBlockType:type,
+      ...extra
+    };
   }
 
-  function triggerAuxiliaryMutation() {
-    if (!traffic.mutationArmed || traffic.mutationTriggered || !isChaosMode() || gameOver) return false;
-    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT) return false;
-    const remaining = tray.map((piece,index) => ({piece,index})).filter(item => item.piece);
-    if (!remaining.length) return false;
-    const target = remaining[Math.floor(rng() * remaining.length)];
-    const previousSize = target.piece.shape?.length || 1;
-    const occupancy = boardOccupancyRatio();
-    const modes = occupancy >= .68 ? ['shrink','special','grow'] : ['grow','shrink','special'];
-    const weights = occupancy >= .68 ? [52,28,20] : [42,35,23];
-    const mode = weightedPick(modes, weights);
-    let nextPiece;
-    let label;
+  function fittingEntryFor(type, pools) {
+    const entries = pools.flat().filter(Boolean);
+    const shuffled = [...entries].sort(() => rng() - .5);
+    for (const entry of shuffled) {
+      const candidate = chaosBlockPiece(type, entry.shape);
+      if (canPlaceAnywhere(candidate)) return entry;
+    }
+    return null;
+  }
 
-    if (mode === 'special') {
-      const type = pickSpecialType();
-      nextPiece = makeSpecialPiece(type);
-      label = `${SPECIAL_META[type].name}으로 변화`;
-    } else if (mode === 'grow') {
-      const entry = pickFittingEntry([SHAPES_BY_CLASS.huge, SHAPES_BY_CLASS.large, SHAPES_BY_CLASS.medium]);
-      nextPiece = normalPieceFromEntry(entry);
-      label = `과성장 ${previousSize}칸→${entry.size}칸`;
-    } else {
-      const entry = pickFittingEntry([SHAPES_BY_CLASS.small, SHAPES_BY_CLASS.medium]);
-      nextPiece = normalPieceFromEntry(entry);
-      label = `수축 ${previousSize}칸→${entry.size}칸`;
+  function makeChaosBlock(type) {
+    if (type === CHAOS_BLOCK_TYPES.PHASE) {
+      const entry = fittingEntryFor(type, [SHAPES_BY_CLASS.large, SHAPES_BY_CLASS.medium, SHAPES_BY_CLASS.huge])
+        || SHAPES_BY_CLASS.medium[0];
+      return chaosBlockPiece(type, entry.shape);
+    }
+    if (type === CHAOS_BLOCK_TYPES.SPLIT) {
+      const variants = rng() < .5
+        ? [ [[0,0],[0,1]], [[0,0],[1,0]] ]
+        : [ [[0,0],[1,0]], [[0,0],[0,1]] ];
+      const first = variants.find(shape => canPlaceAnywhere(chaosBlockPiece(type, shape, {chaosStage:1, splitNextShape:variants[1]}))) || [[0,0]];
+      const next = first.length === 1 ? [[0,0]] : variants[first === variants[0] ? 1 : 0];
+      return chaosBlockPiece(type, first, {chaosStage:1, splitNextShape:next});
+    }
+    if (type === CHAOS_BLOCK_TYPES.UNSTABLE) {
+      const entry = fittingEntryFor(type, [SHAPES_BY_CLASS.large, SHAPES_BY_CLASS.medium, SHAPES_BY_CLASS.small])
+        || SHAPES_BY_CLASS.small[0];
+      return chaosBlockPiece(type, entry.shape, {unstableTurnsLeft:2});
+    }
+    const entry = fittingEntryFor(type, [SHAPES_BY_CLASS.medium, SHAPES_BY_CLASS.small, SHAPES_BY_CLASS.large])
+      || SHAPES_BY_CLASS.small[0];
+    return chaosBlockPiece(CHAOS_BLOCK_TYPES.CLONE, entry.shape);
+  }
+
+  function phaseOverlapCount(piece, row, col) {
+    let overlaps = 0;
+    for (const [dr,dc] of piece.shape) {
+      const rr = row + dr;
+      const cc = col + dc;
+      if (rr < 0 || rr >= SIZE || cc < 0 || cc >= SIZE) return 99;
+      if (board[rr][cc]) overlaps++;
+    }
+    return overlaps;
+  }
+
+  const v612OriginalFitsAt = fitsAt;
+  fitsAt = function(piece, row, col) {
+    if (piece?.chaosBlockType === CHAOS_BLOCK_TYPES.PHASE) return phaseOverlapCount(piece, row, col) <= 1;
+    return v612OriginalFitsAt(piece, row, col);
+  };
+
+  const v612OriginalPreviewPieceAt = previewPieceAt;
+  previewPieceAt = function(piece, row, col) {
+    const valid = v612OriginalPreviewPieceAt(piece, row, col);
+    if (valid && piece?.chaosBlockType === CHAOS_BLOCK_TYPES.PHASE) {
+      for (const [dr,dc] of piece.shape) {
+        const rr = row + dr;
+        const cc = col + dc;
+        if (board[rr]?.[cc] && cellEls[rr]?.[cc]) cellEls[rr][cc].style.background = 'rgba(255,105,207,.86)';
+      }
+    }
+    return valid;
+  };
+
+  function chaosBlockStatusText(piece) {
+    if (piece.chaosFragmentType === 'clone') return '복제 조각 · 추가 1칸';
+    const meta = CHAOS_BLOCK_META[piece.chaosBlockType];
+    if (!meta) return '카오스 블록';
+    if (piece.chaosBlockType === CHAOS_BLOCK_TYPES.SPLIT) return `${meta.name} ${piece.chaosStage || 1}/2 · 두 번 나눠 놓기`;
+    if (piece.chaosBlockType === CHAOS_BLOCK_TYPES.UNSTABLE) return `${meta.name} · ${piece.unstableTurnsLeft || 1}번 안에 사용`;
+    return `${meta.name} · ${meta.rule}`;
+  }
+
+  function chaosBlockActionLabel(piece) {
+    if (!piece) return '블록';
+    if (isSpecialPiece(piece)) return SPECIAL_META[piece.specialType].name;
+    if (piece.chaosFragmentType === 'clone') return '복제 조각';
+    const meta = CHAOS_BLOCK_META[piece.chaosBlockType];
+    return meta ? meta.name : `${piece.shape.length}칸 블록`;
+  }
+
+  function makeSplitContinuation(piece) {
+    let shape = (piece.splitNextShape || [[0,0]]).map(cell => [...cell]);
+    let continuation = chaosBlockPiece(CHAOS_BLOCK_TYPES.SPLIT, shape, {chaosStage:2});
+    if (!canPlaceAnywhere(continuation)) continuation = chaosBlockPiece(CHAOS_BLOCK_TYPES.SPLIT, [[0,0]], {chaosStage:2});
+    return continuation;
+  }
+
+  function makeCloneFragment() {
+    return {
+      shape:[[0,0]],
+      color:CHAOS_BLOCK_META[CHAOS_BLOCK_TYPES.CLONE].color,
+      specialType:null,
+      shapeId:-1099,
+      sizeClass:'small',
+      orientation:'mixed',
+      form:'angled',
+      chaosFragmentType:'clone'
+    };
+  }
+
+  function expireUnstableBlocks(exceptIndex) {
+    let expired = 0;
+    tray.forEach((candidate,index) => {
+      if (!candidate || index === exceptIndex || candidate.chaosBlockType !== CHAOS_BLOCK_TYPES.UNSTABLE) return;
+      candidate.unstableTurnsLeft = Math.max(0, (candidate.unstableTurnsLeft || 1) - 1);
+      if (candidate.unstableTurnsLeft <= 0) {
+        tray[index] = null;
+        expired++;
+      }
+    });
+    if (expired > 0) {
+      const penalty = pressureStageInfo().level >= 2 ? 2 : 1;
+      queuePressurePenalty(penalty, '불안정 코어 폭주', true);
+      if (pressurePending) pressurePending.movesLeft = Math.max(2, pressurePending.movesLeft || 0);
+      if (traffic.action) traffic.action.extra = `불안정 폭주 · 방해 ${penalty}개 예고`;
+      else setActionResult(`불안정 폭주 · 방해 ${penalty}개 예고`, 'danger');
+    }
+    return expired;
+  }
+
+  const v612OriginalConsumePiece = consumeSelectedPiece;
+  consumeSelectedPiece = function() {
+    const index = selected;
+    const piece = index >= 0 ? tray[index] : null;
+    const result = v612OriginalConsumePiece();
+    if (!isChaosMode() || !piece) return result;
+
+    let extra = '';
+    if (piece.chaosBlockType === CHAOS_BLOCK_TYPES.SPLIT && (piece.chaosStage || 1) === 1) {
+      tray[index] = makeSplitContinuation(piece);
+      extra = '분열 조각 1개 남음';
+    } else if (piece.chaosBlockType === CHAOS_BLOCK_TYPES.CLONE) {
+      tray[index] = makeCloneFragment();
+      extra = '복제 조각 1개 생성';
     }
 
-    nextPiece.mutated = true;
-    nextPiece.mutationLabel = label;
-    tray[target.index] = nextPiece;
-    traffic.mutationTriggered = true;
-    traffic.mutationLabel = label;
-    traffic.mutationSlot = target.index;
-    traffic.mutationArmed = false;
-    traffic.mutationCountdown = 2 + Math.floor(rng() * 2);
-    selected = -1;
+    expireUnstableBlocks(index);
+    if (extra && traffic.action) traffic.action.extra = traffic.action.extra ? `${traffic.action.extra} · ${extra}` : extra;
     renderTray();
-    setActionResult(`블록 변이 · ${label}`, 'fever');
-    createShockwave('#9d7cff', .48);
-    beepSequence(mode === 'grow' ? [420,320,230] : [360,540,760], .05);
     refreshTrafficUI();
+    return result;
+  };
+
+  function chooseChaosBlockType() {
+    const occupancy = boardOccupancyRatio();
+    const types = [CHAOS_BLOCK_TYPES.PHASE, CHAOS_BLOCK_TYPES.SPLIT, CHAOS_BLOCK_TYPES.UNSTABLE, CHAOS_BLOCK_TYPES.CLONE];
+    const weights = occupancy >= .68 ? [38,16,30,16] : [22,28,22,28];
+    return weightedPick(types, weights);
+  }
+
+  function spawnChaosBlockForTray() {
+    if (!isChaosMode() || gameOver || chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT) return false;
+    if (tray.some(piece => piece && (piece.chaosBlockType || piece.chaosFragmentType))) return false;
+    const candidates = tray.map((piece,index) => ({piece,index})).filter(item => item.piece && !isSpecialPiece(item.piece));
+    if (!candidates.length) return false;
+
+    let block = null;
+    let type = '';
+    for (let attempt = 0; attempt < 8; attempt++) {
+      type = chooseChaosBlockType();
+      block = makeChaosBlock(type);
+      if (block && canPlaceAnywhere(block)) break;
+      block = null;
+    }
+    if (!block) {
+      type = CHAOS_BLOCK_TYPES.PHASE;
+      block = makeChaosBlock(type);
+    }
+    if (!block || !canPlaceAnywhere(block)) return false;
+
+    const target = candidates[Math.floor(rng() * candidates.length)];
+    tray[target.index] = block;
+    traffic.chaosBlockSlot = target.index;
+    traffic.chaosBlockType = type;
+    traffic.chaosBlockLast = CHAOS_BLOCK_META[type].name;
+    scheduleNextChaosBlock();
+    selected = -1;
+    createShockwave(CHAOS_BLOCK_META[type].color, .34);
+    beepSequence([360,520,700], .035);
     return true;
   }
 
-  const v611OriginalConsumePiece = consumeSelectedPiece;
-  consumeSelectedPiece = function() {
-    const result = v611OriginalConsumePiece();
-    if (traffic.mutationArmed && tray.some(Boolean)) triggerAuxiliaryMutation();
-    return result;
-  };
-
-  const v611OriginalRenderTray = renderTray;
-  renderTray = function() {
-    const result = v611OriginalRenderTray();
-    if (isChaosMode() && traffic.mutationArmed && !traffic.mutationTriggered) {
-      els.tray.querySelectorAll('.tray-slot').forEach(slot => {
-        if (slot.classList.contains('used')) return;
-        slot.classList.add('mutation-pending-slot');
-      });
-      const first = els.tray.querySelector('.tray-slot:not(.used)');
-      if (first && !first.querySelector('.mutation-pending-tag')) {
-        const tag = document.createElement('span');
-        tag.className = 'mutation-pending-tag';
-        tag.textContent = '변이 예정';
-        first.appendChild(tag);
-      }
+  function advanceChaosBlockSchedule() {
+    if (!isChaosMode() || gameOver) return;
+    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT) {
+      traffic.chaosBlockCountdown = Math.max(1, traffic.chaosBlockCountdown);
+      return;
     }
+    traffic.chaosBlockCountdown--;
+    if (traffic.chaosBlockCountdown <= 0) spawnChaosBlockForTray();
+  }
+
+  const v612OriginalRenderTray = renderTray;
+  renderTray = function() {
+    const result = v612OriginalRenderTray();
+    tray.forEach((piece,index) => {
+      if (!piece || (!piece.chaosBlockType && !piece.chaosFragmentType)) return;
+      const slot = els.tray.querySelector(`.tray-slot[data-index="${index}"]`);
+      if (!slot) return;
+      const type = piece.chaosBlockType || CHAOS_BLOCK_TYPES.CLONE;
+      const meta = CHAOS_BLOCK_META[type];
+      slot.classList.add('chaos-block-slot', `chaos-block-${type}`);
+      if (piece.chaosFragmentType) slot.classList.add('chaos-block-fragment');
+      if (piece.chaosBlockType === CHAOS_BLOCK_TYPES.UNSTABLE) slot.dataset.chaosTurns = String(piece.unstableTurnsLeft || 1);
+      slot.style.setProperty('--chaos-block-color', meta.color);
+      slot.setAttribute('aria-label', `${index + 1}번째 ${chaosBlockStatusText(piece)}`);
+
+      const tag = document.createElement('span');
+      tag.className = 'chaos-block-tag';
+      if (piece.chaosFragmentType === 'clone') tag.textContent = '복제 조각';
+      else if (piece.chaosBlockType === CHAOS_BLOCK_TYPES.SPLIT) tag.textContent = `분열 ${piece.chaosStage || 1}/2`;
+      else if (piece.chaosBlockType === CHAOS_BLOCK_TYPES.UNSTABLE) tag.textContent = `불안정 ${piece.unstableTurnsLeft || 1}`;
+      else tag.textContent = meta.tag;
+      slot.appendChild(tag);
+
+      const rule = document.createElement('span');
+      rule.className = 'chaos-block-rule';
+      rule.textContent = piece.chaosFragmentType === 'clone' ? '추가 1칸' : meta.rule;
+      slot.appendChild(rule);
+    });
     refreshTrafficUI();
     return result;
   };
 
-  const v611OriginalInitTray = initTray;
+  const v612OriginalInitTray = initTray;
   initTray = function() {
-    const result = v611OriginalInitTray();
+    const result = v612OriginalInitTray();
     if (isChaosMode() && !gameOver) {
-      if (!traffic.mutationArmed) armMutationForTray();
+      advanceChaosBlockSchedule();
       if (!chaosEvent && chaosEventNumber > 0) startStandaloneMission();
       renderTray();
       refreshTrafficUI();
@@ -6828,7 +7023,8 @@
       traffic.action = {
         startScore:score,
         startBlockers:typeof pressureBlockerCount === 'function' ? pressureBlockerCount() : 0,
-        pieceLabel:isSpecialPiece(piece) ? SPECIAL_META[piece.specialType].name : `${piece.shape.length}칸 블록`
+        pieceLabel:chaosBlockActionLabel(piece),
+        extra:piece.chaosBlockType === CHAOS_BLOCK_TYPES.PHASE && phaseOverlapCount(piece, row, col) > 0 ? '관통 1칸' : ''
       };
     }
     return v611OriginalOnCellClick(row, col);
@@ -6842,6 +7038,7 @@
       const delta = Math.max(0, score - context.startScore);
       const parts = [lineCount > 0 ? `${lineCount}줄 제거` : `${context.pieceLabel} 배치`];
       if (lineCount > 0 && combo > 0) parts.push(`콤보 ×${combo}`);
+      if (context.extra) parts.push(context.extra);
       if (delta > 0) parts.push(`+${formatNumber(delta)}`);
       const blockersNow = typeof pressureBlockerCount === 'function' ? pressureBlockerCount() : 0;
       if (blockersNow > context.startBlockers) parts.push(`방해 +${blockersNow - context.startBlockers}`);
@@ -6854,7 +7051,7 @@
 
   const v611OriginalRestart = restart;
   restart = function() {
-    scheduleNextMutation();
+    scheduleNextChaosBlock();
     traffic.action = null;
     if (traffic.resultTimer) window.clearTimeout(traffic.resultTimer);
     const result = v611OriginalRestart();
@@ -6866,7 +7063,7 @@
   };
 
   clearOverlayFeedback();
-  scheduleNextMutation();
+  scheduleNextChaosBlock();
   if (isChaosMode()) {
     refreshTrafficUI();
     renderTray();
