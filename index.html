@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080b16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- V6.10: V6.9 pressure base + block mutation and gravity shift -->
+  <!-- V6.11: chaos traffic control + clear blockers + frequent auxiliary mutation -->
   <title>10×10 블록 퍼즐 · 카오스 러시 V6.10</title>
   <style>
     :root {
@@ -2477,6 +2477,112 @@
       #board.gravity-hit-down { animation: none; }
     }
 
+
+
+    /* V6.11 · chaos traffic control */
+    #game.chaos-mode #chaos-rule { display:block !important; margin-top:4px; font-size:8px; line-height:1.25; color:#9eabc5; }
+    .chaos-traffic {
+      display:grid;
+      gap:5px;
+      margin-top:6px;
+    }
+    .chaos-traffic-pair {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:5px;
+    }
+    .chaos-lane,
+    .chaos-action-result {
+      min-width:0;
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:9px;
+      background:rgba(6,10,25,.56);
+      padding:5px 7px;
+    }
+    .chaos-lane span,
+    .chaos-action-result span {
+      display:block;
+      margin-bottom:2px;
+      color:#7f8aa8;
+      font-size:8px;
+      font-weight:900;
+      letter-spacing:.06em;
+    }
+    .chaos-lane strong,
+    .chaos-action-result strong {
+      display:block;
+      color:#edf3ff;
+      font-size:9px;
+      line-height:1.28;
+      white-space:normal;
+      overflow-wrap:anywhere;
+    }
+    .chaos-lane-goal { display:none; }
+    .chaos-lane-danger.has-danger {
+      border-color:rgba(255,79,112,.52);
+      background:rgba(67,17,34,.42);
+    }
+    .chaos-lane-danger.has-danger strong { color:#ffd3db; }
+    .chaos-lane-change.has-change {
+      border-color:rgba(157,124,255,.54);
+      background:rgba(42,27,82,.42);
+    }
+    .chaos-lane-change.has-change strong { color:#dfd5ff; }
+    .chaos-action-result {
+      display:grid;
+      grid-template-columns:auto minmax(0,1fr);
+      align-items:center;
+      gap:7px;
+      min-height:28px;
+      border-color:rgba(87,243,255,.18);
+      background:rgba(9,21,38,.68);
+    }
+    .chaos-action-result span { margin:0; white-space:nowrap; }
+    .chaos-action-result strong {
+      color:#aebbd5;
+      text-align:right;
+      transition:color .12s ease;
+    }
+    .chaos-action-result.result-fever strong { color:#fff0a5; }
+    .chaos-action-result.result-danger strong { color:#ffbeca; }
+    .chaos-action-result.result-normal strong { color:#d8f9ff; }
+    .tray-slot.mutation-pending-slot {
+      border-color:rgba(157,124,255,.54) !important;
+      box-shadow:inset 0 0 0 1px rgba(157,124,255,.13), 0 0 12px rgba(157,124,255,.14) !important;
+    }
+    .mutation-pending-tag {
+      position:absolute;
+      left:5px;
+      top:5px;
+      z-index:5;
+      padding:3px 6px;
+      border-radius:999px;
+      border:1px solid rgba(157,124,255,.38);
+      background:rgba(20,13,43,.88);
+      color:#cabaff;
+      font-size:7px;
+      font-weight:950;
+      letter-spacing:.03em;
+      pointer-events:none;
+    }
+    @media (max-width:520px) {
+      #game.chaos-mode .chaos-panel { padding:7px 8px; }
+      #game.chaos-mode .chaos-traffic { gap:3px; margin-top:4px; }
+      #game.chaos-mode .chaos-traffic-pair { gap:4px; }
+      #game.chaos-mode .chaos-lane,
+      #game.chaos-mode .chaos-action-result { padding:3px 5px; border-radius:7px; }
+      #game.chaos-mode .chaos-lane span,
+      #game.chaos-mode .chaos-action-result span { font-size:7px; }
+      #game.chaos-mode .chaos-lane strong,
+      #game.chaos-mode .chaos-action-result strong { font-size:8px; }
+      #game.chaos-mode .chaos-action-result { min-height:22px; }
+    }
+    @media (max-width:350px) {
+      .chaos-traffic-pair { grid-template-columns:1fr; }
+      #game.chaos-mode .chaos-lane strong,
+      #game.chaos-mode .chaos-action-result strong { font-size:7.5px; }
+    }
+
 </style>
 </head>
 <body>
@@ -2524,6 +2630,22 @@
       </div>
       <div class="chaos-track"><div id="chaos-fill"></div></div>
       <div id="chaos-rule" class="chaos-rule">아래 블록 3개를 모두 쓰면 첫 사건이 시작돼.</div>
+      <div id="chaos-traffic" class="chaos-traffic" aria-live="polite">
+        <div class="chaos-lane chaos-lane-goal">
+          <span>현재 목표</span><strong id="chaos-goal-text">첫 사건을 기다리는 중</strong>
+        </div>
+        <div class="chaos-traffic-pair">
+          <div class="chaos-lane chaos-lane-danger">
+            <span>현재 위험</span><strong id="chaos-danger-text">안정 · 방해 블록 없음</strong>
+          </div>
+          <div class="chaos-lane chaos-lane-change">
+            <span>블록 변화</span><strong id="chaos-change-text">변화 없음</strong>
+          </div>
+        </div>
+        <div class="chaos-action-result">
+          <span>방금 결과</span><strong id="chaos-action-result-text">블록을 놓으면 결과가 여기에 바로 보여.</strong>
+        </div>
+      </div>
     </section>
 
     <section id="meltdown-panel" class="meltdown-panel legacy-mode-panel" aria-label="코어 온도 상태" hidden>
@@ -5914,7 +6036,7 @@
     {
       title:'블록 3개를 다 쓰면 사건이 시작돼',
       copy:'아래에 나온 블록 세 개를 모두 사용하면 새 블록이 나오면서 사건이 시작돼. 복잡하게 외울 필요 없이 사건 창에 적힌 한 문장만 보면 돼.',
-      tip:'처음에는 사건 하나씩 나오고, 웨이브가 오르면 사건과 미션이 함께 나올 수 있어.',
+      tip:'큰 사건과 즉석 미션은 동시에 나오지 않아. 화면의 ‘현재 목표’ 한 줄만 따라가면 돼.',
       scene:guideEventScene()
     },
     {
@@ -5936,9 +6058,9 @@
       scene:guidePressureScene()
     },
     {
-      title:'블록이 변하고 보드가 움직일 수도 있어',
-      copy:'블록 변이 사건에서는 첫 블록을 놓은 뒤 남은 블록 하나가 바뀌어. 중력 변화 사건에서는 블록 세 개를 다 쓴 뒤 보드가 화살표 방향으로 한 번 움직여.',
-      tip:'중력 방향은 사건 창과 보드 중앙 화살표로 먼저 알려줘. 움직인 뒤 줄이 완성되면 바로 점수로 연결돼.',
+      title:'블록 변화와 중력은 따로 알려줘',
+      copy:'블록 변이는 2~3세트마다 예고되고 첫 블록을 놓은 뒤 남은 블록 하나가 바뀌어. 중력 변화는 큰 사건으로만 나오고 블록 세 개를 다 쓴 뒤 보드가 화살표 방향으로 움직여.',
+      tip:'‘현재 목표 / 현재 위험 / 블록 변화’가 따로 표시돼. 중력과 변이가 겹치면 변이는 다음 세트로 미뤄져.',
       scene:guideMutationGravityScene()
     },
     {
@@ -6373,8 +6495,385 @@
   void loadNickname();
   restart();
 
-  // Build: 카오스 러시 V6.10 · pressure + mutation + gravity
+  // Build: 카오스 러시 V6.11 · traffic control + blockers + frequent mutation
 
   </script>
+
+<script>
+'use strict';
+(() => {
+  const BUILD = 'V6.11';
+  const traffic = {
+    bannerTimer:0,
+    resultTimer:0,
+    action:null,
+    mutationCountdown:2 + Math.floor(rng() * 2),
+    mutationArmed:false,
+    mutationTriggered:false,
+    mutationLabel:'',
+    mutationSlot:-1
+  };
+
+  const goalText = document.getElementById('chaos-goal-text');
+  const dangerText = document.getElementById('chaos-danger-text');
+  const changeText = document.getElementById('chaos-change-text');
+  const resultWrap = document.querySelector('.chaos-action-result');
+  const resultText = document.getElementById('chaos-action-result-text');
+  const dangerLane = document.querySelector('.chaos-lane-danger');
+  const changeLane = document.querySelector('.chaos-lane-change');
+
+  function setActionResult(text, tone = '') {
+    if (!resultText || !text) return;
+    if (traffic.resultTimer) window.clearTimeout(traffic.resultTimer);
+    resultWrap.classList.remove('result-fever','result-danger','result-normal');
+    resultWrap.classList.add(tone === 'danger' ? 'result-danger' : tone === 'fever' ? 'result-fever' : 'result-normal');
+    resultText.textContent = text;
+    traffic.resultTimer = window.setTimeout(() => {
+      resultWrap.classList.remove('result-fever','result-danger','result-normal');
+      resultText.textContent = '다음 블록을 놓아.';
+      traffic.resultTimer = 0;
+    }, 2600);
+  }
+
+  function showMajorBanner(main, sub = '', tone = '') {
+    clearOverlayFeedback();
+    if (traffic.bannerTimer) window.clearTimeout(traffic.bannerTimer);
+    const mainEl = els.eventBanner.querySelector('.event-main');
+    const subEl = els.eventBanner.querySelector('.event-sub');
+    mainEl.textContent = main;
+    subEl.textContent = sub || '';
+    els.eventBanner.className = tone || '';
+    void els.eventBanner.offsetWidth;
+    els.eventBanner.classList.add('visible');
+    traffic.bannerTimer = window.setTimeout(() => {
+      els.eventBanner.classList.remove('visible');
+      traffic.bannerTimer = 0;
+    }, tone === 'danger' ? 900 : 760);
+  }
+
+  function isMajorAnnouncement(main) {
+    const eventTitles = Object.values(CHAOS_META).map(meta => meta.title);
+    if (eventTitles.includes(main)) return true;
+    return /단계 진입|방해 블록 \d+개 낙하|폭주 시작|웨이브 \d+|게임 종료|마지막 한 수|한 칸을 골라/.test(main || '');
+  }
+
+  const v611OriginalAnnounceEvent = announceEvent;
+  announceEvent = function(main, sub = '', tone = '') {
+    if (!isChaosMode()) return v611OriginalAnnounceEvent(main, sub, tone);
+    if (isMajorAnnouncement(main)) {
+      showMajorBanner(main, sub, tone);
+      return;
+    }
+    setActionResult([main, sub].filter(Boolean).join(' · '), tone);
+  };
+
+  const v611OriginalShowFloatingScore = showFloatingScore;
+  showFloatingScore = function(points, tone = '') {
+    if (!isChaosMode()) return v611OriginalShowFloatingScore(points, tone);
+    // 카오스에서는 점수를 줄 세우지 않는다. 배치가 끝난 뒤 합계 한 번만 표시한다.
+  };
+
+  function missionProgressText() {
+    if (!chaosMission) return '';
+    if (chaosMission.done) return chaosMission.success === false ? '즉석 미션 종료' : `즉석 미션 성공 · +${formatNumber(chaosMission.reward)}`;
+    const progress = chaosMission.type === 'score'
+      ? `${formatNumber(Math.min(chaosMission.target, Math.max(0, score - chaosMission.startScore)))}/${formatNumber(chaosMission.target)}`
+      : `${Math.min(chaosMission.target, chaosMission.progress)}/${chaosMission.target}`;
+    return `즉석 미션 · ${chaosMission.label} ${progress} · ${chaosMission.movesLeft}번`;
+  }
+
+  function refreshTrafficUI() {
+    if (!isChaosMode() || !goalText) return;
+    const blockers = typeof pressureBlockerCount === 'function' ? pressureBlockerCount() : 0;
+    const stage = typeof pressureStageInfo === 'function' ? pressureStageInfo() : {label:'안정', level:0};
+
+    let goalTitle = '준비 중';
+    let goalInstruction = '아래 블록을 놓아 줄을 완성해.';
+    if (chaosEvent) {
+      const meta = CHAOS_META[chaosEvent];
+      const limit = (chaosEvent === CHAOS_TYPES.CORE_JACKPOT || chaosEvent === CHAOS_TYPES.DANGER_LINE)
+        ? ` · ${chaosMovesLeft}번` : '';
+      goalTitle = `${meta.title}${limit}`;
+      goalInstruction = chaosInstruction(meta);
+      goalText.textContent = `${goalTitle} — ${goalInstruction}`;
+    } else if (chaosMission && !chaosMission.done) {
+      goalTitle = '즉석 미션';
+      goalInstruction = missionProgressText();
+      goalText.textContent = goalInstruction;
+    } else {
+      const setsUntil = Math.max(0, chaosNextAtTray - trayRound);
+      goalTitle = '정리 시간';
+      goalInstruction = setsUntil > 0 ? `다음 사건까지 ${setsUntil}세트 · 지금은 줄 정리에 집중해.` : '다음 블록부터 새 사건 시작';
+      goalText.textContent = goalInstruction;
+    }
+
+    let danger = `${stage.label}`;
+    if (pressurePending) danger += ` · 다음 배치 뒤 ${pressurePending.cells.length}개`;
+    if (blockers > 0) danger += ` · 방해 ${blockers}개 · 줄/폭탄/레이저`; else danger += ' · 방해 없음';
+    dangerText.textContent = danger;
+    dangerLane.classList.toggle('has-danger', blockers > 0 || Boolean(pressurePending) || stage.level > 0);
+
+    let change = '변화 없음';
+    let hasChange = false;
+    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT && !chaosGravityApplied) {
+      const info = gravityDirectionInfo();
+      change = `중력 ${info.arrow} · 세트 종료 후 ${info.label} 이동`;
+      hasChange = true;
+    } else if (traffic.mutationArmed && !traffic.mutationTriggered) {
+      change = '변이 예정 · 첫 배치 뒤 1개 변경';
+      hasChange = true;
+    } else if (traffic.mutationTriggered && traffic.mutationLabel) {
+      change = `변이 완료 · ${traffic.mutationLabel}`;
+      hasChange = true;
+    } else {
+      change = `변화 없음 · ${Math.max(1, traffic.mutationCountdown)}세트 뒤 변이`;
+    }
+    changeText.textContent = change;
+    changeLane.classList.toggle('has-change', hasChange);
+
+    chaosTitleNode.textContent = `웨이브 ${chaosWave} · ${chaosWaveProgress}/3`;
+    els.chaosStatus.textContent = goalTitle;
+    els.chaosRule.textContent = goalInstruction;
+  }
+
+  // 큰 사건과 즉석 미션은 절대 동시에 실행하지 않는다.
+  startChaosMission = function() {
+    chaosDoublePressure = false;
+    if (chaosEvent) {
+      chaosMission = null;
+      refreshTrafficUI();
+      return;
+    }
+  };
+
+  function startStandaloneMission() {
+    if (!isChaosMode() || chaosEvent || gameOver || (chaosMission && !chaosMission.done)) return false;
+    const chosen = chooseChaosMission();
+    chaosMission = {
+      ...chosen,
+      progress:0,
+      movesLeft:3,
+      startScore:score,
+      reward:300 + chaosWave * 160,
+      done:false,
+      success:null
+    };
+    setActionResult(`새 미션 · ${chosen.label} · 3번 안에 성공`, '');
+    refreshTrafficUI();
+    return true;
+  }
+
+  const v611OriginalFinishMission = finishChaosMission;
+  finishChaosMission = function(success, reason = '') {
+    if (chaosMission) chaosMission.success = Boolean(success);
+    const result = v611OriginalFinishMission(success, reason);
+    refreshTrafficUI();
+    return result;
+  };
+
+  // 사건 사이에 한 세트의 정리 시간을 보장한다.
+  chaosGap = function() { return 2; };
+
+  const v611OriginalChooseChaosEvent = chooseChaosEvent;
+  chooseChaosEvent = function() {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const type = v611OriginalChooseChaosEvent();
+      if (type !== CHAOS_TYPES.BLOCK_MUTATION) return type;
+    }
+    return CHAOS_TYPES.MINI_RUSH;
+  };
+
+  const v611OriginalStartChaosEvent = startChaosEvent;
+  startChaosEvent = function(forcedType = '') {
+    if (chaosMission) chaosMission = null;
+    const safeType = forcedType === CHAOS_TYPES.BLOCK_MUTATION ? '' : forcedType;
+    const result = v611OriginalStartChaosEvent(safeType);
+    chaosDoublePressure = false;
+    refreshTrafficUI();
+    return result;
+  };
+
+  function scheduleNextMutation() {
+    traffic.mutationCountdown = 2 + Math.floor(rng() * 2);
+    traffic.mutationArmed = false;
+    traffic.mutationTriggered = false;
+    traffic.mutationLabel = '';
+    traffic.mutationSlot = -1;
+  }
+
+  function armMutationForTray() {
+    if (!isChaosMode() || gameOver) return;
+    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT) {
+      traffic.mutationCountdown = Math.max(1, traffic.mutationCountdown);
+      return;
+    }
+    traffic.mutationCountdown--;
+    if (traffic.mutationCountdown <= 0) {
+      traffic.mutationArmed = true;
+      traffic.mutationTriggered = false;
+      traffic.mutationLabel = '';
+      setActionResult('변이 예고 · 첫 블록 뒤 남은 블록 하나가 바뀌어', 'fever');
+    }
+  }
+
+  function triggerAuxiliaryMutation() {
+    if (!traffic.mutationArmed || traffic.mutationTriggered || !isChaosMode() || gameOver) return false;
+    if (chaosEvent === CHAOS_TYPES.GRAVITY_SHIFT) return false;
+    const remaining = tray.map((piece,index) => ({piece,index})).filter(item => item.piece);
+    if (!remaining.length) return false;
+    const target = remaining[Math.floor(rng() * remaining.length)];
+    const previousSize = target.piece.shape?.length || 1;
+    const occupancy = boardOccupancyRatio();
+    const modes = occupancy >= .68 ? ['shrink','special','grow'] : ['grow','shrink','special'];
+    const weights = occupancy >= .68 ? [52,28,20] : [42,35,23];
+    const mode = weightedPick(modes, weights);
+    let nextPiece;
+    let label;
+
+    if (mode === 'special') {
+      const type = pickSpecialType();
+      nextPiece = makeSpecialPiece(type);
+      label = `${SPECIAL_META[type].name}으로 변화`;
+    } else if (mode === 'grow') {
+      const entry = pickFittingEntry([SHAPES_BY_CLASS.huge, SHAPES_BY_CLASS.large, SHAPES_BY_CLASS.medium]);
+      nextPiece = normalPieceFromEntry(entry);
+      label = `과성장 ${previousSize}칸→${entry.size}칸`;
+    } else {
+      const entry = pickFittingEntry([SHAPES_BY_CLASS.small, SHAPES_BY_CLASS.medium]);
+      nextPiece = normalPieceFromEntry(entry);
+      label = `수축 ${previousSize}칸→${entry.size}칸`;
+    }
+
+    nextPiece.mutated = true;
+    nextPiece.mutationLabel = label;
+    tray[target.index] = nextPiece;
+    traffic.mutationTriggered = true;
+    traffic.mutationLabel = label;
+    traffic.mutationSlot = target.index;
+    traffic.mutationArmed = false;
+    traffic.mutationCountdown = 2 + Math.floor(rng() * 2);
+    selected = -1;
+    renderTray();
+    setActionResult(`블록 변이 · ${label}`, 'fever');
+    createShockwave('#9d7cff', .48);
+    beepSequence(mode === 'grow' ? [420,320,230] : [360,540,760], .05);
+    refreshTrafficUI();
+    return true;
+  }
+
+  const v611OriginalConsumePiece = consumeSelectedPiece;
+  consumeSelectedPiece = function() {
+    const result = v611OriginalConsumePiece();
+    if (traffic.mutationArmed && tray.some(Boolean)) triggerAuxiliaryMutation();
+    return result;
+  };
+
+  const v611OriginalRenderTray = renderTray;
+  renderTray = function() {
+    const result = v611OriginalRenderTray();
+    if (isChaosMode() && traffic.mutationArmed && !traffic.mutationTriggered) {
+      els.tray.querySelectorAll('.tray-slot').forEach(slot => {
+        if (slot.classList.contains('used')) return;
+        slot.classList.add('mutation-pending-slot');
+      });
+      const first = els.tray.querySelector('.tray-slot:not(.used)');
+      if (first && !first.querySelector('.mutation-pending-tag')) {
+        const tag = document.createElement('span');
+        tag.className = 'mutation-pending-tag';
+        tag.textContent = '변이 예정';
+        first.appendChild(tag);
+      }
+    }
+    refreshTrafficUI();
+    return result;
+  };
+
+  const v611OriginalInitTray = initTray;
+  initTray = function() {
+    const result = v611OriginalInitTray();
+    if (isChaosMode() && !gameOver) {
+      if (!traffic.mutationArmed) armMutationForTray();
+      if (!chaosEvent && chaosEventNumber > 0) startStandaloneMission();
+      renderTray();
+      refreshTrafficUI();
+    }
+    return result;
+  };
+
+  const v611OriginalUpdateChaosUI = updateChaosUI;
+  updateChaosUI = function() {
+    const result = v611OriginalUpdateChaosUI();
+    refreshTrafficUI();
+    return result;
+  };
+
+  const v611OriginalUpdateWaveUI = updateChaosWaveUI;
+  updateChaosWaveUI = function() {
+    const result = v611OriginalUpdateWaveUI();
+    refreshTrafficUI();
+    return result;
+  };
+
+  const v611OriginalApplyPressureUI = applyPressureUI;
+  applyPressureUI = function() {
+    const result = v611OriginalApplyPressureUI();
+    refreshTrafficUI();
+    return result;
+  };
+
+  const v611OriginalOnCellClick = onCellClick;
+  onCellClick = function(row, col) {
+    if (isChaosMode() && !chaosLastChanceSelecting && phase === PHASE.PLAYING && selected >= 0 && tray[selected]) {
+      const piece = tray[selected];
+      traffic.action = {
+        startScore:score,
+        startBlockers:typeof pressureBlockerCount === 'function' ? pressureBlockerCount() : 0,
+        pieceLabel:isSpecialPiece(piece) ? SPECIAL_META[piece.specialType].name : `${piece.shape.length}칸 블록`
+      };
+    }
+    return v611OriginalOnCellClick(row, col);
+  };
+
+  const v611OriginalAfterPlacement = afterPlacementFlow;
+  afterPlacementFlow = function(startedInFever = false, lineCount = 0) {
+    const context = traffic.action;
+    const result = v611OriginalAfterPlacement(startedInFever, lineCount);
+    if (isChaosMode() && context) {
+      const delta = Math.max(0, score - context.startScore);
+      const parts = [lineCount > 0 ? `${lineCount}줄 제거` : `${context.pieceLabel} 배치`];
+      if (lineCount > 0 && combo > 0) parts.push(`콤보 ×${combo}`);
+      if (delta > 0) parts.push(`+${formatNumber(delta)}`);
+      const blockersNow = typeof pressureBlockerCount === 'function' ? pressureBlockerCount() : 0;
+      if (blockersNow > context.startBlockers) parts.push(`방해 +${blockersNow - context.startBlockers}`);
+      setActionResult(parts.join(' · '), lineCount > 0 || delta >= 500 ? 'fever' : '');
+      traffic.action = null;
+    }
+    refreshTrafficUI();
+    return result;
+  };
+
+  const v611OriginalRestart = restart;
+  restart = function() {
+    scheduleNextMutation();
+    traffic.action = null;
+    if (traffic.resultTimer) window.clearTimeout(traffic.resultTimer);
+    const result = v611OriginalRestart();
+    if (isChaosMode()) {
+      resultText.textContent = '블록을 놓으면 결과가 여기에 바로 보여.';
+      refreshTrafficUI();
+    }
+    return result;
+  };
+
+  clearOverlayFeedback();
+  scheduleNextMutation();
+  if (isChaosMode()) {
+    refreshTrafficUI();
+    renderTray();
+  }
+  document.documentElement.dataset.chaosBuild = BUILD;
+})();
+</script>
+
 </body>
 </html>
